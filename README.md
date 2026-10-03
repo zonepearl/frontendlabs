@@ -73,41 +73,6 @@ wiki/<folder>/*.md ──sync──▶ docs/<folder>/*.md ──render──▶ 
 changes. Edit the wiki originals, or run with `-sync=false` if you want to
 edit `docs/` directly and never have it overwritten.
 
-## Hosting at https://frontendlabs.xyz
-
-`make build` writes a self-contained static site to `dist/`. Upload the
-*contents* of `dist/` to the web root of frontendlabs.xyz (GitHub Pages,
-Cloudflare Pages, Netlify, S3+CloudFront, or nginx all work).
-
-**Deployed with GitHub Pages:** every push to `main` runs
-[`.github/workflows/pages.yml`](.github/workflows/pages.yml), which builds
-`dist/`, runs the link check, and publishes. CI can't see the wiki, so run
-`make sync` locally and commit `docs/` before pushing.
-
-The build includes:
-
-- `CNAME` (`frontendlabs.xyz`), for GitHub Pages custom domains
-- `404.html` (root-relative links, so it works at any missing URL), which the
-  static hosts above serve automatically
-- `sitemap.xml` with absolute `https://frontendlabs.xyz/...` URLs, and `robots.txt`
-- canonical, Open Graph and Twitter tags on every page, with the logo as the
-  share image
-
-Every link inside the site is relative, so the same build also works from
-disk or a preview URL. `make check` must pass before deploying. It scans every
-HTML file in `dist/` (guide pages, original editions, 404) and fails on:
-
-- localhost, `file:` and filesystem references
-- the dev live-reload client
-- protocol-relative URLs
-- missing files or `#anchors`
-- sitemap entries without a page, and wrong canonical URLs
-
-`serve` builds into `.preview/`, never `dist/`, so a dev preview can't be
-deployed by mistake. (The live-reload client also refuses to run anywhere but
-localhost.)
-
-The domain lives in one place: `site.base_url` in `guides.json`.
 
 ## Adding or changing a guide
 
