@@ -1,0 +1,302 @@
+{
+  "site": {
+    "title": "Frontend Labs — Engineering Field Guides",
+    "tagline": "Long-form, hands-on guides from the kernel to the browser. Read them as books, follow the series, run the labs.",
+    "base_url": "https://frontendlabs.xyz",
+    "wiki_root": ".."
+  },
+  "categories": [
+    {
+      "id": "series",
+      "title": "The systems, networking & security series",
+      "note": "Seven guides designed as one course: OS → networking → security → the HTTPS walkthrough, with Go alongside every step."
+    },
+    {
+      "id": "languages",
+      "title": "Languages",
+      "note": "The languages the labs and projects are written in."
+    },
+    {
+      "id": "foundations",
+      "title": "Foundations",
+      "note": "Algorithms and the mathematics underneath them."
+    },
+    {
+      "id": "more",
+      "title": "More field guides",
+      "note": "AI and performance testing."
+    }
+  ],
+  "guides": [
+    {
+      "slug": "linux",
+      "title": "Operating Systems, Linux & Containers",
+      "icon": "🖥️",
+      "category": "series",
+      "step": "1",
+      "level": "Beginner → Expert",
+      "summary": "Processes, memory, files, sockets, containers, Kubernetes — and Go on Linux, including a container runtime you build.",
+      "source": "os-linux/real-life-os-guide.md",
+      "originals": [
+        "os-linux/real-life-os-guide-book.html",
+        "os-linux/real-life-os-guide.html"
+      ]
+    },
+    {
+      "slug": "osi",
+      "title": "The OSI Model, One Click at a Time",
+      "icon": "🧭",
+      "category": "series",
+      "step": "2a",
+      "level": "Overview",
+      "summary": "One “Place order” click through all seven layers: real addresses, a millisecond timeline, and a debugging playbook by layer.",
+      "source": "networking/real-life-example-osi.md",
+      "originals": [
+        "networking/real-life-example-osi-book.html"
+      ]
+    },
+    {
+      "slug": "tcp-ip",
+      "title": "Networking from Zero (TCP/IP)",
+      "icon": "🌐",
+      "category": "series",
+      "step": "2b",
+      "level": "Beginner → Expert",
+      "summary": "L1–L4 in depth with packet captures and professional network operations, plus 23 Go labs.",
+      "source": "networking/tcp-ip/real-life-guide-v1.md",
+      "originals": [
+        "networking/tcp-ip/real-life-guide-v1-book.html",
+        "networking/tcp-ip/real-life-guide-v1.html"
+      ]
+    },
+    {
+      "slug": "security-from-zero",
+      "title": "Security from Zero",
+      "icon": "🔒",
+      "category": "series",
+      "step": "3a",
+      "level": "Beginner → Advanced",
+      "summary": "Encoding vs hashing vs encryption, TLS packet by packet, your own CA, SSH hardening, and the OWASP Top 10.",
+      "source": "security/real-life-guide.md",
+      "originals": [
+        "security/real-life-guide-book.html",
+        "security/real-life-guide.html"
+      ]
+    },
+    {
+      "slug": "security-in-depth",
+      "title": "Security Engineering in Depth",
+      "icon": "🕵️",
+      "category": "series",
+      "step": "3b",
+      "level": "Advanced",
+      "summary": "Cloud and Kubernetes security, distributed authorization, advanced web attacks, data protection, detection — 10 Go labs.",
+      "source": "security/real-life-security-guide-v1.md",
+      "originals": [
+        "security/real-life-security-guide-v1-book.html",
+        "security/real-life-security-guide-v1.html"
+      ]
+    },
+    {
+      "slug": "https",
+      "title": "The HTTPS Request Lifecycle",
+      "icon": "🔗",
+      "category": "series",
+      "step": "4",
+      "level": "Intermediate → Expert",
+      "summary": "One request end to end, then the server side built in Go; the finale traces one request through every guide.",
+      "source": "v2-https/real-life-guide-v1.md",
+      "originals": [
+        "v2-https/real-life-guide-v1-book.html",
+        "v2-https/real-life-guide-v1.html"
+      ]
+    },
+    {
+      "slug": "go",
+      "title": "Go — The Complete Field Guide",
+      "icon": "🐹",
+      "category": "languages",
+      "step": "Alongside",
+      "level": "Beginner → Expert",
+      "summary": "Syntax to systems internals, concurrency, networking, security services, and production operations.",
+      "source": "Golang/real-life-golang-guide.md",
+      "originals": [
+        "Golang/real-life-golang-guide.html"
+      ]
+    },
+    {
+      "slug": "go-plan",
+      "title": "Go 120-Day Engineering Plan",
+      "icon": "🗓️",
+      "category": "languages",
+      "level": "Day by day",
+      "summary": "Daily exercises that grow into an L4 load balancer, a TLS proxy, a WAF, DDoS defences, and an edge security proxy.",
+      "source": "Golang/golang-90-day-plan.md",
+      "originals": [],
+      "pages": [
+        {
+          "slug": "week1",
+          "source": "Golang/detailed-90-day-plan/week1.md"
+        },
+        {
+          "slug": "week2",
+          "source": "Golang/detailed-90-day-plan/week2.md"
+        },
+        {
+          "slug": "week3",
+          "source": "Golang/detailed-90-day-plan/week3.md"
+        },
+        {
+          "slug": "week4",
+          "source": "Golang/detailed-90-day-plan/week4.md"
+        },
+        {
+          "slug": "week5",
+          "source": "Golang/detailed-90-day-plan/week5.md"
+        },
+        {
+          "slug": "week6",
+          "source": "Golang/detailed-90-day-plan/week6.md"
+        },
+        {
+          "slug": "week7",
+          "source": "Golang/detailed-90-day-plan/week7.md"
+        },
+        {
+          "slug": "week8",
+          "source": "Golang/detailed-90-day-plan/week8.md"
+        },
+        {
+          "slug": "week9",
+          "source": "Golang/detailed-90-day-plan/week9.md"
+        },
+        {
+          "slug": "week10",
+          "source": "Golang/detailed-90-day-plan/week10.md"
+        },
+        {
+          "slug": "week11",
+          "source": "Golang/detailed-90-day-plan/week11.md"
+        },
+        {
+          "slug": "week12",
+          "source": "Golang/detailed-90-day-plan/week12.md"
+        },
+        {
+          "slug": "week13",
+          "source": "Golang/detailed-90-day-plan/week13.md"
+        },
+        {
+          "slug": "week14",
+          "source": "Golang/detailed-90-day-plan/week14.md"
+        },
+        {
+          "slug": "week15",
+          "source": "Golang/detailed-90-day-plan/week15.md"
+        },
+        {
+          "slug": "week16",
+          "source": "Golang/detailed-90-day-plan/week16.md"
+        },
+        {
+          "slug": "week17",
+          "source": "Golang/detailed-90-day-plan/week17.md"
+        },
+        {
+          "slug": "sme-gaps",
+          "source": "Golang/detailed-90-day-plan/real-world-projects-and-sme-gaps.md"
+        },
+        {
+          "slug": "lru-cache-project",
+          "source": "Golang/projects/lru_cache.md"
+        }
+      ]
+    },
+    {
+      "slug": "c",
+      "title": "C — The Complete Field Guide",
+      "icon": "🛠️",
+      "category": "languages",
+      "level": "Beginner → Expert",
+      "summary": "Memory, pointers, the standard library, real allocators, SQLite/Redis/curl walkthroughs, and a Linux driver.",
+      "source": "c-lang/real-life-c-guide.md",
+      "originals": [
+        "c-lang/real-life-c-guide.html"
+      ]
+    },
+    {
+      "slug": "javascript",
+      "title": "JavaScript — The Complete Field Guide",
+      "icon": "🟨",
+      "category": "languages",
+      "level": "Beginner → Expert",
+      "summary": "The language from beginner to expert, how browser engines render a page, HTTP from the browser, and Web Workers.",
+      "source": "JS/real-life-JS-guide.md",
+      "originals": [
+        "JS/real-life-JS-guide.html"
+      ]
+    },
+    {
+      "slug": "dsa",
+      "title": "Data Structures & Algorithms",
+      "icon": "🧩",
+      "category": "foundations",
+      "level": "Beginner → Advanced",
+      "summary": "Plain-language explanations, real-world analogies, pseudocode, and Go implementations for every core topic.",
+      "source": "DSA/real-life-ds-algo-guide.md",
+      "originals": [
+        "DSA/real-life-ds-algo-guide.html"
+      ]
+    },
+    {
+      "slug": "maths",
+      "title": "Real-Life Mathematics",
+      "icon": "📐",
+      "category": "foundations",
+      "level": "Beginner → Expert",
+      "summary": "Number systems, probability, linear algebra, calculus, crypto, and control theory, each tied to a real engineering decision.",
+      "source": "Maths/real-life-maths-guide.md",
+      "originals": [
+        "Maths/real-life-maths-guide.html"
+      ]
+    },
+    {
+      "slug": "tcp-ip-reference",
+      "title": "TCP/IP — The Complete Field Guide (reference)",
+      "icon": "📡",
+      "category": "more",
+      "level": "Reference",
+      "summary": "The denser companion to Networking from Zero: a lookup manual for the TCP/IP suite, from packets to performance forensics.",
+      "source": "networking/tcp-ip/real-life-example.md",
+      "originals": [
+        "networking/tcp-ip/real-life-example-book.html",
+        "networking/tcp-ip/real-life-example.html"
+      ]
+    },
+    {
+      "slug": "ai",
+      "title": "AI from Zero to LLMs",
+      "icon": "🤖",
+      "category": "more",
+      "level": "Beginner → Expert",
+      "summary": "From classical ML through Transformers to training, serving, and optimizing LLMs, plus agents and governance.",
+      "source": "AI-ML/real-life-ai-example-v1.md",
+      "originals": [
+        "AI-ML/real-life-ai-example-v1-book.html",
+        "AI-ML/real-life-ai-example-v1.html"
+      ]
+    },
+    {
+      "slug": "scale-perf",
+      "title": "Scale, Load & Performance Testing",
+      "icon": "📈",
+      "category": "more",
+      "level": "In depth",
+      "summary": "Network and latency fundamentals, percentiles and jitter, open-source load-test tools, and simulations.",
+      "source": "scale-perf/real-life-scale-guide.md",
+      "originals": [
+        "scale-perf/real-life-scale-guide.html"
+      ]
+    }
+  ]
+}

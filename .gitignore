@@ -1,0 +1,6 @@
+dist/
+.preview/
+bin/
+node_modules/
+*.tmp
+.DS_Store

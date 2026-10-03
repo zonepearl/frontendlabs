@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="One real request, followed through all seven layers. You click "Place order" on a shopping site from your laptop on home Wi-Fi. About 250 ms later you">
+<title>The OSI Model, One Click at a Time</title>
+<style>
+/* ============================ THEMES ============================ */
+:root{
+  /* Paper (default) - warm, low-glare, closest to a printed book */
+  --bg:#f7f2e7;  --bg-soft:#efe8d9;  --bg-card:#fbf7ee;
+  --fg:#3a352c;  --fg-soft:#6d6558;  --fg-faint:#948b7c;
+  --rule:#ded3bd; --rule-soft:#e9e0cd;
+  --accent:#8a4b23; --accent-soft:#f0e2d1;
+  --hl:#f4e3b8;
+  --shadow:0 1px 2px rgba(90,72,45,.07), 0 6px 20px rgba(90,72,45,.06);
+}
+html[data-theme="light"]{
+  --bg:#fdfcfa;  --bg-soft:#f2f0ec;  --bg-card:#ffffff;
+  --fg:#22201c;  --fg-soft:#5f5a53;  --fg-faint:#8d877e;
+  --rule:#e2ddd4; --rule-soft:#efece6;
+  --accent:#8f4a1e; --accent-soft:#f7ece2;
+  --hl:#fdf0c2;
+  --shadow:0 1px 2px rgba(0,0,0,.05), 0 6px 20px rgba(0,0,0,.05);
+}
+html[data-theme="night"]{
+  --bg:#191816;  --bg-soft:#232120;  --bg-card:#201e1c;
+  --fg:#ddd5c7;  --fg-soft:#a49b8c;  --fg-faint:#7d7568;
+  --rule:#35322d; --rule-soft:#2b2825;
+  --accent:#dda06a; --accent-soft:#2c2622;
+  --hl:#4a3f22;
+  --shadow:none;
+}
+
+/* ============================ TYPE ============================ */
+:root{
+  --serif: ui-serif, "New York", "Iowan Old Style", "Charter", "Palatino",
+           "Palatino Linotype", "Book Antiqua", Georgia, "Noto Serif", serif;
+  --sans:  ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+           "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono:  ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+           "Liberation Mono", monospace;
+  --fs: 19px;              /* changed by the A-/A+ controls */
+  --measure: 34rem;        /* ~66 characters -- the classic book measure */
+  --lh: 1.72;
+}
+html[data-width="narrow"] { --measure: 30rem; }
+html[data-width="wide"]   { --measure: 40rem; }
+
+*{ box-sizing:border-box; }
+html{
+  font-size:var(--fs);
+  scroll-behavior:smooth;
+  scroll-padding-top:4.5rem;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:var(--serif); line-height:var(--lh);
+  font-kerning:normal;
+  font-variant-numeric:oldstyle-nums proportional-nums;
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  overflow-wrap:break-word;
+  transition:background .25s ease, color .25s ease;
+}
+
+/* ============================ CHROME ============================ */
+#progress{
+  position:fixed; top:0; left:0; height:3px; width:0;
+  background:var(--accent); z-index:60; transition:width .12s linear;
+}
+#bar{
+  position:fixed; top:0; left:0; right:0; z-index:50;
+  display:flex; align-items:center; gap:.5rem;
+  padding:calc(.45rem + env(safe-area-inset-top)) .9rem .45rem;
+  background:var(--bg);
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter:saturate(1.6) blur(14px);
+  backdrop-filter:saturate(1.6) blur(14px);
+  border-bottom:1px solid var(--rule-soft);
+  font-family:var(--sans); font-size:.72rem;
+  transition:transform .28s ease, opacity .28s ease;
+}
+#bar.hidden{ transform:translateY(-105%); opacity:0; }
+#bar .where{
+  flex:1; min-width:0; color:var(--fg-soft);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.btn{
+  font:inherit; font-family:var(--sans); font-size:.72rem; line-height:1;
+  color:var(--fg-soft); background:transparent;
+  border:1px solid var(--rule); border-radius:8px;
+  padding:.5rem .6rem; min-height:34px; min-width:34px;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.btn:hover{ color:var(--fg); border-color:var(--fg-faint); }
+.btn:active{ transform:translateY(1px); }
+.btn.on{ color:var(--accent); border-color:var(--accent); }
+.grp{ display:flex; gap:.25rem; }
+@media (max-width:640px){ .hide-sm{ display:none; } }
+
+/* ============================ TOC DRAWER ============================ */
+#scrim{
+  position:fixed; inset:0; z-index:69; background:rgba(20,16,10,.34);
+  opacity:0; pointer-events:none; transition:opacity .25s ease;
+}
+#scrim.open{ opacity:1; pointer-events:auto; }
+#toc{
+  position:fixed; z-index:70; top:0; bottom:0; left:0;
+  width:min(23rem, 86vw);
+  background:var(--bg-card); border-right:1px solid var(--rule);
+  box-shadow:var(--shadow);
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:calc(3.6rem + env(safe-area-inset-top)) 1rem 3rem 1.1rem;
+  transform:translateX(-102%); transition:transform .28s cubic-bezier(.3,.7,.3,1);
+  font-family:var(--sans); font-size:.8rem; line-height:1.4;
+}
+#toc.open{ transform:none; }
+#toc ol{ list-style:none; margin:0; padding:0; }
+#toc a{ text-decoration:none; color:inherit; display:block; }
+#toc .toc-part>a{
+  font-weight:650; color:var(--fg); margin-top:1.1rem;
+  padding:.4rem .5rem; border-radius:7px; letter-spacing:.01em;
+}
+#toc .toc-part>a:hover{ background:var(--bg-soft); }
+#toc .toc-ch a{
+  display:flex; gap:.5rem; align-items:baseline; justify-content:space-between;
+  color:var(--fg-soft); padding:.36rem .5rem .36rem .9rem;
+  border-left:2px solid transparent; border-radius:0 7px 7px 0;
+}
+#toc .toc-ch a:hover{ color:var(--fg); background:var(--bg-soft); }
+#toc .toc-ch a em{ font-style:normal; font-size:.68rem; color:var(--fg-faint);
+                   flex:none; font-variant-numeric:tabular-nums; }
+#toc .toc-ch a.here{
+  color:var(--accent); border-left-color:var(--accent);
+  background:var(--accent-soft); font-weight:600;
+}
+#toc .toc-loose a{ padding-left:.5rem; }
+
+/* ============================ PAGE ============================ */
+main{
+  max-width:var(--measure);
+  margin:0 auto;
+  padding:5.5rem 1.35rem 8rem;
+  padding-left:max(1.35rem, env(safe-area-inset-left));
+  padding-right:max(1.35rem, env(safe-area-inset-right));
+}
+p{ margin:0 0 1.15em; }
+a{ color:var(--accent); text-decoration:none;
+   border-bottom:1px solid var(--rule);
+   border-bottom-color:color-mix(in srgb, var(--accent) 32%, transparent); }
+a:hover{ border-bottom-color:var(--accent); }
+strong{ font-weight:650; }
+em{ font-style:italic; }
+hr{ border:0; height:1px; background:var(--rule-soft); margin:2.6em auto; width:70%; }
+
+/* -- headings: serif, book-like, tight -- */
+h1,h2,h3,h4,h5,h6{
+  font-family:var(--serif); font-weight:650; line-height:1.22;
+  letter-spacing:-.008em; color:var(--fg);
+  margin:2.1em 0 .55em; scroll-margin-top:5rem;
+}
+h1{
+  font-size:2.1em; font-weight:700; letter-spacing:-.02em;
+  margin:2.6em 0 1.1em; padding-bottom:.5rem;
+  border-bottom:2px solid var(--rule);
+  text-wrap:balance;
+}
+h1.book-title{
+  font-size:2.7em; border:0; text-align:center;
+  margin:.6em 0 .1em; padding:0;
+}
+h2{ font-size:1.5em; margin-top:2.4em; text-wrap:balance; }
+h3{ font-size:1.14em; margin-top:1.9em; }
+h4{ font-size:1em; color:var(--fg-soft); margin-top:1.6em; }
+
+/* chapter separation: a printed-book feel without pagination */
+.chapter{ padding-top:.4rem; }
+.chapter + .chapter > h2::before{
+  content:""; display:block; width:2.2rem; height:1px;
+  background:var(--rule); margin:0 auto 2.4rem;
+}
+
+/* first paragraph after a chapter title gets a small-caps lead-in */
+.chapter > h2 + p::first-line{ font-variant-caps:small-caps; letter-spacing:.02em; }
+
+/* ============================ LISTS ============================ */
+ul,ol{ margin:0 0 1.2em; padding-left:1.45em; }
+li{ margin:.35em 0; }
+li>ul, li>ol{ margin:.35em 0; }
+li::marker{ color:var(--fg-faint); }
+
+ul.checklist{ list-style:none; padding-left:0; }
+ul.checklist li.task{ margin:.5em 0; }
+ul.checklist label{
+  display:flex; gap:.7rem; align-items:flex-start; cursor:pointer;
+  padding:.45rem .65rem; border-radius:9px; border:1px solid var(--rule-soft);
+  background:var(--bg-card); transition:background .15s, border-color .15s;
+}
+ul.checklist label:hover{ border-color:var(--rule); }
+ul.checklist input{
+  margin-top:.34em; width:1.05em; height:1.05em; flex:none;
+  accent-color:var(--accent); cursor:pointer;
+}
+ul.checklist input:checked + span{ color:var(--fg-faint); text-decoration:line-through; }
+
+/* ============================ QUOTES / NOTES ============================ */
+blockquote.note{
+  margin:1.5em 0; padding:.9em 1.2em;
+  background:var(--bg-card); border:1px solid var(--rule-soft);
+  border-left:3px solid var(--accent); border-radius:0 10px 10px 0;
+  color:var(--fg-soft); font-size:.97em;
+}
+blockquote.note p:last-child{ margin-bottom:0; }
+blockquote.note strong{ color:var(--fg); }
+blockquote.note-simplified{ border-left-color:#b08a3e; }
+blockquote.note-debated{ border-left-color:#7a6ba8; }
+
+/* ============================ PEDAGOGICAL CARDS ============================ */
+.blk{
+  margin:1.7em 0; padding:.15em 1.15em 1em;
+  border:1px solid var(--rule-soft); border-radius:12px;
+  background:var(--bg-card); box-shadow:var(--shadow);
+}
+.blk > h3{
+  margin:.95em 0 .6em; font-size:.74rem; font-family:var(--sans);
+  font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--fg-faint); display:flex; align-items:center; gap:.55rem;
+}
+.blk > h3::before{
+  content:attr(data-icon); font-size:.95rem; letter-spacing:0;
+  text-transform:none; opacity:.85;
+}
+.blk > *:last-child{ margin-bottom:0; }
+
+/* "In one sentence" -- the thesis. Make it unmissable. */
+.blk-tldr{
+  border:0; border-left:3px solid var(--accent);
+  border-radius:0 12px 12px 0; background:var(--accent-soft);
+  box-shadow:none;
+}
+.blk-tldr p{ font-size:1.1em; line-height:1.55; color:var(--fg); margin-bottom:.4em; }
+.blk-tldr > h3{ color:var(--accent); }
+
+.blk-practice { border-color:var(--rule);
+                border-color:color-mix(in srgb, #4b7f52 34%, var(--rule-soft)); }
+.blk-practice > h3{ color:#4b7f52; }
+html[data-theme="night"] .blk-practice > h3{ color:#86b98c; }
+
+.blk-check{ border-color:var(--rule);
+            border-color:color-mix(in srgb, #3f6ea8 34%, var(--rule-soft)); }
+.blk-check > h3{ color:#3f6ea8; }
+html[data-theme="night"] .blk-check > h3{ color:#8fb2dd; }
+.blk-check ol, .blk-check ul{ margin-bottom:.4em; }
+
+.blk-confusion{ border-color:var(--rule);
+                border-color:color-mix(in srgb, #a8792f 36%, var(--rule-soft)); }
+.blk-confusion > h3{ color:#a8792f; }
+html[data-theme="night"] .blk-confusion > h3{ color:#d3ab6b; }
+
+.blk-reading{
+  background:transparent; box-shadow:none;
+  border:0; border-top:1px solid var(--rule-soft); border-radius:0;
+  padding:.2em 0 0; font-size:.94em; color:var(--fg-soft);
+}
+.blk-reading > h3{ margin-top:1.1em; }
+.blk-reading li{ margin:.45em 0; }
+
+.blk-example, .blk-how, .blk-idea, .blk-problem{ box-shadow:none; }
+.blk-problem, .blk-idea{ background:transparent; border-color:transparent;
+                          padding-left:0; padding-right:0; }
+
+/* ============================ Q&A (<details>) ============================ */
+details.qa{ margin:.9em 0; border:1px solid var(--rule); border-radius:10px;
+            background:var(--bg-card); }
+details.qa > summary{ cursor:pointer; padding:.8em 1em; font-weight:600;
+                      list-style:none; color:var(--fg); }
+details.qa > summary::-webkit-details-marker{ display:none; }
+details.qa > summary::before{ content:"\25B8"; display:inline-block; width:1.1em;
+                              color:var(--accent); transition:transform .15s; }
+details.qa[open] > summary::before{ transform:rotate(90deg); }
+details.qa[open] > summary{ border-bottom:1px solid var(--rule-soft); }
+details.qa > :not(summary){ margin-left:1em; margin-right:1em; }
+details.qa > p:last-child{ margin-bottom:.9em; }
+
+/* ============================ CODE ============================ */
+.codewrap{ position:relative; margin:1.5em 0; }
+.codewrap .copy{
+  position:absolute; top:.5rem; right:.5rem; z-index:2;
+  font-family:var(--sans); font-size:.66rem; padding:.3rem .5rem;
+  color:var(--fg-faint); background:var(--bg); border:1px solid var(--rule);
+  border-radius:6px; cursor:pointer; opacity:0; transition:opacity .15s;
+}
+.codewrap:hover .copy, .codewrap .copy:focus{ opacity:1; }
+.codewrap .copy.done{ color:#4b7f52; border-color:#4b7f52; opacity:1; }
+pre{
+  margin:0; padding:1rem 1.1rem;
+  background:var(--bg-soft); border:1px solid var(--rule-soft);
+  border-radius:10px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+  font-family:var(--mono); font-size:.79rem; line-height:1.55;
+  -moz-tab-size:4; tab-size:4;
+  color:var(--fg);
+}
+pre code{ white-space:pre; display:block; background:none; border:0; padding:0;
+          font-size:inherit; font-variant-numeric:normal; }
+pre[data-lang]::after{
+  content:attr(data-lang); position:absolute; bottom:.4rem; right:.7rem;
+  font-family:var(--sans); font-size:.6rem; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--fg-faint); pointer-events:none;
+}
+code{
+  font-family:var(--mono); font-size:.85em;
+  background:var(--bg-soft); border:1px solid var(--rule-soft);
+  border-radius:5px; padding:.06em .34em;
+  font-variant-numeric:normal;
+}
+
+/* ============================ TABLES ============================ */
+.tbl{
+  margin:1.6em 0; overflow-x:auto; -webkit-overflow-scrolling:touch;
+  border:1px solid var(--rule-soft); border-radius:10px; background:var(--bg-card);
+}
+table{ border-collapse:collapse; width:100%;
+       font-family:var(--sans); font-size:.8rem; line-height:1.45; }
+th,td{ padding:.6rem .8rem; text-align:left; vertical-align:top;
+       border-bottom:1px solid var(--rule-soft); }
+thead th{ background:var(--bg-soft); font-weight:650; color:var(--fg);
+          border-bottom:1px solid var(--rule); position:sticky; top:0; }
+tbody tr:last-child td{ border-bottom:0; }
+tbody tr:hover{ background:var(--bg-soft);
+                background:color-mix(in srgb, var(--accent-soft) 45%, transparent); }
+td code, th code{ font-size:.92em; }
+
+/* ============================ CHAPTER NAV ============================ */
+.chapnav{
+  display:flex; gap:.7rem; margin:3.5em 0 0;
+  padding-top:1.4rem; border-top:1px solid var(--rule-soft);
+  font-family:var(--sans); font-size:.78rem;
+}
+.chapnav a{
+  flex:1; border:1px solid var(--rule-soft); border-radius:11px;
+  padding:.75rem .9rem; color:var(--fg-soft); background:var(--bg-card);
+  text-decoration:none; transition:border-color .15s, color .15s;
+}
+.chapnav a:hover{ border-color:var(--accent); color:var(--fg); }
+.chapnav a span{ display:block; font-size:.64rem; letter-spacing:.09em;
+                 text-transform:uppercase; color:var(--fg-faint); margin-bottom:.2rem; }
+.chapnav a.next{ text-align:right; }
+.chapnav a.spacer{ visibility:hidden; }
+
+/* ============================ TITLE PAGE ============================ */
+.titlepage{ text-align:center; padding:2.5rem 0 1rem; }
+.titlepage .sub{ color:var(--fg-soft); font-size:1.02em; font-style:italic;
+                 max-width:26rem; margin:.2rem auto 1.4rem; }
+.titlepage .meta{ font-family:var(--sans); font-size:.72rem; color:var(--fg-faint);
+                  letter-spacing:.08em; text-transform:uppercase; }
+.titlepage .rule{ width:3rem; height:2px; background:var(--accent);
+                  margin:1.6rem auto; opacity:.6; }
+
+#resume{
+  display:none; margin:1.6rem auto 0; max-width:26rem;
+  font-family:var(--sans); font-size:.78rem; text-align:center;
+}
+#resume a{ display:inline-block; padding:.6rem 1rem; border-radius:10px;
+           border:1px solid var(--accent); color:var(--accent); }
+
+/* ============================ RESPONSIVE ============================ */
+/* iPad portrait / small laptops */
+@media (max-width:900px){
+  :root{ --fs:18.5px; }
+  main{ padding:5rem 1.15rem 7rem; }
+}
+/* iPhone / small */
+@media (max-width:600px){
+  :root{ --fs:18px; --lh:1.68; }
+  h1{ font-size:1.8em; } h1.book-title{ font-size:2.1em; } h2{ font-size:1.34em; }
+  pre{ font-size:.74rem; }
+  .blk{ padding:.15em .85em .85em; }
+  .chapnav{ flex-direction:column; }
+}
+/* big screens: nudge the column optically higher, never wider than the measure */
+@media (min-width:1500px){
+  :root{ --fs:20px; }
+}
+/* iPad landscape and up: allow the TOC to dock open if the user wants */
+@media (min-width:1200px){
+  html[data-dock="1"] #toc{ transform:none; box-shadow:none; }
+  html[data-dock="1"] main{ margin-left:min(23rem,86vw); }
+  html[data-dock="1"] #scrim{ display:none; }
+}
+@media (prefers-reduced-motion:reduce){
+  *{ transition:none !important; animation:none !important; scroll-behavior:auto !important; }
+}
+/* honour a dark system theme on first visit (JS refines this) */
+@media (prefers-color-scheme:dark){
+  html:not([data-theme]) { color-scheme:dark; }
+}
+
+/* ============================ PRINT ============================ */
+/* ============================ PRINT / PDF ============================ */
+/* Goal: a PDF that looks like the on-screen book -- same warm palette, same
+   card colours, same serif type. Two things make that work:
+     1. print-color-adjust:exact  -> stops the browser stripping backgrounds
+     2. forcing the light palette -> printing from Night mode would otherwise
+        produce a black page and an enormous amount of toner              */
+@media print{
+
+  /* -- 1. render our colours instead of the browser's "ink saving" version -- */
+  *, *::before, *::after{
+    -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+  }
+
+  /* -- 2. always print on "paper", whatever theme is active on screen -- */
+  html,
+  html[data-theme="paper"],
+  html[data-theme="light"],
+  html[data-theme="night"]{
+    --bg:#faf7f0;  --bg-soft:#f1ebdd;  --bg-card:#fffdf8;
+    --fg:#2f2b24;  --fg-soft:#5e5749;  --fg-faint:#877f6f;
+    --rule:#d8cdb7; --rule-soft:#e8e0ce;
+    --accent:#8a4a1e; --accent-soft:#f4e8d8;
+    --hl:#f7e7ba;
+    --shadow:none;
+    color-scheme: light;
+  }
+  /* neutralise the night-mode card headings (same specificity, declared later) */
+  html[data-theme="night"] .blk-practice  > h3{ color:#4b7f52; }
+  html[data-theme="night"] .blk-check     > h3{ color:#3f6ea8; }
+  html[data-theme="night"] .blk-confusion > h3{ color:#a8792f; }
+
+  /* -- 3. page geometry -- */
+  @page{ margin: 15mm 20mm 17mm; }
+  html{ font-size: 10.5pt; }
+  body{ background: var(--bg) !important; color: var(--fg); }
+
+  /* -- 4. drop the app chrome -- */
+  #bar, #toc, #scrim, #progress, .chapnav, .copy, #resume{ display:none !important; }
+  pre[data-lang]::after{ display:none; }        /* language chip is UI, not content */
+
+  /* -- 5. full-width flow, no sidebar offset -- */
+  .layout{ display:block; }
+  html[data-dock="1"] main{ margin-left:0; }
+  main{ max-width:none; margin:0; padding:0; }
+
+  /* -- 6. title page on its own sheet -- */
+  .titlepage{ padding: 22mm 0 0; page-break-after: always; break-after: page; }
+  .titlepage .rule{ background: var(--accent) !important; }
+
+  /* -- 7. breaks -- */
+  h1{ page-break-before: always; break-before: page; }
+  h1.book-title, .titlepage h1{ page-break-before: avoid; break-before: avoid; }
+  h1, h2, h3, h4{ page-break-after: avoid; break-after: avoid-page; }
+  .blk > h3{ page-break-after: avoid; break-after: avoid-page; }
+  p, li, blockquote{ orphans: 3; widows: 3; }
+  pre, .tbl, table, blockquote, figure{
+      page-break-inside: avoid; break-inside: avoid-page; }
+  .chapter{ break-inside: auto; }
+  .chapter + .chapter > h2::before{ display:none; }   /* the little screen divider */
+
+  /* -- 8. keep the book's look -- */
+  a{ color: var(--accent); border-bottom: 0; text-decoration: none; }
+
+  pre{
+    background: var(--bg-soft) !important;
+    border: 1px solid var(--rule-soft);
+    border-radius: 6pt;
+    font-size: 8.8pt; line-height: 1.42;
+    padding: 7pt 9pt;
+    /* ~91 characters fit on the line at this size, which covers >99% of the
+       code in these guides, so ASCII diagrams stay intact. The rare longer
+       line wraps rather than being clipped off the page.                  */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow: visible;
+  }
+  pre code{ white-space: pre-wrap; }
+  code{ background: var(--bg-soft) !important;
+        border: 1px solid var(--rule-soft); }
+
+  .blk{ background: var(--bg-card) !important;
+        border: 1px solid var(--rule-soft); box-shadow: none; }
+  .blk-tldr{ background: var(--accent-soft) !important;
+             border: 0; border-left: 3pt solid var(--accent) !important; }
+  .blk-reading{ background: transparent !important; border: 0;
+                border-top: 1px solid var(--rule-soft); }
+  .blk-problem, .blk-idea{ background: transparent !important; border-color: transparent; }
+  blockquote.note{ background: var(--bg-card) !important;
+                   border-left: 3pt solid var(--accent); }
+  blockquote.note-simplified{ border-left-color:#b08a3e; }
+  blockquote.note-debated{ border-left-color:#7a6ba8; }
+
+  .tbl{ background: var(--bg-card) !important; overflow: visible; }
+  table{ font-size: 8.8pt; }
+  thead th{ background: var(--bg-soft) !important; position: static; }
+  tbody tr:hover{ background: transparent !important; }
+
+  ul.checklist label{ background: var(--bg-card) !important;
+                      border: 1px solid var(--rule-soft); }
+  ul.checklist input{ accent-color: var(--accent); }
+}
+</style>
+</head>
+<body>
+
+<div id="progress" aria-hidden="true"></div>
+
+<header id="bar">
+  <button class="btn" id="tocBtn" aria-label="Contents" title="Contents (t)">&#9776;<span class="hide-sm">&nbsp;Contents</span></button>
+  <span class="where" id="where">The OSI Model, One Click at a Time</span>
+  <span class="grp">
+    <button class="btn hide-sm" id="dockBtn" title="Pin contents">&#9707;</button>
+    <button class="btn hide-sm" id="widthBtn" title="Column width (w)">&#8596;</button>
+    <button class="btn" id="fsDown" title="Smaller text (-)">A&minus;</button>
+    <button class="btn" id="fsUp" title="Larger text (+)">A+</button>
+    <button class="btn" id="themeBtn" title="Theme (d)">Paper</button>
+    <button class="btn hide-sm" id="printBtn" title="Print / Save as PDF (p)">PDF</button>
+  </span>
+</header>
+
+<div id="scrim"></div>
+<nav id="toc" aria-label="Table of contents"><ol class="toc-list"><li class="toc-ch toc-loose">href="#how-to-read-this-guide"><span>How to read this guide</span><em>1 min</em></a></li><li class="toc-ch toc-loose">href="#the-series-os-networking-security-https"><span>The series: OS → networking → security → HTTPS</span><em>2 min</em></a></li><li class="toc-ch toc-loose">href="#table-of-contents"><span>Table of contents</span><em>1 min</em></a></li><li class="toc-ch toc-loose">href="#part-1-the-scenario"><span>Part 1 — The scenario</span><em>2 min</em></a></li><li class="toc-ch toc-loose">href="#part-2-the-mental-model"><span>Part 2 — The mental model</span><em>5 min</em></a></li><li class="toc-ch toc-loose">href="#part-3-layer-1-physical"><span>Part 3 — Layer 1: Physical</span><em>5 min</em></a></li><li class="toc-ch toc-loose">href="#part-4-layer-2-data-link"><span>Part 4 — Layer 2: Data Link</span><em>6 min</em></a></li><li class="toc-ch toc-loose">href="#part-5-layer-3-network"><span>Part 5 — Layer 3: Network</span><em>7 min</em></a></li><li class="toc-ch toc-loose">href="#part-6-layer-4-transport"><span>Part 6 — Layer 4: Transport</span><em>7 min</em></a></li><li class="toc-ch toc-loose">href="#part-7-layer-5-session"><span>Part 7 — Layer 5: Session</span><em>5 min</em></a></li><li class="toc-ch toc-loose">href="#part-8-layer-6-presentation"><span>Part 8 — Layer 6: Presentation</span><em>5 min</em></a></li><li class="toc-ch toc-loose">href="#part-9-layer-7-application"><span>Part 9 — Layer 7: Application</span><em>6 min</em></a></li><li class="toc-ch toc-loose">href="#part-10-the-full-replay-a-millisecond-timeline"><span>Part 10 — The full replay: a millisecond timeline</span><em>2 min</em></a></li><li class="toc-ch toc-loose">href="#part-11-x-ray-of-one-packet"><span>Part 11 — X-ray of one packet</span><em>3 min</em></a></li><li class="toc-ch toc-loose">href="#part-12-inside-the-server-from-the-nic-to-your-handler"><span>Part 12 — Inside the server: from the NIC to your handler</span><em>2 min</em></a></li><li class="toc-ch toc-loose">href="#part-13-the-return-trip-and-the-goodbye"><span>Part 13 — The return trip and the goodbye</span><em>2 min</em></a></li><li class="toc-ch toc-loose">href="#part-14-debugging-by-layer-the-incident-playbook"><span>Part 14 — Debugging by layer: the incident playbook</span><em>4 min</em></a></li><li class="toc-ch toc-loose">href="#part-15-architecture-decisions-by-layer-the-senior-and-manager-view"><span>Part 15 — Architecture decisions by layer: the senior and manager view</span><em>3 min</em></a></li><li class="toc-ch toc-loose">href="#part-16-cheat-sheet"><span>Part 16 — Cheat sheet</span><em>2 min</em></a></li><li class="toc-ch toc-loose">href="#part-17-self-check-questions"><span>Part 17 — Self-check questions</span><em>4 min</em></a></li><li class="toc-ch toc-loose">href="#continue-the-series"><span>Continue the series</span><em>1 min</em></a></li></ol></nav>
+
+<main>
+  <div class="titlepage">
+    <h1 class="book-title">The OSI Model, One Click at a Time</h1>
+    <p class="sub">One real request, followed through all seven layers. You click "Place order" on a shopping site from your laptop on home Wi-Fi. About 250 ms later you see "Order confirmed".</p>
+    <div class="rule"></div>
+    <p class="meta">21 chapters &middot; about 15,221 words &middot; 1 h 9 min of reading</p>
+    <div id="resume"></div>
+  </div>
+
+
+<hr>
+<blockquote class="note">
+<p><strong>The series:</strong> 1 OS → 2 Networking → 3 Security → 4 HTTPS walkthrough, with Go alongside.</p>
+<p><strong>You are here: step 2a, Networking: the map.</strong> ← Previous: <a href="../os-linux/real-life-os-guide-book.html">Operating Systems, Linux, and Containers</a>. Next: <a href="tcp-ip/real-life-guide-v1-book.html">Networking from Zero (TCP/IP)</a> →</p>
+<p><a href="#the-series-os-networking-security-https">The full series map</a>.</p>
+</blockquote>
+<hr>
+<section class="chapter" id="ch-how-to-read-this-guide" data-ch="how-to-read-this-guide"><h2 id="how-to-read-this-guide">How to read this guide</h2>
+<ul>
+<li><strong>First pass (about 45 minutes):</strong> read Parts 1–2, then the <em>"In our story"</em> and <em>"Why it matters to you"</em> boxes in each layer chapter, then Part 10 (the timeline).</li>
+<li><strong>Second pass (deep):</strong> read every layer chapter in full, then Parts 11–15.</li>
+<li><strong>Day to day:</strong> Part 14 (debugging playbook) and Part 16 (cheat sheet).</li>
+</ul>
+<p>Each layer chapter uses the same structure:</p>
+<div class="tbl"><table>
+<thead><tr><th>Section</th><th>What you get</th></tr></thead>
+<tbody>
+<tr><td><strong>Job</strong></td><td>The layer's job, in one sentence</td></tr>
+<tr><td><strong>In our story</strong></td><td>What happens to <em>your click</em> at this layer</td></tr>
+<tr><td><strong>How it works</strong></td><td>The theory, at the depth you'd need in a design review</td></tr>
+<tr><td><strong>Try it yourself</strong></td><td>Commands for macOS and Linux</td></tr>
+<tr><td><strong>What breaks</strong></td><td>Symptom → cause table</td></tr>
+<tr><td><strong>War story</strong></td><td>A realistic production failure</td></tr>
+<tr><td><strong>Why it matters to you</strong></td><td>Takeaways for decisions, reviews, and incidents</td></tr>
+</tbody></table></div>
+<hr>
+</section><section class="chapter" id="ch-the-series-os-networking-security-https" data-ch="the-series-os-networking-security-https"><h2 id="the-series-os-networking-security-https">The series: OS → networking → security → HTTPS</h2>
+<p>This guide is one of seven, designed to be read as <strong>one course</strong> in this order:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>   1  OS &amp; Linux  ──▶  2  Networking  ──▶  3  Security  ──▶  4  HTTPS walkthrough
+                         2a OSI map          3a From Zero        (one request through
+                         2b TCP/IP           3b In Depth          every guide, in Go)
+   ════════════════════  Go, alongside every step  ════════════════════</code></pre></div>
+<div class="tbl"><table>
+<thead><tr><th>Step</th><th>Guide</th><th>What it gives you</th><th>Hands-on</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><a href="../os-linux/real-life-os-guide-book.html">Operating Systems, Linux, and Containers</a></td><td>the machine every request starts and ends on: processes, memory, files, sockets, containers, Kubernetes</td><td>9 Go labs (<a href="../os-linux/real-life-os-guide-book.html#part-20-systems-programming-in-go-the-os-from-inside-a-program">Part 20</a>)</td></tr>
+<tr><td>2a</td><td><strong>The OSI Model, One Click at a Time</strong> ← you are here</td><td>one click followed through all seven layers; the map for everything after it</td><td>concept map, 1 hour</td></tr>
+<tr><td>2b</td><td><a href="tcp-ip/real-life-guide-v1-book.html">Networking from Zero (TCP/IP)</a></td><td>how machines talk: addressing, routing, TCP, TLS, packet capture, network operations</td><td>23 Go labs (<a href="tcp-ip/real-life-guide-v1-book.html#0-8-the-go-labs-build-the-network-tools-yourself">§0.8</a>)</td></tr>
+<tr><td>3a</td><td><a href="../security/real-life-guide-book.html">Security from Zero</a></td><td>encoding vs hashing vs encryption, TLS, PKI, SSH, the OWASP Top 10, threat modelling</td><td>OpenSSL labs and a vulnerable app to break</td></tr>
+<tr><td>3b</td><td><a href="../security/real-life-security-guide-v1-book.html">Security Engineering in Depth</a></td><td>cloud and Kubernetes security, distributed authorization, advanced web attacks, data protection, detection</td><td>10 Go labs + a <code>govulncheck</code> exercise (<a href="../security/real-life-security-guide-v1-book.html#0-8-the-go-labs-security-mechanisms-you-can-run">§0.8</a>)</td></tr>
+<tr><td>4</td><td><a href="../v2-https/real-life-guide-v1-book.html">The HTTPS Request Lifecycle</a></td><td>one request end to end, then the server side built in Go; Chapter 25 traces one request through every guide</td><td>13 Go labs (<a href="../v2-https/real-life-guide-v1-book.html#0-6-the-go-labs-build-the-lifecycle-yourself">§0.6</a>, <a href="../v2-https/real-life-guide-v1-book.html#chapter-25-one-https-request-every-layer-every-guide">Ch 25</a>)</td></tr>
+<tr><td>∥</td><td><a href="../Golang/real-life-golang-guide.html">Go — The Complete Field Guide</a></td><td>the language behind every lab, plus the 120-day plan's multi-week projects</td><td><a href="../Golang/golang-90-day-plan.md">120-day plan</a></td></tr>
+</tbody></table></div>
+<p><strong>Why this order.</strong> Every network connection is a file descriptor owned by a process, so the OS comes first. Networking comes next, because every attack and defence in the security guides assumes you can follow a packet. Security comes third, because it needs both. The HTTPS walkthrough comes last because a single HTTPS request uses all of it, and <a href="../v2-https/real-life-guide-v1-book.html#chapter-25-one-https-request-every-layer-every-guide">its final chapter</a> runs one request through every guide in a Go program. Go runs alongside the whole way: each guide's "Build it in Go" labs turn its chapters into code you can run.</p>
+<p><strong>Reading paths by role:</strong></p>
+<ul>
+<li><strong>Backend engineer:</strong> 1 (Phases 1–2, Part 20) → 2a → 2b (Parts 1–7) → 3a (Parts 1–6) → 4 (all, including Part 9) → 3b (Parts 5–6).</li>
+<li><strong>SRE / platform:</strong> 1 (all) → 2a → 2b (all) → 3b (Parts 2–4, 8) → 4 (Parts 8–10).</li>
+<li><strong>Security engineer:</strong> 1 (Phases 1, 3) → 2a → 2b (Parts 3–8) → 3a → 3b → 4 (Chapters 12, 19–22, 25).</li>
+<li><strong>Engineering manager:</strong> 2a → 1 (Chapters 1–3, 44, 66, 72) → 3b (Part 9) → 4 (Chapters 13, 18, 23, 25).</li>
+</ul>
+<p>Chapters link to each other directly, with <strong>"Across the series"</strong> notes where another guide covers a topic in more depth.</p>
+</section><section class="chapter" id="ch-table-of-contents" data-ch="table-of-contents"><h2 id="table-of-contents">Table of contents</h2>
+<ol>
+<li>The scenario: one click and the people and devices involved</li>
+<li>The mental model: seven layers, encapsulation, and the honest truth</li>
+<li>Layer 1: Physical. Turning bits into radio, light, and voltage</li>
+<li>Layer 2: Data Link. Getting a frame to the next box</li>
+<li>Layer 3: Network. Getting a packet across the planet</li>
+<li>Layer 4: Transport. Turning packets into reliable conversations</li>
+<li>Layer 5: Session. Keeping a conversation going</li>
+<li>Layer 6: Presentation. Agreeing on what the bytes mean</li>
+<li>Layer 7: Application. What you actually asked for</li>
+<li>The full replay: a millisecond timeline of the click</li>
+<li>X-ray of one packet: byte budget and hop-by-hop rewrites</li>
+<li>Inside the server: from the NIC to your handler</li>
+<li>The return trip and the goodbye</li>
+<li>Debugging by layer: the incident playbook</li>
+<li>Architecture decisions by layer: the senior and manager view</li>
+<li>Cheat sheet</li>
+<li>Self-check questions (with answers)</li>
+</ol>
+<hr>
+</section><section class="chapter" id="ch-part-1-the-scenario" data-ch="part-1-the-scenario"><h2 id="part-1-the-scenario">Part 1 — The scenario</h2>
+<h3 id="the-story">The story</h3>
+<p>It's 9:14 pm. You're on the sofa with your laptop, connected to home Wi-Fi. Your cart on <code>shop.example.com</code> holds a pair of running shoes. You click <strong>Place order</strong>.</p>
+<p>The browser's JavaScript runs:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="js"><code>await fetch("https://shop.example.com/api/v1/orders", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Idempotency-Key": "7f3c9a2e-1b4d-4c8e-9f00-2a6b8d1e5c43",
+  },
+  body: JSON.stringify({ cartId: "c_8812", paymentMethodId: "pm_77" }),
+});</code></pre></div>
+<p>From your point of view that's one line of code. Underneath, it involves about a dozen devices, three or four organisations, two continents' worth of routing tables, and every layer of the OSI model, <em>twice</em>: once on the way out and once on the way back.</p>
+<h3 id="the-cast-of-characters">The cast of characters</h3>
+<p>All addresses use reserved documentation ranges, so they're safe to copy.</p>
+<div class="tbl"><table>
+<thead><tr><th>#</th><th>Who</th><th>What it is</th><th>Key addresses</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>Your laptop</strong></td><td>The client: browser, OS kernel, Wi-Fi chip</td><td>MAC <code>3c:22:fb:aa:bb:01</code>, IP <code>192.168.1.23</code></td></tr>
+<tr><td>2</td><td><strong>Home router</strong></td><td>Wi-Fi access point + switch + router + NAT + DHCP server + DNS forwarder in one box</td><td>LAN MAC <code>9c:53:22:00:00:01</code>, LAN IP <code>192.168.1.1</code>, WAN IP <code>203.0.113.7</code></td></tr>
+<tr><td>3</td><td><strong>ONT</strong> (Optical Network Terminal)</td><td>The small box that turns the fibre's light into Ethernet</td><td>(no IP you care about)</td></tr>
+<tr><td>4</td><td><strong>ISP access network</strong></td><td>OLT, aggregation switches, BNG (Broadband Network Gateway)</td><td>Your gateway as seen from the ISP</td></tr>
+<tr><td>5</td><td><strong>ISP core and the Internet</strong></td><td>Routers that speak BGP to other networks</td><td>Many hops</td></tr>
+<tr><td>6</td><td><strong>Cloud edge</strong></td><td>The cloud provider's border routers</td><td></td></tr>
+<tr><td>7</td><td><strong>Load balancer (ALB)</strong></td><td>An L7 proxy that terminates TLS and routes by path</td><td>Public <code>198.51.100.20</code>, private <code>10.0.1.15</code></td></tr>
+<tr><td>8</td><td><strong>Kubernetes node</strong></td><td>A VM running your pods</td><td><code>10.0.2.40</code></td></tr>
+<tr><td>9</td><td><strong><code>orders-service</code> pod</strong></td><td>Your code</td><td><code>10.0.2.77:8080</code></td></tr>
+<tr><td>10</td><td><strong>Postgres</strong></td><td>The database</td><td><code>10.0.3.10:5432</code></td></tr>
+<tr><td>11</td><td><strong>DNS resolvers</strong></td><td>Recursive resolver, root, <code>.com</code> TLD, <code>example.com</code> authoritative servers</td><td>Various</td></tr>
+</tbody></table></div>
+<h3 id="the-map">The map</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code> YOUR HOME                         ISP                          INTERNET              CLOUD REGION (VPC 10.0.0.0/16)
+┌─────────────────────────┐   ┌────────────────────┐   ┌────────────────────┐   ┌──────────────────────────────────────────┐
+│ Laptop                  │   │                    │   │                    │   │  ┌─────────┐   ┌──────────┐   ┌────────┐ │
+│ 192.168.1.23            │   │ OLT ─ Aggregation  │   │  Transit / peering │   │  │   ALB   │──▶│ K8s node │──▶│  Pod   │ │
+│     │  Wi-Fi (radio)    │   │        │           │   │   routers (BGP)    │   │  │ L7 proxy│   │10.0.2.40 │   │10.0.2.77│ │
+│     ▼                   │   │       BNG ─ Core ──┼──▶│                    │──▶│  │10.0.1.15│   └──────────┘   └───┬────┘ │
+│ Home router 192.168.1.1 │   │                    │   │                    │   │  └─────────┘                      │      │
+│ NAT → 203.0.113.7       │   └────────────────────┘   └────────────────────┘   │   ▲ 198.51.100.20         ┌───────▼────┐ │
+│     │  Ethernet (copper)│          ▲ fibre (light)                            │   │                       │ Postgres   │ │
+│     ▼                   │          │                                          │   │                       │ 10.0.3.10  │ │
+│ ONT ════════════════════┼──────────┘                                          │                           └────────────┘ │
+└─────────────────────────┘                                                     └──────────────────────────────────────────┘</code></pre></div>
+<p>Keep this map in mind. Every layer chapter comes back to it.</p>
+<hr>
+</section><section class="chapter" id="ch-part-2-the-mental-model" data-ch="part-2-the-mental-model"><h2 id="part-2-the-mental-model">Part 2 — The mental model</h2>
+<h3 id="2-1-the-seven-layers-in-one-table">2.1 The seven layers in one table</h3>
+<div class="tbl"><table>
+<thead><tr><th>#</th><th>Layer</th><th>Its one job</th><th>Unit of data (PDU)</th><th>"Address" it uses</th><th>Lives in</th></tr></thead>
+<tbody>
+<tr><td>7</td><td><strong>Application</strong></td><td>Do the thing the user wanted (fetch a page, place an order, resolve a name)</td><td>Message</td><td>URL, hostname, API path</td><td>Your code, browser, nginx, ALB</td></tr>
+<tr><td>6</td><td><strong>Presentation</strong></td><td>Agree on what the bytes <em>mean</em>: encoding, serialisation, compression, encryption</td><td>Message</td><td>—</td><td>JSON/protobuf libraries, TLS, gzip</td></tr>
+<tr><td>5</td><td><strong>Session</strong></td><td>Set up, maintain, resume, and end a dialogue</td><td>Message</td><td>Session ID, cookie, TLS ticket</td><td>TLS, HTTP/2, app session logic</td></tr>
+<tr><td>4</td><td><strong>Transport</strong></td><td>Process-to-process delivery; reliability, ordering, flow and congestion control</td><td><strong>Segment</strong> (TCP) / <strong>Datagram</strong> (UDP)</td><td><strong>Port</strong></td><td>OS kernel</td></tr>
+<tr><td>3</td><td><strong>Network</strong></td><td>Get a packet from any host to any host, across networks</td><td><strong>Packet</strong></td><td><strong>IP address</strong></td><td>OS kernel, routers</td></tr>
+<tr><td>2</td><td><strong>Data Link</strong></td><td>Get a frame to the <em>next device</em> on the same link</td><td><strong>Frame</strong></td><td><strong>MAC address</strong></td><td>NIC driver/firmware, switches, Wi-Fi AP</td></tr>
+<tr><td>1</td><td><strong>Physical</strong></td><td>Turn bits into signals on a medium and back</td><td><strong>Bit / symbol</strong></td><td>—</td><td>NIC hardware, cables, radios, optics</td></tr>
+</tbody></table></div>
+<p>Mnemonic (top-down): <strong>A</strong>ll <strong>P</strong>eople <strong>S</strong>eem <strong>T</strong>o <strong>N</strong>eed <strong>D</strong>ata <strong>P</strong>rocessing. Bottom-up: <strong>P</strong>lease <strong>D</strong>o <strong>N</strong>ot <strong>T</strong>hrow <strong>S</strong>ausage <strong>P</strong>izza <strong>A</strong>way.</p>
+<h3 id="2-2-the-rule-that-makes-it-work-each-layer-talks-only-to-its-neighbours-and-its-peer">2.2 The rule that makes it work: each layer talks only to its neighbours and its peer</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>   Laptop                                                   Server
+┌─────────────┐        "peer" conversation (logical)     ┌─────────────┐
+│ L7  HTTP    │ ◀─────────────────────────────────────▶  │ L7  HTTP    │
+│ L6  TLS/JSON│ ◀─────────────────────────────────────▶  │ L6  TLS/JSON│
+│ L5  session │ ◀─────────────────────────────────────▶  │ L5  session │
+│ L4  TCP     │ ◀─────────────────────────────────────▶  │ L4  TCP     │
+│ L3  IP      │ ◀──▶ router ◀──▶ router ◀──▶ router ◀──▶ │ L3  IP      │
+│ L2  Wi-Fi   │ ◀──▶ AP │ Eth ◀──▶ │ ... each link ... ◀▶│ L2  Ethernet│
+│ L1  radio   │ ~~~~ ~~ │ ─── ──── │ ═══ fibre ═══ ───── │ L1  copper  │
+└─────────────┘                                          └─────────────┘</code></pre></div>
+<p>Two ideas carry most of the weight:</p>
+<ol>
+<li><strong>Vertical (service):</strong> each layer uses only the layer below it and serves only the layer above it. TCP doesn't know whether it's running over Wi-Fi or fibre. HTTP doesn't know about MAC addresses.</li>
+<li><strong>Horizontal (protocol):</strong> each layer talks <em>logically</em> to the same layer on the other side. L4 to L7 are <strong>end-to-end</strong>: only the two endpoints read them. L1 to L3 are <strong>hop-by-hop</strong>: every router and switch along the way reads and rewrites them.</li>
+</ol>
+<blockquote class="note">
+<p><strong>The single most useful sentence in networking:</strong> <em>MAC addresses change at every hop; IP addresses stay the same end to end (unless NAT rewrites them); ports and everything above belong to the endpoints (unless a proxy terminates the connection).</em></p>
+</blockquote>
+<h3 id="2-3-encapsulation-envelopes-inside-envelopes">2.3 Encapsulation: envelopes inside envelopes</h3>
+<p>On the way down, each layer wraps the data from above in its own header (and sometimes a trailer). On the way up, each layer removes its own wrapper and passes the rest upward.</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>L7  HTTP request          [ POST /api/v1/orders  headers  {"cartId":"c_8812",...} ]
+L6  TLS record        [TLS hdr][ ..........encrypted HTTP bytes.......... ][auth tag]
+L4  TCP segment   [TCP hdr][ ..................TLS record.................... ]
+L3  IP packet  [IP hdr][ ......................TCP segment.......................]
+L2  Frame [MAC hdr][ ............................IP packet.......................... ][FCS]
+L1  Bits  ▁▃▇▅▂▇▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃▅▇▂▁▃</code></pre></div>
+<p>Compare it to posting a letter. You write it (L7), translate it into a language both of you read and seal it (L6), number the pages so they can be put back in order (L4), put a city-and-street address on the envelope (L3), and then the local van takes it to the next sorting office (L2) by road (L1). Each sorting office puts it on a <em>different</em> van (new L2), but the street address (L3) doesn't change.</p>
+<h3 id="2-4-the-honest-truth-about-osi-vs-real-life">2.4 The honest truth about OSI vs real life</h3>
+<p>The Internet doesn't run on OSI protocols. It runs on the <strong>TCP/IP suite</strong>, which has four or five layers. OSI is the <strong>vocabulary</strong> engineers use to talk about it. When someone says "that's an L7 load balancer" or "L2 adjacency", they're using OSI terms for TCP/IP things.</p>
+<div class="tbl"><table>
+<thead><tr><th>OSI</th><th>TCP/IP model</th><th>Real protocols in our story</th></tr></thead>
+<tbody>
+<tr><td>7 Application</td><td>Application</td><td>HTTP/1.1, HTTP/2, DNS, DHCP¹, the Postgres wire protocol</td></tr>
+<tr><td>6 Presentation</td><td>Application</td><td>TLS (encryption), JSON, UTF-8, gzip/brotli, HPACK</td></tr>
+<tr><td>5 Session</td><td>Application</td><td>TLS handshake and resumption, HTTP/2 streams, cookies, connection pools</td></tr>
+<tr><td>4 Transport</td><td>Transport</td><td>TCP, UDP, (QUIC sits on top of UDP)</td></tr>
+<tr><td>3 Network</td><td>Internet</td><td>IPv4, IPv6, ICMP, (BGP runs over TCP but <em>controls</em> L3)</td></tr>
+<tr><td>2 Data Link</td><td>Link</td><td>Ethernet (802.3), Wi-Fi (802.11), ARP², VLAN (802.1Q)</td></tr>
+<tr><td>1 Physical</td><td>Link</td><td>1000BASE-T copper, 802.11ax radio, GPON fibre</td></tr>
+</tbody></table></div>
+<p>¹ DHCP is an L7 protocol (over UDP) whose <em>purpose</em> is to configure L3.</p>
+<p>² ARP sits between L2 and L3. It's carried directly in Ethernet frames (L2), and its job is to map L3 addresses to L2 addresses.</p>
+<p><strong>Where the model is fuzzy, and why that's fine:</strong></p>
+<ul>
+<li><strong>TLS</strong> is variously called L4.5, L5, L6, or L7. Its handshake behaves like a session (L5), and its record encryption behaves like presentation (L6).</li>
+<li><strong>QUIC / HTTP/3</strong> combines L4, L5, and L6 into one protocol that runs in user space over UDP.</li>
+<li><strong>Routing protocols</strong> (BGP, OSPF) carry L3 <em>control</em> information, but BGP is itself carried over TCP.</li>
+</ul>
+<p>Use the model for what it's good at: <strong>locating a problem, splitting responsibility, and naming things precisely.</strong> Don't argue about which layer TLS belongs to in a design review. Ask <em>"which component terminates it, and what can that component see?"</em></p>
+<h3 id="2-5-layers-are-not-steps-in-time">2.5 Layers are not steps in time</h3>
+<p>People often assume L1 happens first and L7 happens last. Here's the actual order of events for our click:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Long before the click (seconds to hours earlier):
+  L1   Wi-Fi radio links up with the router
+  L2   Wi-Fi association + WPA3 authentication
+  L3   DHCP gives the laptop 192.168.1.23 (DHCP itself is L7-over-UDP!)
+  L2/3 ARP learns the router's MAC
+
+At the click (t = 0):
+  L7   DNS lookup for shop.example.com      ← an L7 protocol, needed BEFORE...
+  L4   TCP handshake                        ← ...the L4 connection can start
+  L5/6 TLS handshake
+  L7   HTTP POST
+       ... and every single one of those uses L1–L3 for every packet.</code></pre></div>
+<p>The layers describe <strong>nesting</strong>, not chronology. The chapters below go bottom-up, as you asked, but they keep pointing out <em>when</em> each thing happens.</p>
+<hr>
+</section><section class="chapter" id="ch-part-3-layer-1-physical" data-ch="part-3-layer-1-physical"><h2 id="part-3-layer-1-physical">Part 3 — Layer 1: Physical</h2>
+<section class="blk blk-tldr"><h3 id="job" class="k-tldr">Job</h3>
+<p>Turn a stream of 1s and 0s into something that can travel through a medium (radio waves, voltage on copper, pulses of light), and turn it back into bits at the other end with as few errors as possible.</p>
+</section>
+<section class="blk blk-problem"><h3 id="in-our-story" class="k-problem">In our story</h3>
+<p>Your click crosses <strong>three completely different physical media</strong> before it even leaves the neighbourhood, and several more after that:</p>
+<div class="tbl"><table>
+<thead><tr><th>Hop</th><th>Medium</th><th>Standard</th><th>What's physically happening</th></tr></thead>
+<tbody>
+<tr><td>Laptop → router</td><td>Radio, 5 GHz band</td><td>Wi-Fi 6 (802.11ax)</td><td>Bits are encoded as changes in the amplitude and phase of a radio wave (1024-QAM: each symbol carries 10 bits), spread over many sub-carriers (OFDM/OFDMA)</td></tr>
+<tr><td>Router → ONT</td><td>Copper, Cat6 cable</td><td>1000BASE-T</td><td>Four twisted pairs at once, each carrying 5-level voltage symbols (PAM-5) at 125 Mbaud, in both directions simultaneously</td></tr>
+<tr><td>ONT → ISP</td><td>Single-mode fibre</td><td>GPON</td><td>Pulses of laser light: 1490 nm downstream (2.488 Gb/s shared), 1310 nm upstream (1.244 Gb/s shared)</td></tr>
+<tr><td>ISP core / Internet</td><td>Fibre</td><td>100G/400G Ethernet over DWDM</td><td>Many wavelengths ("colours") on one fibre, each carrying 100–400 Gb/s using PAM4 or coherent optics</td></tr>
+<tr><td>Inside the cloud data centre</td><td>Fibre + copper DACs</td><td>25G/100G Ethernet</td><td>Short-reach optics or direct-attach copper</td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-how"><h3 id="how-it-works" class="k-how">How it works</h3>
+<p><strong>1. Bits become symbols.</strong> Physical media can't carry "a 1". They carry a <em>symbol</em>: a voltage level, a light intensity, or a radio wave with a particular amplitude and phase. The more distinct symbols a link can reliably tell apart, the more bits each symbol carries:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>  2 levels  (NRZ)    → 1 bit / symbol
+  4 levels  (PAM4)   → 2 bits / symbol
+  1024-QAM (Wi-Fi 6) → 10 bits / symbol   ← needs a very clean signal (high SNR)</code></pre></div>
+<p>That's why your Wi-Fi speed drops as you walk away from the router. The <strong>signal-to-noise ratio (SNR)</strong> falls, so the radios automatically fall back to simpler modulations (a lower <strong>MCS</strong> index) that carry fewer bits per symbol but survive noise better.</p>
+<p><strong>2. Clocking and line coding.</strong> The receiver has to know <em>when</em> to sample. Line codes (8b/10b, 64b/66b) and scrambling make sure the signal changes often enough for the receiver to recover the sender's clock from the data itself.</p>
+<p><strong>3. Error correction.</strong> Modern links add <strong>Forward Error Correction (FEC)</strong>: redundant bits that let the receiver <em>fix</em> small errors without retransmitting. This adds a little latency and costs nothing at higher layers. Anything FEC can't fix becomes a bad frame at L2.</p>
+<p><strong>4. The three delays L1 controls.</strong> Most latency discussions mix these up:</p>
+<div class="tbl"><table>
+<thead><tr><th>Delay</th><th>Formula</th><th>Our numbers</th></tr></thead>
+<tbody>
+<tr><td><strong>Propagation</strong> (speed of light in the medium)</td><td>distance ÷ (~200,000 km/s in fibre)</td><td>≈ <strong>5 µs per km</strong>. A region 1,500 km away costs ≥ 7.5 ms one way, ≥ 15 ms round trip, <em>before any equipment</em></td></tr>
+<tr><td><strong>Serialisation</strong> (time to put the bits on the wire)</td><td>frame size ÷ link rate</td><td>1,500 B at 1 Gb/s = <strong>12 µs</strong>. At 10 Mb/s upstream = <strong>1.2 ms</strong></td></tr>
+<tr><td><strong>Duplex / medium access</strong></td><td>Wi-Fi is half-duplex and shared: devices take turns</td><td>Under contention it adds anywhere from 1 ms to 50 ms or more</td></tr>
+</tbody></table></div>
+<p><strong>Propagation delay can't be engineered away.</strong> You can buy more bandwidth. You can't buy a faster speed of light. That's the physical reason CDNs, edge regions, and "deploy close to users" exist.</p>
+<p><strong>5. Wi-Fi is the weakest link in most user journeys.</strong> It's shared, half-duplex, subject to interference (microwaves, neighbours' networks on the same channel), and it retransmits at L2 when frames are lost. That turns packet loss into <strong>latency jitter</strong> that higher layers see as random slowness.</p>
+</section>
+<section class="blk blk-practice"><h3 id="try-it-yourself" class="k-practice">Try it yourself</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="bash"><code># macOS: Wi-Fi signal (RSSI), noise, channel, PHY mode, transmit rate
+sudo wdutil info | sed -n '/WIFI/,/BLUETOOTH/p'
+system_profiler SPAirPortDataType | head -40
+
+# macOS: end-to-end capacity + responsiveness under load ("bufferbloat")
+networkQuality
+
+# Linux: wired link speed, duplex, auto-negotiation
+ethtool eth0
+
+# Linux: L1/L2 error counters. Rising CRC/rx_errors = physical problem
+ip -s link show eth0
+ethtool -S eth0 | grep -Ei 'err|crc|drop|fcs'
+
+# Linux: Wi-Fi signal and bitrate
+iw dev wlan0 link</code></pre></div>
+<p>What healthy looks like: Wi-Fi RSSI better than −65 dBm, noise around −90 dBm (an SNR of 25 dB or more), wired links at their full speed in full duplex, and <strong>zero</strong> CRC errors that keep increasing.</p>
+</section>
+<section class="blk blk-confusion"><h3 id="what-breaks" class="k-confusion">What breaks</h3>
+<div class="tbl"><table>
+<thead><tr><th>Symptom you see higher up</th><th>Physical cause</th></tr></thead>
+<tbody>
+<tr><td>"Wi-Fi is slow in the bedroom", video calls freeze</td><td>Low SNR → low MCS rate + L2 retransmissions</td></tr>
+<tr><td>TCP throughput is fine at night and terrible at 8 pm</td><td>Channel congestion (shared medium), or the shared GPON/cable segment is saturated</td></tr>
+<tr><td>Steady trickle of CRC errors, slow transfers</td><td>Damaged cable, dirty fibre connector, failing optic (check DOM/DDM light levels)</td></tr>
+<tr><td>A link that keeps going up and down</td><td>Bad cable, auto-negotiation fight, overheated transceiver</td></tr>
+<tr><td>A server NIC stuck at 100 Mb/s</td><td>Cable with a broken pair. 1000BASE-T needs all 4 pairs and silently falls back to 100BASE-TX on 2</td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-example"><h3 id="war-story-the-database-is-slow-on-tuesdays" class="k-example">War story: "The database is slow on Tuesdays"</h3>
+<p>A team spent two weeks tuning queries on a database whose p99 latency spiked at random. In the end someone ran <code>ethtool -S</code> on the database host and found <code>rx_crc_errors</code> rising steadily. A fibre patch lead had been crushed under a rack door. About 0.1% of frames were corrupted, which meant 0.1% packet loss, which made TCP retransmit after a 200 ms or longer timeout. The "Tuesday" pattern was the weekly batch job: more traffic meant more corrupted frames. <strong>Lesson:</strong> when the latency <em>tail</em> is bad and the <em>median</em> is fine, check for packet loss first, and check the error counters at the bottom of the stack before profiling the top.</p>
+</section>
+<section class="blk blk-idea"><h3 id="why-it-matters-to-you" class="k-idea">Why it matters to you</h3>
+<ul>
+<li><strong>Latency has a physical floor.</strong> If your SLO needs a p50 under 50 ms worldwide, no amount of code optimisation will get you there from one region. That's an architecture decision (CDN, multi-region, edge compute), not a performance ticket.</li>
+<li><strong>Packet loss usually starts physical, but shows up as an application tail-latency problem.</strong> Make "check the interface error counters" step 1 of your runbooks.</li>
+<li><strong>"Bandwidth" and "latency" are different budgets.</strong> More bandwidth doesn't make a chatty API with 30 sequential calls any faster.</li>
+<li>In the cloud you never touch L1. You just need to know it exists. Choosing an instance type with "up to 10 Gbps" networking <em>is</em> an L1/L2 capacity decision, and "up to" often means burst credits.</li>
+</ul>
+</section>
+<h3 id="go-deeper-in-the-series">Go deeper in the series</h3>
+<ul>
+<li><strong>Physical and Wi-Fi in more detail:</strong> <a href="tcp-ip/real-life-guide-v1-book.html#chapter-8-wi-fi-same-idea-different-physics">TCP/IP guide, Chapter 8 (Wi-Fi)</a> and <a href="tcp-ip/real-life-guide-v1-book.html#chapter-27-latency-bandwidth-and-bufferbloat">Chapter 27 (latency, bandwidth, bufferbloat)</a>.</li>
+<li><strong>Interface counters on a server:</strong> <a href="../os-linux/real-life-os-guide-book.html#chapter-37-how-a-linux-box-sees-the-network">Linux guide, Chapter 37</a>.</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-4-layer-2-data-link" data-ch="part-4-layer-2-data-link"><h2 id="part-4-layer-2-data-link">Part 4 — Layer 2: Data Link</h2>
+<section class="blk blk-tldr"><h3 id="job-1" class="k-tldr">Job</h3>
+<p>Get a <strong>frame</strong> from one device to the <strong>next device on the same link</strong>, identify both by <strong>MAC address</strong>, and detect corrupted frames. L2 never sees past the next hop.</p>
+</section>
+<section class="blk blk-problem"><h3 id="in-our-story-1" class="k-problem">In our story</h3>
+<p>Before you even clicked, L2 had already done a lot of work, and during the click it does a little more at <strong>every hop</strong>.</p>
+<p><strong>Earlier that evening (bootstrapping the link):</strong></p>
+<ol>
+<li><strong>Association.</strong> The laptop's Wi-Fi chip scans, finds the SSID <code>HomeNet-5G</code> (the router's radio has a MAC/BSSID), and <em>associates</em>.</li>
+<li><strong>Authentication (WPA3-SAE + 4-way handshake).</strong> The laptop and router prove they both know the passphrase <em>without sending it</em>, and derive per-session encryption keys. <strong>Wi-Fi frames are encrypted at L2</strong>, so a neighbour sniffing the air sees only ciphertext.</li>
+<li><strong>ARP for the gateway.</strong> Once DHCP (Part 5) has given the laptop an IP address and told it "your gateway is <code>192.168.1.1</code>", the laptop needs the gateway's <em>MAC</em> to build frames:
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Laptop  → broadcast ff:ff:ff:ff:ff:ff  ARP: "Who has 192.168.1.1? Tell 192.168.1.23"
+Router  → 3c:22:fb:aa:bb:01            ARP: "192.168.1.1 is at 9c:53:22:00:00:01"</code></pre></div>
+</li>
+</ol>
+<p>The answer is cached (the <strong>ARP table</strong>) for minutes, so the click itself doesn't trigger a new ARP request.</p>
+<p><strong>At the click: one frame, rebuilt at every hop.</strong> The laptop's first outgoing packet to the cloud is wrapped like this:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Wi-Fi hop (802.11 frame, as transmitted over the air):
+  Addr1 (receiver / BSSID)  = 9c:53:22:00:00:01   router radio
+  Addr2 (transmitter)       = 3c:22:fb:aa:bb:01   laptop
+  Addr3 (final L2 dest)     = 9c:53:22:00:00:01   router (gateway)
+  [ encrypted payload: IP packet src 192.168.1.23 → dst 198.51.100.20 ]
+
+Router WAN → ONT → ISP (Ethernet II frame):
+  Dst MAC = &lt;ISP BNG's MAC&gt;
+  Src MAC = &lt;router WAN MAC&gt;
+  EtherType = 0x0800 (IPv4)
+  [ IP packet, now src 203.0.113.7 (after NAT) → dst 198.51.100.20 ]
+  FCS (CRC-32)
+
+... a new frame on every subsequent link ...
+
+Cloud: final hop to ALB
+  Dst MAC = &lt;ALB ENI MAC&gt;   Src MAC = &lt;VPC virtual router MAC&gt;</code></pre></div>
+<p><strong>The IP packet inside stays essentially the same the whole way (only NAT and TTL change it). The L2 envelope is thrown away and rebuilt at every router.</strong></p>
+</section>
+<section class="blk blk-how"><h3 id="how-it-works-1" class="k-how">How it works</h3>
+<p><strong>1. The Ethernet II frame.</strong> This is the most common structure in networking:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>┌──────────┬─────┬─────────┬─────────┬───────────┬───────────┬──────────────┬─────┬─────┐
+│ Preamble │ SFD │ Dst MAC │ Src MAC │ 802.1Q tag│ EtherType │   Payload    │ FCS │ IFG │
+│  7 B     │ 1 B │  6 B    │  6 B    │ 4 B (opt) │   2 B     │ 46–1500 B    │ 4 B │12 B │
+└──────────┴─────┴─────────┴─────────┴───────────┴───────────┴──────────────┴─────┴─────┘
+   L1 sync                                        0x0800 IPv4                  CRC   gap
+                                                  0x86DD IPv6
+                                                  0x0806 ARP</code></pre></div>
+<ul>
+<li><strong>MAC address:</strong> 48 bits. The first 24 bits are the vendor's <strong>OUI</strong>. Modern phones and laptops <em>randomise</em> their MAC per network for privacy, which breaks "identify devices by MAC" schemes.</li>
+<li><strong>EtherType</strong> tells the receiver which L3 protocol is inside. This is the hand-off point between layers.</li>
+<li><strong>FCS</strong> is a CRC-32. A frame that fails the check is <strong>silently dropped</strong>. L2 doesn't retransmit on Ethernet; TCP (L4) has to notice the gap. <em>Wi-Fi does</em> retransmit at L2, because the air loses so many frames.</li>
+<li><strong>MTU (1500 bytes)</strong> is the maximum <em>payload</em>. It's the most important number that crosses layers: IP and TCP size themselves to fit it.</li>
+</ul>
+<p><strong>2. Switches learn, flood, and forward.</strong></p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Frame arrives on port 3 from MAC A, destined for MAC B
+ 1. LEARN:   "MAC A lives on port 3"     (MAC/CAM table)
+ 2. LOOKUP:  do I know where MAC B is?
+       yes → FORWARD out that one port
+       no  → FLOOD out every port except 3  (B will answer, and I'll learn)
+ 3. Broadcast (ff:ff:ff:ff:ff:ff) → always flood</code></pre></div>
+<p>Everything that receives a given broadcast is in one <strong>broadcast domain</strong>. ARP, DHCP discovery, and some service discovery depend on broadcast, which is why it doesn't scale: a broadcast domain with 5,000 hosts is constantly busy with ARP traffic.</p>
+<p><strong>3. VLANs (802.1Q)</strong> add a 4-byte tag with a 12-bit VLAN ID (1–4094), so one physical switch can act as many <em>separate</em> broadcast domains (for example "guest Wi-Fi" and "home"). VLANs are the L2 version of network segmentation.</p>
+<p><strong>4. Loops are fatal at L2.</strong> Ethernet frames have <strong>no TTL</strong>. If you create a loop between switches, broadcast frames circulate forever and multiply into a <strong>broadcast storm</strong> that takes down the whole segment within seconds. <strong>Spanning Tree Protocol (STP)</strong> blocks redundant links to prevent this. Modern data centres avoid big L2 domains altogether (leaf-spine with L3 routing down to the rack).</p>
+<p><strong>5. L2 in the cloud is mostly an illusion.</strong> Your VPC <em>looks</em> like Ethernet, but:</p>
+<ul>
+<li>There's no real broadcast. The hypervisor or smart NIC (for example AWS Nitro) answers ARP itself and delivers frames directly.</li>
+<li>The "virtual router" at <code>.1</code> of every subnet is software in the host.</li>
+<li>Kubernetes overlays (Flannel, Calico in VXLAN mode) put a <strong>whole L2 frame inside a UDP packet</strong> (VXLAN, port 4789) to build a virtual L2 network on top of L3. That costs <strong>50 bytes</strong> per packet, which is why pod MTUs are often 1450 instead of 1500.</li>
+</ul>
+</section>
+<section class="blk blk-practice"><h3 id="try-it-yourself-1" class="k-practice">Try it yourself</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="bash"><code># ARP/neighbour table: who's on my LAN and what's their MAC?
+arp -a                       # macOS / Linux
+ip neigh show                # Linux
+
+# Watch ARP in real time (then run: ping 192.168.1.1 in another terminal)
+sudo tcpdump -i en0 -n -e arp            # -e prints the MAC (L2) headers
+
+# See the L2 header of every packet to the shop
+sudo tcpdump -i en0 -n -e host shop.example.com
+
+# Interface MTU
+ifconfig en0 | grep mtu      # macOS
+ip link show eth0            # Linux
+
+# Linux bridge / switch MAC table (on a Linux router or K8s node)
+bridge fdb show | head</code></pre></div>
+</section>
+<section class="blk blk-confusion"><h3 id="what-breaks-1" class="k-confusion">What breaks</h3>
+<div class="tbl"><table>
+<thead><tr><th>Symptom</th><th>L2 cause</th></tr></thead>
+<tbody>
+<tr><td>Traffic to an IP goes to the <em>old</em> server for minutes after a failover</td><td>Stale ARP caches. The new owner must send a <strong>gratuitous ARP</strong> (keepalived/VRRP does this)</td></tr>
+<tr><td>Whole office network dies within seconds of someone plugging in a cable</td><td>L2 loop → broadcast storm (STP disabled or misconfigured)</td></tr>
+<tr><td>Two hosts on "the same subnet" can't reach each other</td><td>Different VLANs; trunk port not carrying the VLAN</td></tr>
+<tr><td>Small requests work, large responses hang</td><td><strong>MTU mismatch</strong> (for example a VXLAN overlay with MTU 1500 inside). Large frames get dropped</td></tr>
+<tr><td>Intermittent connectivity, log shows "MAC flapping"</td><td>Duplicate MAC (cloned VM) or a loop</td></tr>
+<tr><td>Device keeps getting a new IP / gets blocked by MAC filtering</td><td>MAC randomisation on the client</td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-example"><h3 id="war-story-big-json-responses-time-out-small-ones-are-fine" class="k-example">War story: "Big JSON responses time out, small ones are fine"</h3>
+<p>After moving to a new Kubernetes CNI, <code>GET /api/orders?limit=10</code> worked but <code>?limit=500</code> hung until timeout. The overlay used VXLAN (50 bytes of overhead) but the pod interfaces were still set to MTU 1500. Small responses fit in one frame. Large responses produced full 1500-byte packets, which became 1550 bytes after encapsulation, exceeded the underlying 1500 MTU, and were dropped, because the ICMP "too big" messages that should have triggered Path MTU Discovery were filtered. <strong>Fix:</strong> set the pod MTU to 1450 (or enable jumbo frames, 9001 in AWS, on the underlay). <strong>Lesson:</strong> <em>"works for small payloads, hangs for large ones" is almost always MTU.</em></p>
+</section>
+<section class="blk blk-idea"><h3 id="why-it-matters-to-you-1" class="k-idea">Why it matters to you</h3>
+<ul>
+<li><strong>"Same subnet" means "same L2 domain."</strong> Hosts can talk directly without a router. Anything that relies on that (multicast discovery, VRRP failover, some legacy clustering) <strong>won't work the same way in the cloud</strong>, so check for it during migrations.</li>
+<li><strong>Failover designs that move an IP need L2 cooperation</strong> (gratuitous ARP). In the cloud you use the provider's API instead (move an Elastic IP or ENI), which takes seconds, not milliseconds. Put that in your RTO.</li>
+<li><strong>MTU is a cross-team contract.</strong> Overlays, VPNs, tunnels, and PPPoE all eat into it. Write it down for every network path.</li>
+<li><strong>L2 encryption (WPA3, MACsec) protects only one hop.</strong> It doesn't replace TLS.</li>
+</ul>
+</section>
+<h3 id="go-deeper-in-the-series-1">Go deeper in the series</h3>
+<ul>
+<li><strong>Ethernet, ARP, switches, VLANs:</strong> <a href="tcp-ip/real-life-guide-v1-book.html#chapter-5-mac-addresses-and-ethernet-frames">TCP/IP guide, Chapters 5–7</a>, with ARP captured live.</li>
+<li><strong>MTU and overlays:</strong> <a href="tcp-ip/real-life-guide-v1-book.html#chapter-15-mtu-the-maximum-size-of-a-packet">TCP/IP Chapter 15</a> and the tunnels lab in <a href="tcp-ip/real-life-guide-v1-book.html#chapter-54-vpns-and-tunnels-wireguard-ipsec-gre-overlays-and-mtu-traps">Chapter 54</a>, where a WireGuard tunnel measured exactly 1,420 bytes.</li>
+<li><strong>Bridges and veth pairs, built by hand:</strong> <a href="tcp-ip/real-life-guide-v1-book.html#chapter-52-host-networking-internals-namespaces-veth-bridges-conntrack">TCP/IP Chapter 52</a>.</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-5-layer-3-network" data-ch="part-5-layer-3-network"><h2 id="part-5-layer-3-network">Part 5 — Layer 3: Network</h2>
+<section class="blk blk-tldr"><h3 id="job-2" class="k-tldr">Job</h3>
+<p>Deliver a <strong>packet</strong> from any host to any other host <em>across many networks</em>, using hierarchical <strong>IP addresses</strong> and <strong>routing</strong>. L3 is "best effort": it can drop, duplicate, or reorder packets and doesn't tell anyone. Reliability is the job of a higher layer.</p>
+</section>
+<section class="blk blk-problem"><h3 id="in-our-story-2" class="k-problem">In our story</h3>
+<p><strong>Earlier that evening, DHCP gave the laptop its L3 identity</strong> (the "DORA" exchange, over UDP 68 → 67):</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Laptop → broadcast   DHCP DISCOVER  "I'm 3c:22:fb:aa:bb:01, I need an address"
+Router → laptop      DHCP OFFER     "Try 192.168.1.23"
+Laptop → broadcast   DHCP REQUEST   "I'll take 192.168.1.23"
+Router → laptop      DHCP ACK       IP 192.168.1.23/24, gateway 192.168.1.1,
+                                    DNS 192.168.1.1, lease 24h</code></pre></div>
+<p><strong>At the click, the laptop's kernel makes a routing decision</strong> for <code>198.51.100.20</code> (the ALB's IP, which DNS supplied; see Part 9):</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Is 198.51.100.20 inside my subnet 192.168.1.0/24?   No.
+→ Use the default route: send it to the gateway 192.168.1.1
+→ (L2) wrap it in a frame addressed to the gateway's MAC</code></pre></div>
+<p><strong>The packet then travels about 12–18 router hops:</strong></p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code> hop  device                          what it does with our packet
+ ───  ──────────────────────────────  ───────────────────────────────────────────────
+  1   Home router 192.168.1.1         TTL 64→63, NAT: src 192.168.1.23:54012
+                                         → 203.0.113.7:61001, forward to ISP
+  2   ISP BNG                         TTL 63→62, route lookup, forward
+ 3–6  ISP aggregation/core            longest-prefix match on 198.51.100.0/24
+                                         → "learned via BGP from the cloud's network"
+ 7–12 Transit / peering exchange      BGP-chosen path between autonomous systems
+13–15 Cloud border + backbone         into the region, towards the ALB's subnet
+ 16   ALB                             destination reached; hand to L4</code></pre></div>
+</section>
+<section class="blk blk-how"><h3 id="how-it-works-2" class="k-how">How it works</h3>
+<p><strong>1. The IPv4 header (20 bytes, field by field):</strong></p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code> 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+┌───────┬───────┬───────────┬───┬───────────────────────────────┐
+│Version│  IHL  │   DSCP    │ECN│         Total Length          │  4 | 5 | 0 | 0 | 1500
+├───────┴───────┴───────────┴───┼─────┬─────────────────────────┤
+│        Identification         │Flags│    Fragment Offset      │  0x1c46 | DF | 0
+├───────────────┬───────────────┼─────┴─────────────────────────┤
+│      TTL      │   Protocol    │        Header Checksum        │  64 | 6 (TCP) | ...
+├───────────────┴───────────────┴───────────────────────────────┤
+│                    Source IP: 192.168.1.23                    │
+├───────────────────────────────────────────────────────────────┤
+│                 Destination IP: 198.51.100.20                 │
+└───────────────────────────────────────────────────────────────┘</code></pre></div>
+<p>The fields that matter in real life:</p>
+<div class="tbl"><table>
+<thead><tr><th>Field</th><th>Why you care</th></tr></thead>
+<tbody>
+<tr><td><strong>TTL</strong></td><td>Decremented at every router. At 0 the packet is dropped and an ICMP "Time Exceeded" is sent back. That's what makes routing loops survivable, and it's how <code>traceroute</code> works. Default 64 (Linux/macOS), 128 (Windows)</td></tr>
+<tr><td><strong>Protocol</strong></td><td>6 = TCP, 17 = UDP, 1 = ICMP. The hand-off to L4</td></tr>
+<tr><td><strong>DF (Don't Fragment)</strong></td><td>Set by modern stacks. A router that can't forward a too-big DF packet drops it and sends "ICMP Fragmentation Needed". <strong>Path MTU Discovery</strong> depends on that ICMP getting back to the sender</td></tr>
+<tr><td><strong>DSCP</strong></td><td>Quality-of-service marking. Respected inside enterprise/carrier networks, mostly ignored across the public Internet</td></tr>
+<tr><td><strong>Src/Dst</strong></td><td>The end-to-end identity, <em>except where NAT rewrites it</em></td></tr>
+</tbody></table></div>
+<p><strong>2. Routing = longest-prefix match.</strong> Every router has a table of prefixes and picks the <strong>most specific</strong> one that matches:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Destination 198.51.100.20
+  0.0.0.0/0         → upstream            (matches, /0)
+  198.51.100.0/22   → peer A              (matches, /22)
+  198.51.100.0/24   → peer B              (matches, /24)  ← WINNER: most specific</code></pre></div>
+<p><strong>3. BGP: how the Internet agrees on routes.</strong> The Internet is about 75,000 <strong>Autonomous Systems</strong> (ASes: ISPs, clouds, large companies). Each one <em>announces</em> the prefixes it owns to its neighbours via <strong>BGP</strong>. Your ISP knows how to reach <code>198.51.100.0/24</code> because the cloud provider's AS announced it and that announcement spread. BGP chooses paths by <em>policy and business relationships</em>, not by shortest latency. That's why traffic sometimes takes odd detours.</p>
+<p><strong>4. NAT: the home router's trick.</strong> IPv4 has only about 4.3 billion addresses, so your whole home shares <strong>one</strong> public IP. The router keeps a translation table:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Inside (private)            Outside (public)          Remote
+192.168.1.23:54012   ⇄   203.0.113.7:61001   ⇄   198.51.100.20:443
+192.168.1.40:51877   ⇄   203.0.113.7:61002   ⇄   142.250.x.x:443   (your phone)</code></pre></div>
+<p>Consequences for software engineers:</p>
+<ul>
+<li>NAT is <strong>stateful</strong>. Idle mappings expire (often after 30 s to 5 min for TCP), which silently breaks long-idle connections. That's why WebSockets and gRPC streams need <strong>keepalives</strong>.</li>
+<li>Many mobile and some broadband users sit behind <strong>Carrier-Grade NAT</strong> (the <code>100.64.0.0/10</code> range): thousands of customers share one IP. <strong>Rate-limiting or blocking by IP punishes innocent users.</strong></li>
+<li>Servers can't initiate connections to clients behind NAT. That's why push notifications, WebRTC (STUN/TURN), and "phone home" agents exist.</li>
+</ul>
+<p><strong>5. ICMP: L3's messaging channel.</strong> <code>ping</code> (Echo), <code>traceroute</code> (Time Exceeded), and Path MTU Discovery (Fragmentation Needed) all depend on it. <strong>Blocking all ICMP is a classic misconfiguration</strong> that causes the MTU black-hole from Part 4.</p>
+<p><strong>6. IPv6 in one paragraph.</strong> 128-bit addresses, so every device can have a global address and <strong>no NAT is needed</strong>. A fixed 40-byte header, no fragmentation by routers, and ARP is replaced by Neighbour Discovery (ICMPv6). Browsers try IPv6 and IPv4 in parallel (<strong>Happy Eyeballs</strong>) and use whichever connects first. If your AAAA record points to a broken IPv6 path, some users get a 250 ms penalty on every new connection.</p>
+<p><strong>7. L3 in the cloud.</strong></p>
+<div class="tbl"><table>
+<thead><tr><th>Cloud concept</th><th>OSI reality</th></tr></thead>
+<tbody>
+<tr><td>VPC <code>10.0.0.0/16</code></td><td>Your private L3 address space</td></tr>
+<tr><td>Subnet <code>10.0.2.0/24</code></td><td>An L3 prefix, pinned to one availability zone</td></tr>
+<tr><td>Route table</td><td>Static routes: <code>0.0.0.0/0 → internet gateway</code> or <code>→ NAT gateway</code></td></tr>
+<tr><td>Internet gateway</td><td>1:1 NAT between a public IP and an instance's private IP</td></tr>
+<tr><td>NAT gateway</td><td>Many-to-one NAT (like your home router) for outbound traffic from private subnets</td></tr>
+<tr><td>Security group</td><td><strong>Stateful</strong> L3/L4 firewall: allow <code>tcp/443 from 0.0.0.0/0</code>; return traffic is automatic</td></tr>
+<tr><td>Network ACL</td><td><strong>Stateless</strong> L3/L4 filter per subnet: you must allow the return (ephemeral) ports too</td></tr>
+<tr><td>VPC peering / Transit Gateway</td><td>Routing between L3 address spaces. <strong>Requires non-overlapping CIDRs</strong></td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-practice"><h3 id="try-it-yourself-2" class="k-practice">Try it yourself</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="bash"><code># My IP, subnet, gateway
+ipconfig getifaddr en0; netstat -rn | grep default      # macOS
+ip addr show; ip route show                              # Linux
+ipconfig getpacket en0                                   # macOS: full DHCP lease
+
+# Which route would the kernel use for this destination?
+route -n get 198.51.100.20                               # macOS
+ip route get 198.51.100.20                               # Linux
+
+# My public IP (what the server sees after NAT)
+curl -s https://ifconfig.me; echo
+
+# The path, hop by hop (TTL trick). mtr = traceroute + live loss/latency stats
+traceroute -n shop.example.com
+mtr -rwc 50 shop.example.com
+
+# Find the path MTU: largest packet that passes with DF set
+ping -D -s 1472 shop.example.com      # macOS (-D sets DF)
+ping -M do -s 1472 shop.example.com   # Linux. 1472 + 8 ICMP + 20 IP = 1500</code></pre></div>
+</section>
+<section class="blk blk-confusion"><h3 id="what-breaks-2" class="k-confusion">What breaks</h3>
+<div class="tbl"><table>
+<thead><tr><th>Symptom</th><th>L3 cause</th></tr></thead>
+<tbody>
+<tr><td><code>ping 192.168.1.1</code> works, <code>ping 1.1.1.1</code> doesn't</td><td>Default route missing, or upstream/ISP down</td></tr>
+<tr><td>VPC peering request rejected / some services unreachable</td><td><strong>Overlapping CIDRs</strong> (both teams picked <code>10.0.0.0/16</code>)</td></tr>
+<tr><td>Connections hang only for some users / large payloads</td><td>PMTU black-hole (ICMP blocked)</td></tr>
+<tr><td>Traffic works one way, replies vanish</td><td><strong>Asymmetric routing</strong> through a stateful firewall that only sees half the flow</td></tr>
+<tr><td>"Packets to region X take a crazy path"</td><td>BGP policy; route leak; ISP peering dispute</td></tr>
+<tr><td>Outbound calls from private subnet fail</td><td>No route to the NAT gateway; NAT gateway in the wrong AZ/subnet</td></tr>
+<tr><td>Rate limiter blocks a whole office/mobile carrier</td><td>Many users behind one NAT/CGNAT IP</td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-example"><h3 id="war-story-we-can-t-connect-the-acquisition-s-network" class="k-example">War story: "We can't connect the acquisition's network"</h3>
+<p>Company A bought Company B. Both had built their entire cloud estate in <code>10.0.0.0/16</code>. VPC peering, Transit Gateway, and VPN all require non-overlapping address space. The fix took <strong>two quarters</strong>: re-IP'ing hundreds of services, redoing firewall rules and DNS, and running a NAT translation layer in the meantime. <strong>Lesson for managers:</strong> IP address planning is a company-wide, decade-long decision. Allocate CIDRs centrally (IPAM) <em>from day one</em>, even if you're "just a startup".</p>
+</section>
+<section class="blk blk-idea"><h3 id="why-it-matters-to-you-2" class="k-idea">Why it matters to you</h3>
+<ul>
+<li><strong>An IP address is not a user identity.</strong> NAT, CGNAT, proxies, and VPNs make sure of that. Design rate limits and fraud rules accordingly.</li>
+<li><strong>IP plans are architecture.</strong> Overlapping CIDRs are one of the most expensive network mistakes to fix.</li>
+<li><strong>Don't block ICMP wholesale.</strong> Allow at least "Fragmentation Needed" / "Packet Too Big".</li>
+<li><strong>Know which of your firewalls are stateful and which are stateless.</strong> Security groups and NACLs behave very differently, and teams lose days to that difference.</li>
+<li><strong>Long-lived idle connections die in NAT tables you don't control.</strong> Add application-level keepalives shorter than the smallest NAT timeout on the path.</li>
+</ul>
+</section>
+<h3 id="go-deeper-in-the-series-2">Go deeper in the series</h3>
+<ul>
+<li><strong>Subnetting with exercises</strong>, plus a Go subnet calculator and IPAM allocator: <a href="tcp-ip/real-life-guide-v1-book.html#chapter-10-subnet-masks-the-part-everyone-finds-hard">TCP/IP guide, Chapters 10–11</a>.</li>
+<li><strong>See your own NAT</strong> with the <code>whoami</code> lab: <a href="tcp-ip/real-life-guide-v1-book.html#chapter-12-private-addresses-and-nat">TCP/IP Chapter 12</a>.</li>
+<li><strong>Routing protocols</strong> (OSPF, BGP, VRRP): <a href="tcp-ip/real-life-guide-v1-book.html#part-12-how-routers-learn-routes">TCP/IP Part 12</a>; anycast and global routing: <a href="../v2-https/real-life-guide-v1-book.html#chapter-7-nat-vip-bgp-anycast-vrrp-global-traffic-routing">HTTPS guide, Chapter 7</a>.</li>
+<li><strong>IP planning and overlapping CIDRs</strong> (the war story above, with tooling): <a href="tcp-ip/real-life-guide-v1-book.html#chapter-61-network-design-refactoring-migrations-diagrams-ipam-change-safety">TCP/IP Chapter 61</a>.</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-6-layer-4-transport" data-ch="part-6-layer-4-transport"><h2 id="part-6-layer-4-transport">Part 6 — Layer 4: Transport</h2>
+<section class="blk blk-tldr"><h3 id="job-3" class="k-tldr">Job</h3>
+<p>Turn the unreliable, host-to-host packets of L3 into <strong>process-to-process</strong> communication, identified by <strong>ports</strong>. TCP adds reliability, ordering, flow control, and congestion control. UDP adds only ports and a checksum.</p>
+</section>
+<section class="blk blk-problem"><h3 id="in-our-story-3" class="k-problem">In our story</h3>
+<p>The browser asks the kernel to <code>connect()</code> to <code>198.51.100.20:443</code>. The kernel picks an <strong>ephemeral source port</strong> (54012) and performs the <strong>three-way handshake</strong>:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>  Laptop 192.168.1.23:54012                                ALB 198.51.100.20:443
+        │                                                          │
+   t=0  │──── SYN  seq=3001829117  win=65535                    ──▶│
+        │          options: MSS=1460, SACK-permitted,              │
+        │                   WScale=6, Timestamps                   │
+        │                                                          │
+  t=40ms│◀─── SYN-ACK seq=901120044 ack=3001829118  MSS=1460 ... ──│
+        │                                                          │
+  t=40ms│──── ACK  ack=901120045   ─────────────────────────────▶ │  (connection ESTABLISHED)
+        │──── [immediately followed by TLS ClientHello] ─────────▶ │</code></pre></div>
+<p>One full <strong>round trip (RTT ≈ 40 ms)</strong> has passed and <em>no application data has moved yet</em>. That's the cost of reliability, and the reason connection reuse matters so much.</p>
+<p>The connection is now identified everywhere by its <strong>5-tuple</strong>:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>(protocol=TCP, src=192.168.1.23, sport=54012, dst=198.51.100.20, dport=443)</code></pre></div>
+<p>…which the home router's NAT rewrites to <code>(TCP, 203.0.113.7, 61001, 198.51.100.20, 443)</code> for everyone on the Internet side.</p>
+<p><strong>Important:</strong> the ALB is an L7 proxy, so <strong>this TCP connection ends at the ALB.</strong> The ALB opens a <em>separate</em> TCP connection from <code>10.0.1.15:&lt;ephemeral&gt;</code> to the pod <code>10.0.2.77:8080</code>, and it usually reuses one it already has open. The pod never sees your laptop's TCP connection (or your IP, except in the <code>X-Forwarded-For</code> header).</p>
+</section>
+<section class="blk blk-how"><h3 id="how-it-works-3" class="k-how">How it works</h3>
+<p><strong>1. TCP vs UDP.</strong></p>
+<div class="tbl"><table>
+<thead><tr><th></th><th>TCP</th><th>UDP</th></tr></thead>
+<tbody>
+<tr><td>Connection</td><td>Yes (handshake, state)</td><td>No</td></tr>
+<tr><td>Reliability and ordering</td><td>Yes: sequence numbers, ACKs, retransmissions</td><td>No: the app handles loss</td></tr>
+<tr><td>Flow/congestion control</td><td>Yes</td><td>No (the app must be polite)</td></tr>
+<tr><td>Header</td><td>20–60 B</td><td>8 B</td></tr>
+<tr><td>Message boundaries</td><td><strong>No</strong>: it's a byte stream</td><td>Yes: one send = one datagram</td></tr>
+<tr><td>Used by</td><td>HTTP/1.1, HTTP/2, TLS, Postgres, SSH</td><td>DNS, DHCP, QUIC/HTTP/3, video calls, games, VXLAN</td></tr>
+</tbody></table></div>
+<blockquote class="note">
+<p>"TCP is a byte stream" means: if you <code>send()</code> 100 bytes twice, the other side may <code>recv()</code> 200 bytes once, or 37 then 163. <strong>Every TCP protocol must frame its own messages</strong> (HTTP uses <code>Content-Length</code> / chunked encoding; gRPC uses a length prefix). Forgetting this is a classic bug in hand-written protocols.</p>
+</blockquote>
+<p><strong>2. The TCP header and the fields that matter:</strong></p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Src port 54012 | Dst port 443
+Sequence number   — byte offset of this segment's first byte in the stream
+Ack number        — "I've received everything up to byte N-1, send N next"
+Flags             — SYN, ACK, FIN (graceful close), RST (abort), PSH, ECE/CWR (ECN)
+Window            — receive window: how many more bytes I can buffer (flow control)
+Options           — MSS, Window Scale, SACK, Timestamps</code></pre></div>
+<p><strong>3. Reliability.</strong> Every byte has a sequence number. The receiver ACKs what it has received. If an ACK doesn't arrive within the <strong>retransmission timeout (RTO)</strong>, or the sender sees <strong>three duplicate ACKs</strong> (fast retransmit), it sends the data again. Linux's minimum RTO is <strong>200 ms</strong>, and the initial RTO before any RTT measurement (the SYN) is <strong>1 second</strong>. So:</p>
+<blockquote class="note">
+<p><strong>One lost packet in the wrong place costs 200 ms to 1 s or more.</strong> A lost SYN adds a full second to connection setup. This is why 0.1% packet loss damages p99 latency far more than you'd expect.</p>
+</blockquote>
+<p><strong>4. Flow control vs congestion control.</strong> People mix these up:</p>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Flow control</th><th>Congestion control</th></tr></thead>
+<tbody>
+<tr><td>Protects</td><td>The <strong>receiver</strong> (don't overflow its buffer)</td><td>The <strong>network</strong> (don't overflow routers in between)</td></tr>
+<tr><td>Mechanism</td><td>Receiver advertises a window (<code>rwnd</code>)</td><td>Sender estimates a congestion window (<code>cwnd</code>)</td></tr>
+<tr><td>Effective send limit</td><td><code>min(rwnd, cwnd)</code></td><td></td></tr>
+</tbody></table></div>
+<p><strong>Slow start:</strong> a new connection starts with <code>cwnd = 10 segments</code> (~14 KB) and roughly doubles every RTT until it sees loss (CUBIC, the Linux default) or until it models the path's bandwidth (BBR). Consequence:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Transferring 200 KB on a fresh connection, RTT 40 ms, ignoring loss:
+  RTT 1: 14 KB    RTT 2: 28 KB    RTT 3: 56 KB    RTT 4: 112 KB   → ~4 RTTs ≈ 160 ms
+On a warmed-up, reused connection: ~1 RTT ≈ 40 ms</code></pre></div>
+<p><strong>5. Bandwidth-delay product (BDP).</strong> To fill a pipe you need <code>bandwidth × RTT</code> bytes in flight. 1 Gb/s × 100 ms = <strong>12.5 MB</strong>. If socket buffers or windows are smaller than that, a single connection <em>can't</em> use the bandwidth you're paying for. That's why cross-region bulk copies use parallel streams.</p>
+<p><strong>6. Closing.</strong> A graceful close is FIN → ACK → FIN → ACK. The side that closes <strong>first</strong> enters <strong>TIME_WAIT</strong> for 2×MSL (60 s on Linux) to absorb stray packets. A busy client that opens and closes thousands of short connections can run out of <strong>ephemeral ports</strong> (Linux default range 32768–60999, about 28k) because of TIME_WAIT. <strong>RST</strong> is an abort: "this connection doesn't exist" or "I'm giving up". It's what you see as <code>ECONNRESET</code> / "connection reset by peer".</p>
+<p><strong>7. Ports and sockets in the kernel.</strong> A server <code>listen()</code>s on <code>:8080</code>. The kernel completes the handshake <em>without involving your app</em> and queues the connection in the <strong>accept backlog</strong>. Your app calls <code>accept()</code> to get it. If your app is too slow to accept, the backlog fills and new SYNs get dropped. To clients that looks like a 1–3 s connect delay.</p>
+<p><strong>8. L4 load balancers vs L7 proxies (a preview of Part 15).</strong> An <strong>L4 load balancer</strong> (AWS NLB, IPVS, Maglev) routes on the 5-tuple and passes the TCP stream through without reading it. An <strong>L7 proxy</strong> (ALB, nginx, Envoy) <em>ends</em> your TCP connection, reads the HTTP, and starts a new connection to the backend.</p>
+</section>
+<section class="blk blk-practice"><h3 id="try-it-yourself-3" class="k-practice">Try it yourself</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="bash"><code># All TCP connections with state, process, and per-connection internals (Linux)
+ss -tanp
+ss -tni dst 198.51.100.20         # shows rtt, cwnd, retrans, mss per connection
+
+# macOS equivalent (less detail)
+netstat -anv -p tcp | head -30
+lsof -nP -iTCP -sTCP:ESTABLISHED
+
+# Capture just the handshake and teardown packets
+sudo tcpdump -i en0 -n 'host shop.example.com and (tcp[tcpflags] &amp; (tcp-syn|tcp-fin|tcp-rst) != 0)'
+
+# Is a port reachable? (L4 check, no HTTP involved)
+nc -vz shop.example.com 443
+
+# System-wide retransmission and drop counters
+netstat -s | grep -iE 'retrans|listen|overflow|reset'
+
+# Ephemeral port range and TIME_WAIT count (Linux)
+sysctl net.ipv4.ip_local_port_range
+ss -tan state time-wait | wc -l</code></pre></div>
+</section>
+<section class="blk blk-confusion"><h3 id="what-breaks-3" class="k-confusion">What breaks</h3>
+<div class="tbl"><table>
+<thead><tr><th>Symptom</th><th>L4 cause</th></tr></thead>
+<tbody>
+<tr><td><code>Connection refused</code> (immediately)</td><td>Host reachable, <strong>nothing listening</strong> on that port → kernel sends RST</td></tr>
+<tr><td>Connect <strong>hangs then times out</strong></td><td>Firewall/security group silently dropping SYNs, wrong route, or host down</td></tr>
+<tr><td>Random 1 s or 3 s connect delays</td><td>SYN dropped (backlog overflow, conntrack full, packet loss) → SYN retransmit after 1 s</td></tr>
+<tr><td><code>connection reset by peer</code> mid-request</td><td>Peer process crashed, idle timeout reaped the connection, or a middlebox injected an RST</td></tr>
+<tr><td><code>EADDRNOTAVAIL</code> / "cannot assign requested address"</td><td>Ephemeral port exhaustion (no connection pooling, TIME_WAIT pile-up, NAT gateway port limits)</td></tr>
+<tr><td>Single stream won't exceed ~50 Mb/s cross-region</td><td>BDP &gt; window/buffer size</td></tr>
+<tr><td>Requests take exactly +40 ms (or +200 ms)</td><td><strong>Nagle's algorithm + delayed ACK</strong> interacting. Set <code>TCP_NODELAY</code> for request/response protocols</td></tr>
+<tr><td><code>nf_conntrack: table full, dropping packet</code> in kernel log</td><td>Linux connection-tracking table exhausted on a busy node/NAT box</td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-example"><h3 id="war-story-black-friday-outbound-payments-start-failing" class="k-example">War story: "Black Friday, outbound payments start failing"</h3>
+<p>The checkout service called a payment provider for every order. It opened a <strong>new HTTPS connection per request</strong> and closed it immediately. All outbound traffic went through one cloud NAT gateway, which supports about 55,000 simultaneous connections <em>per unique destination</em>. At peak traffic, TIME_WAIT plus in-flight connections exhausted that limit. New connections failed with timeouts and <code>EADDRNOTAVAIL</code>, and payments failed. <strong>Fix:</strong> an HTTP client with a connection pool and keep-alive (100 long-lived connections instead of tens of thousands of short ones), plus more NAT IPs. <strong>Lesson:</strong> connection reuse isn't a micro-optimisation. It's a <em>capacity</em> property of your system. Review every outbound HTTP client for pooling.</p>
+</section>
+<section class="blk blk-idea"><h3 id="why-it-matters-to-you-3" class="k-idea">Why it matters to you</h3>
+<ul>
+<li><strong>Every new TCP connection costs 1 RTT, plus slow start.</strong> Every new TLS connection costs another RTT. Connection pooling and keep-alive are the cheapest latency wins available.</li>
+<li><strong>Packet loss → retransmission timeouts → tail latency.</strong> Your p99 is often a network story.</li>
+<li><strong>"Refused" and "timed out" point to different teams.</strong> Refused means the host answered, so the service is down. Timeout means something dropped the packet, so look at firewalls, routing, and security groups.</li>
+<li><strong>Timeouts must be layered deliberately</strong> (connect timeout &lt; request timeout &lt; upstream LB idle timeout). See the war story in Part 7.</li>
+<li><strong>Ports are a finite resource</strong> on clients, NAT gateways, and conntrack tables. High-fan-out services need pooling <em>by design</em>.</li>
+</ul>
+</section>
+<h3 id="go-deeper-in-the-series-3">Go deeper in the series</h3>
+<p>Each idea in this part has a Go lab in the <a href="tcp-ip/real-life-guide-v1-book.html">TCP/IP guide</a>:</p>
+<div class="tbl"><table>
+<thead><tr><th>Idea here</th><th>Lab there</th></tr></thead>
+<tbody>
+<tr><td>Refused vs timed out</td><td><code>dialcheck</code>, <a href="tcp-ip/real-life-guide-v1-book.html#chapter-21-tcp-part-1-the-three-way-handshake">Ch 21</a></td></tr>
+<tr><td>TCP is a byte stream</td><td><code>stream</code>, <a href="tcp-ip/real-life-guide-v1-book.html#chapter-22-tcp-part-2-how-it-never-loses-your-data">Ch 22</a></td></tr>
+<tr><td>TIME_WAIT / CLOSE_WAIT</td><td><code>closewait</code>, <a href="tcp-ip/real-life-guide-v1-book.html#chapter-23-tcp-part-3-closing-a-connection-and-the-states">Ch 23</a></td></tr>
+<tr><td>Flow control</td><td><code>zerowindow</code>, <a href="tcp-ip/real-life-guide-v1-book.html#chapter-24-flow-control-the-sliding-window">Ch 24</a></td></tr>
+<tr><td>Nagle + delayed ACK (the +40 ms)</td><td><code>nagle</code>, <a href="tcp-ip/real-life-guide-v1-book.html#chapter-26-the-40-millisecond-mystery">Ch 26</a> (measured: 44 ms)</td></tr>
+<tr><td>Accept queue full ("slow connects, idle app")</td><td><code>acceptq</code>, <a href="tcp-ip/real-life-guide-v1-book.html#chapter-52-host-networking-internals-namespaces-veth-bridges-conntrack">Ch 52</a></td></tr>
+<tr><td>Bandwidth-delay product</td><td><code>bdp</code>, <a href="tcp-ip/real-life-guide-v1-book.html#chapter-59-network-performance-engineering-qos-packet-loss-shaping-saturation">Ch 59</a></td></tr>
+</tbody></table></div>
+<p>And the operating-system side, where 10,000 waiting connections need about 16 threads in Go: <a href="../os-linux/real-life-os-guide-book.html#chapter-73-go-meets-the-kernel-system-calls-threads-and-the-runtime">Linux guide, Chapters 73 and 78</a>.</p>
+<hr>
+</section><section class="chapter" id="ch-part-7-layer-5-session" data-ch="part-7-layer-5-session"><h2 id="part-7-layer-5-session">Part 7 — Layer 5: Session</h2>
+<section class="blk blk-tldr"><h3 id="job-4" class="k-tldr">Job</h3>
+<p>Establish, maintain, synchronise, resume, and end a <strong>dialogue</strong> between two applications: something that lasts longer than a single packet or single request.</p>
+</section>
+<h3 id="the-honest-truth">The honest truth</h3>
+<p>TCP/IP has <strong>no dedicated session layer protocol</strong>. Session responsibilities are spread across TLS, HTTP, and your application. That's exactly why session problems are so often <em>nobody's</em> problem until they become an incident.</p>
+<section class="blk blk-problem"><h3 id="in-our-story-4" class="k-problem">In our story</h3>
+<p>Five different "sessions" are active at once when you click Place order:</p>
+<div class="tbl"><table>
+<thead><tr><th>"Session"</th><th>Lifetime</th><th>What establishes it</th><th>What it buys you</th></tr></thead>
+<tbody>
+<tr><td><strong>TCP connection</strong></td><td>Seconds to minutes</td><td>3-way handshake</td><td>Reliable byte stream (strictly L4, but the browser treats it as a reusable session)</td></tr>
+<tr><td><strong>TLS session</strong></td><td>Hours (via tickets)</td><td>TLS handshake; resumption with <strong>session tickets / PSK</strong></td><td>Skip the expensive handshake work next time</td></tr>
+<tr><td><strong>HTTP/2 connection + streams</strong></td><td>Minutes</td><td>ALPN negotiation (<code>h2</code>), then SETTINGS frames</td><td>Many concurrent requests (<em>streams</em>) multiplexed over one TCP+TLS connection</td></tr>
+<tr><td><strong>Browser connection pool</strong></td><td>Until idle timeout</td><td>Browser policy</td><td>Your click reuses the connection opened when the cart page loaded, so <em>no</em> new TCP or TLS handshake is needed</td></tr>
+<tr><td><strong>Application login session</strong></td><td>Days</td><td>Login → <code>Set-Cookie: session=…</code> or a JWT</td><td>The server knows <em>who you are</em> on every stateless HTTP request</td></tr>
+</tbody></table></div>
+<p>So in the <em>common</em> case, your click skips the TCP and TLS handshakes entirely: the browser already has a warm HTTP/2 connection to <code>shop.example.com</code> from loading the checkout page. The POST becomes a new <strong>stream</strong> (stream ID 15, say) on that existing connection.</p>
+<p>Two more session-level behaviours happen on the server side:</p>
+<ul>
+<li>The ALB keeps its own <strong>pool of keep-alive connections</strong> to the pods, which is a separate session layer behind the proxy.</li>
+<li>If the ALB has <strong>sticky sessions</strong> enabled, a cookie (<code>AWSALB=…</code>) pins you to one pod.</li>
+</ul>
+</section>
+<section class="blk blk-how"><h3 id="how-it-works-4" class="k-how">How it works</h3>
+<p><strong>1. Session resumption (TLS).</strong> After a full handshake the server gives the client an encrypted <strong>session ticket</strong>. On reconnecting, the client presents it and both sides derive keys without repeating the certificate exchange. TLS 1.3 even allows <strong>0-RTT</strong> data, where the request goes in the very first flight, but 0-RTT data <strong>can be replayed by an attacker</strong>, so it's only safe for idempotent requests (GET, never POST /orders).</p>
+<p><strong>2. Multiplexing (HTTP/2).</strong> One connection carries many independent <strong>streams</strong>, each with its own ID and flow control. That removes HTTP/1.1's "one request at a time per connection" limit. The catch is <strong>TCP-level head-of-line blocking</strong>: one lost TCP packet stalls <em>all</em> streams until it's retransmitted. HTTP/3 (QUIC over UDP) fixes this by doing loss recovery per stream.</p>
+<p><strong>3. Dialogue control and checkpointing.</strong> These are classic OSI session functions. Modern equivalents:</p>
+<ul>
+<li><strong>Resumable uploads</strong> (tus protocol, S3 multipart): restart from the last checkpoint after a disconnect.</li>
+<li><strong>WebSocket / gRPC streams</strong>: long-lived, full-duplex dialogues with their own keepalive pings.</li>
+<li><strong>Database sessions</strong>: Postgres connection state (transactions, <code>SET</code> variables, prepared statements) is session state. That's why <em>transaction-mode</em> poolers like PgBouncer break <code>SET</code> and session-level prepared statements.</li>
+</ul>
+<p><strong>4. Application sessions: stateful vs stateless.</strong></p>
+<div class="tbl"><table>
+<thead><tr><th>Approach</th><th>Where state lives</th><th>Trade-off</th></tr></thead>
+<tbody>
+<tr><td>Server-side session (cookie holds an ID → Redis)</td><td>Shared store</td><td>Easy revocation; extra lookup per request; the store is a dependency</td></tr>
+<tr><td>Sticky sessions (cookie → specific instance)</td><td>Instance memory</td><td>Simple; <strong>breaks on deploys/scale-in, uneven load</strong></td></tr>
+<tr><td>Token (JWT holds the claims)</td><td>The client</td><td>No lookup; <strong>hard to revoke</strong>; token size added to every request</td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-practice"><h3 id="try-it-yourself-4" class="k-practice">Try it yourself</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="bash"><code># See ALPN (h2 vs http/1.1), TLS version, and whether the TLS session was reused
+curl -sv -o /dev/null https://shop.example.com/ 2&gt;&amp;1 | grep -E 'ALPN|SSL connection|HTTP/'
+
+# Two requests in one curl invocation: watch the connection get reused
+curl -sv -o /dev/null -o /dev/null https://shop.example.com/ https://shop.example.com/health 2&gt;&amp;1 \
+  | grep -E 'Connected to|Re-using|left intact'
+
+# TLS session resumption test (look for "Reused" on later connections)
+openssl s_client -connect shop.example.com:443 -servername shop.example.com -reconnect &lt;/dev/null 2&gt;/dev/null \
+  | grep -E '^(New|Reused)'
+
+# Browser: chrome://net-internals/#sockets  and  DevTools → Network → "Connection ID" column</code></pre></div>
+</section>
+<section class="blk blk-confusion"><h3 id="what-breaks-4" class="k-confusion">What breaks</h3>
+<div class="tbl"><table>
+<thead><tr><th>Symptom</th><th>Session-level cause</th></tr></thead>
+<tbody>
+<tr><td>Sporadic <strong>502s</strong> from the load balancer, especially after idle periods</td><td><strong>Keep-alive timeout mismatch</strong>: the backend closes an idle connection the LB still thinks is open (see war story)</td></tr>
+<tr><td>Users logged out during a deploy</td><td>Sessions stored in instance memory; sticky sessions pointed at terminated instances</td></tr>
+<tr><td>One pod at 90% CPU, others idle</td><td>Sticky sessions or long-lived HTTP/2 / gRPC connections pinning traffic</td></tr>
+<tr><td>WebSocket drops every ~60 s</td><td>An idle timeout somewhere on the path (LB, NAT, corporate proxy) is shorter than your ping interval</td></tr>
+<tr><td>"Prepared statement does not exist" errors</td><td>Transaction-mode connection pooler + session-level DB features</td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-example"><h3 id="war-story-the-502s-nobody-could-reproduce" class="k-example">War story: "The 502s nobody could reproduce"</h3>
+<p>A Node.js service behind an ALB returned about 0.05% 502s with no errors in its own logs. Cause: the ALB's idle timeout was <strong>60 s</strong>, but Node's <code>server.keepAliveTimeout</code> defaulted to <strong>5 s</strong>. After 5 s of idleness, Node closed the backend connection. Sometimes the ALB had <em>just</em> sent a new request on that same connection at that exact moment. The request hit a closing socket, and the ALB returned 502. <strong>Fix:</strong> make the <em>server's</em> keep-alive timeout <strong>longer</strong> than the load balancer's idle timeout (for example 65 s vs 60 s), so the LB always closes first. <strong>Lesson (and a good interview question):</strong> in any proxy chain, <em>the side that sends requests on a reused connection must be the one that closes idle connections first</em>, so every hop's idle timeout must be shorter than the timeout of the hop behind it.</p>
+</section>
+<section class="blk blk-idea"><h3 id="why-it-matters-to-you-4" class="k-idea">Why it matters to you</h3>
+<ul>
+<li><strong>Connection reuse is the biggest session-layer performance lever.</strong> A warm connection avoids 2 RTTs (TCP + TLS) and TCP slow start.</li>
+<li><strong>Timeouts along a proxy chain are a design artefact.</strong> Document them per hop (client → CDN → LB → sidecar → app → DB).</li>
+<li><strong>Prefer stateless app servers with an external session store or tokens.</strong> Sticky sessions are technical debt that shows up at deploy time.</li>
+<li><strong>Long-lived connections defeat load balancing.</strong> gRPC/HTTP/2 clients on an L4 balancer send <em>everything</em> to one backend. See Part 15.</li>
+</ul>
+</section>
+<h3 id="go-deeper-in-the-series-4">Go deeper in the series</h3>
+<ul>
+<li><strong>The keep-alive 502 race and timeout nesting:</strong> <a href="tcp-ip/real-life-guide-v1-book.html#chapter-57-production-load-balancing-l4-vs-l7-health-checks-draining-retries">TCP/IP guide, Chapter 57</a>.</li>
+<li><strong>TLS session resumption, tested from Go:</strong> <a href="tcp-ip/real-life-guide-v1-book.html#chapter-29-tls-how-it-gets-encrypted">TCP/IP Chapter 29</a> (it resumes only after the client has <em>read</em> the session ticket).</li>
+<li><strong>Long-lived sessions (SSE, WebSockets)</strong> and the timeouts that cut them: <a href="../v2-https/real-life-guide-v1-book.html#chapter-24-streaming-over-http-server-sent-events-websockets-and-long-lived-connections">HTTPS guide, Chapter 24</a>.</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-8-layer-6-presentation" data-ch="part-8-layer-6-presentation"><h2 id="part-8-layer-6-presentation">Part 8 — Layer 6: Presentation</h2>
+<section class="blk blk-tldr"><h3 id="job-5" class="k-tldr">Job</h3>
+<p>Make sure both sides agree on <strong>what the bytes mean</strong>: character encoding, data serialisation, compression, and <strong>encryption</strong>.</p>
+</section>
+<section class="blk blk-problem"><h3 id="in-our-story-5" class="k-problem">In our story</h3>
+<p>Four presentation transformations happen to your order before it hits the wire:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>JS object { cartId: "c_8812", paymentMethodId: "pm_77" }
+   │  1. SERIALISE   JSON.stringify → text
+   ▼
+'{"cartId":"c_8812","paymentMethodId":"pm_77"}'
+   │  2. ENCODE      text → UTF-8 bytes (43 bytes)
+   ▼
+7b 22 63 61 72 74 49 64 22 3a 22 63 5f 38 38 31 32 22 ...
+   │  3. COMPRESS    headers compressed with HPACK (HTTP/2); body too small to gzip
+   ▼
+   │  4. ENCRYPT     TLS 1.3 record: AES-128-GCM with this session's keys
+   ▼
+17 03 03 00 5a  &lt;90 bytes of ciphertext + 16-byte authentication tag&gt;</code></pre></div>
+<p>On the server, the ALB <strong>decrypts</strong> (TLS terminates there). It then either re-encrypts towards the pod (end-to-end TLS) or sends plaintext inside the VPC. Finally the pod's framework <strong>decompresses, decodes, and deserialises</strong> the bytes back into an object.</p>
+</section>
+<section class="blk blk-how"><h3 id="how-it-works-5" class="k-how">How it works</h3>
+<p><strong>1. The TLS 1.3 handshake</strong> (when there's no warm connection to reuse):</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Client                                                       Server (ALB)
+  │── ClientHello ───────────────────────────────────────────────▶│
+  │     supported versions: TLS 1.3                               │
+  │     cipher suites: TLS_AES_128_GCM_SHA256, CHACHA20_POLY1305  │
+  │     key_share: X25519 public key        ← key exchange starts NOW
+  │     SNI: shop.example.com               ← which certificate do I want (plaintext!)
+  │     ALPN: h2, http/1.1                  ← which L7 protocol next
+  │                                                               │
+  │◀── ServerHello (key_share) ───────────────────────────────────│
+  │◀── {EncryptedExtensions, Certificate, CertificateVerify, ──── │   ← already encrypted
+  │     Finished}                                                 │
+  │                                                               │
+  │── {Finished} ── {HTTP request} ──────────────────────────────▶│   1 RTT total</code></pre></div>
+<p>The four things TLS gives you:</p>
+<div class="tbl"><table>
+<thead><tr><th>Property</th><th>Mechanism</th></tr></thead>
+<tbody>
+<tr><td><strong>Confidentiality</strong></td><td>Symmetric encryption (AES-GCM / ChaCha20) with keys from an ephemeral <strong>ECDHE</strong> exchange (X25519)</td></tr>
+<tr><td><strong>Integrity</strong></td><td>AEAD authentication tag on every record. Any tampering → connection fails</td></tr>
+<tr><td><strong>Authentication</strong></td><td>Certificate chain: <code>shop.example.com</code> → intermediate CA → a root CA in your OS/browser trust store; server proves it owns the private key (CertificateVerify)</td></tr>
+<tr><td><strong>Forward secrecy</strong></td><td>Ephemeral keys: stealing the server's private key later doesn't decrypt recorded past traffic</td></tr>
+</tbody></table></div>
+<p>TLS 1.2 needed <strong>2 RTTs</strong>. TLS 1.3 needs <strong>1</strong>. QUIC combines the transport and TLS handshakes into <strong>1</strong> as well.</p>
+<p><strong>What's still visible on the wire:</strong> the destination IP, the port, <strong>SNI</strong> (the hostname, unless Encrypted Client Hello is used), packet sizes, and timing. Encryption hides <em>content</em>, not <em>metadata</em>.</p>
+<p><strong>2. Serialisation formats.</strong></p>
+<div class="tbl"><table>
+<thead><tr><th>Format</th><th>Strengths</th><th>Gotchas</th></tr></thead>
+<tbody>
+<tr><td>JSON</td><td>Human-readable, universal</td><td>No integer type: <strong>JS loses precision above 2⁵³−1</strong>, so send 64-bit IDs as strings. No binary, no dates (agree on ISO-8601), verbose</td></tr>
+<tr><td>Protobuf / gRPC</td><td>Compact, typed, schema evolution</td><td>Needs schema discipline: never reuse field numbers; not human-readable</td></tr>
+<tr><td>Avro / Parquet</td><td>Schema registry, analytics</td><td>Writer and reader schema compatibility rules</td></tr>
+<tr><td>XML / SOAP</td><td>Mature validation</td><td>Heavy; XXE attacks if parsers are misconfigured</td></tr>
+</tbody></table></div>
+<p><strong>3. Character encoding.</strong> Always UTF-8 on the wire. Declare it (<code>Content-Type: application/json; charset=utf-8</code>). Mojibake (<code>CafÃ©</code> instead of <code>Café</code>) means one side decoded UTF-8 bytes as Latin-1. Database column encodings, CSV exports, and email are where this still happens.</p>
+<p><strong>4. Compression.</strong> <code>Accept-Encoding: gzip, br</code> → <code>Content-Encoding: br</code>. Brotli/gzip typically shrink JSON 70–90%. HTTP/2 compresses <em>headers</em> with <strong>HPACK</strong> (HTTP/3 uses QPACK). Security note: compressing secrets together with attacker-controlled input under encryption enables CRIME/BREACH-style attacks.</p>
+</section>
+<section class="blk blk-practice"><h3 id="try-it-yourself-5" class="k-practice">Try it yourself</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="bash"><code># Full TLS handshake details: protocol, cipher, certificate chain, expiry
+openssl s_client -connect shop.example.com:443 -servername shop.example.com &lt;/dev/null 2&gt;/dev/null \
+  | grep -E 'Protocol|Cipher|subject=|issuer=|Verify return'
+
+# Certificate dates and names (expiry monitoring in one line)
+echo | openssl s_client -connect shop.example.com:443 -servername shop.example.com 2&gt;/dev/null \
+  | openssl x509 -noout -dates -subject -ext subjectAltName
+
+# Did the server compress the response?
+curl -s -o /dev/null -H 'Accept-Encoding: br, gzip' -w '%{size_download} bytes\n' https://shop.example.com/
+curl -sI -H 'Accept-Encoding: br, gzip' https://shop.example.com/ | grep -i content-encoding
+
+# Inspect bytes / encoding of a payload
+printf 'Café' | xxd        # c3 a9 = é in UTF-8</code></pre></div>
+</section>
+<section class="blk blk-confusion"><h3 id="what-breaks-5" class="k-confusion">What breaks</h3>
+<div class="tbl"><table>
+<thead><tr><th>Symptom</th><th>Presentation cause</th></tr></thead>
+<tbody>
+<tr><td>Sudden total outage, browsers show <code>NET::ERR_CERT_DATE_INVALID</code></td><td><strong>Expired certificate</strong></td></tr>
+<tr><td>Works in Chrome, fails in <code>curl</code>/Java/Android</td><td><strong>Missing intermediate certificate</strong> (browsers sometimes fetch it themselves; other clients don't)</td></tr>
+<tr><td>Some clients fail TLS, others fine</td><td>Clock skew on the client; old clients without TLS 1.2+/SNI; cipher mismatch</td></tr>
+<tr><td>Wrong certificate served</td><td>SNI not sent (old client, raw IP), or the wrong default cert on the LB</td></tr>
+<tr><td>Order IDs off by one in the UI</td><td>64-bit integer in JSON parsed into a JS <code>Number</code></td></tr>
+<tr><td><code>Café</code> shows as <code>CafÃ©</code></td><td>UTF-8 decoded as Latin-1 somewhere in the pipeline</td></tr>
+<tr><td>gRPC consumer crashes after a deploy</td><td>Protobuf field number reused or type changed</td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-example"><h3 id="war-story-the-certificate-that-expired-on-a-saturday" class="k-example">War story: "The certificate that expired on a Saturday"</h3>
+<p>A company's API certificate was renewed manually every year by one engineer, who left. On a Saturday the certificate expired. Every mobile app version pinned to that certificate's public key also broke, and fixing that needed an app-store release that took four days. <strong>Fixes:</strong> automated issuance and renewal (ACME / cloud certificate manager), expiry monitoring alerting 30 days ahead, and pinning the <em>CA/intermediate</em> key rather than the leaf, with a backup pin. <strong>Lesson for managers:</strong> certificate expiry is one of the most common <em>preventable</em> outages. Track it as an owned, monitored asset, not tribal knowledge.</p>
+</section>
+<section class="blk blk-idea"><h3 id="why-it-matters-to-you-5" class="k-idea">Why it matters to you</h3>
+<ul>
+<li><strong>Decide where TLS terminates, and say so.</strong> At the CDN? The LB? The pod (end-to-end / mTLS via a service mesh)? Every terminating hop can read plaintext. That's a compliance (PCI/HIPAA) and threat-model decision.</li>
+<li><strong>Encoding and serialisation are API contracts.</strong> Put them in your API guidelines: UTF-8, ISO-8601 timestamps in UTC, string IDs, explicit nulls vs missing fields, protobuf evolution rules.</li>
+<li><strong>Automate certificates end to end.</strong> A manual certificate is an incident on a timer.</li>
+</ul>
+</section>
+<h3 id="go-deeper-in-the-series-5">Go deeper in the series</h3>
+<ul>
+<li><strong>TLS 1.3 in depth:</strong> <a href="../v2-https/real-life-guide-v1-book.html#chapter-4-tls-https-the-encrypted-tunnel">HTTPS guide, Chapter 4</a>.</li>
+<li><strong>Inspect any server's TLS from Go</strong>, with named failure modes: <code>tlsinspect</code>, <a href="tcp-ip/real-life-guide-v1-book.html#chapter-29-tls-how-it-gets-encrypted">TCP/IP Chapter 29</a>.</li>
+<li><strong>Certificate operations</strong> (inventory, chains, ACME, 47-day lifetimes): <a href="tcp-ip/real-life-guide-v1-book.html#chapter-56-tls-and-certificate-operations-expiry-chains-sni-rotation">TCP/IP Chapter 56</a> and <a href="../v2-https/real-life-guide-v1-book.html#chapter-16-certificate-and-domain-operations-acme-rotation-ct-monitoring-and-emergency-revocation">HTTPS Chapter 16</a>.</li>
+<li><strong>Serialisation and framing in Go:</strong> <a href="../Golang/real-life-golang-guide.html#23-encoding-json-and-reflection-briefly">Go guide §23 (JSON)</a> and <a href="../Golang/real-life-golang-guide.html#34-networking-deep-dive-net-conn-tcp-udp-framing-your-own-protocol">§34 (framing your own protocol)</a>.</li>
+<li><strong>The cryptography underneath</strong> (hashing vs encryption, AEAD, certificates, running a CA): <a href="../security/real-life-guide-book.html">Security from Zero</a>; envelope encryption with per-tenant keys, as a Go lab: <a href="../security/real-life-security-guide-v1-book.html#chapter-9-data-security-in-the-cloud-kms-and-envelope-encryption">Security Engineering in Depth, Chapter 9</a>.</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-9-layer-7-application" data-ch="part-9-layer-7-application"><h2 id="part-9-layer-7-application">Part 9 — Layer 7: Application</h2>
+<section class="blk blk-tldr"><h3 id="job-6" class="k-tldr">Job</h3>
+<p>Provide the service the user actually wanted, using a protocol that both applications understand: HTTP to place an order, DNS to find a server, the Postgres wire protocol to save it.</p>
+</section>
+<section class="blk blk-problem"><h3 id="in-our-story-6" class="k-problem">In our story</h3>
+<p>Three L7 protocols take part in your one click: <strong>DNS</strong>, <strong>HTTP</strong>, and the <strong>Postgres protocol</strong>.</p>
+<p><strong>Step A: DNS (assuming nothing is cached).</strong> The browser needs an IP for <code>shop.example.com</code>:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Browser cache?        miss
+OS resolver cache?    miss
+ │
+ ▼ UDP 53 → home router 192.168.1.1 (DNS forwarder) → ISP recursive resolver
+                                                         │
+     ┌───────────────────────────────────────────────────┘
+     │ 1. Root server       "who handles .com?"           → a.gtld-servers.net ...
+     │ 2. .com TLD server   "who handles example.com?"    → ns1.example-dns.net ...
+     │ 3. Authoritative     "shop.example.com?"
+     │       → CNAME shop-alb-123.region.elb.example.net
+     │       → A     198.51.100.20   TTL 60
+     ▼
+Browser now has 198.51.100.20 (cached for 60 s)</code></pre></div>
+<p>DNS is an L7 protocol carried over <strong>UDP</strong> (L4), falling back to TCP for large responses. Increasingly it's encrypted (DNS-over-HTTPS/TLS). A cold lookup can take 20–100 ms or more. A cached one takes 0 ms.</p>
+<p><strong>Step B: the HTTP request.</strong> Inside the TLS tunnel, on HTTP/2 stream 15:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="http"><code>:method: POST
+:scheme: https
+:authority: shop.example.com
+:path: /api/v1/orders
+content-type: application/json
+content-length: 43
+cookie: session=s%3A9d8f...; AWSALB=...
+idempotency-key: 7f3c9a2e-1b4d-4c8e-9f00-2a6b8d1e5c43
+user-agent: Mozilla/5.0 ...
+accept-encoding: gzip, br
+
+{"cartId":"c_8812","paymentMethodId":"pm_77"}</code></pre></div>
+<p><strong>Step C: L7 routing at the load balancer.</strong> Because the ALB decrypts the traffic and parses HTTP, it can make <strong>content-aware</strong> decisions that an L4 device can't:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Rule: Host = shop.example.com AND Path = /api/v1/orders*  → target group "orders-service"
+Adds: X-Forwarded-For: 203.0.113.7      (your public IP, which is otherwise lost)
+      X-Forwarded-Proto: https
+      X-Amzn-Trace-Id: Root=1-6703...   (distributed-tracing correlation ID)
+Picks a healthy pod: 10.0.2.77:8080 (least outstanding requests)
+Sends over an existing keep-alive connection, HTTP/1.1 (or HTTP/2, gRPC)</code></pre></div>
+<p><strong>Step D: your code.</strong> The <code>orders-service</code> handler:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>1. Authenticate: look up the session cookie (Redis) → user u_4411
+2. Idempotency: have we seen key 7f3c9a2e...? No → record it
+3. Business logic: price the cart, call the payment provider (another full
+   outbound L1–L7 journey through the NAT gateway!)
+4. Persist: INSERT INTO orders ... over a pooled Postgres connection
+   (Postgres wire protocol, L7, over TCP 5432, often TLS)
+5. Respond: 201 Created  {"orderId":"o_99120371","status":"confirmed"}</code></pre></div>
+<p>Every outbound call in step D repeats the <em>entire</em> OSI journey on a different path. A single user click usually fans out into 5–50 internal L7 conversations.</p>
+</section>
+<section class="blk blk-how"><h3 id="how-it-works-6" class="k-how">How it works</h3>
+<p><strong>1. HTTP's model:</strong> a stateless request/response with method, target, headers, and body. Stateless means every request carries everything the server needs (cookies, tokens), which is what lets any instance handle any request and makes horizontal scaling possible.</p>
+<p><strong>2. Methods and idempotency matter to the network layers below.</strong></p>
+<div class="tbl"><table>
+<thead><tr><th>Method</th><th>Safe?</th><th>Idempotent?</th><th>Can a proxy/client retry automatically?</th></tr></thead>
+<tbody>
+<tr><td>GET, HEAD</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>PUT, DELETE</td><td>No</td><td>Yes</td><td>Yes (with care)</td></tr>
+<tr><td><strong>POST</strong></td><td>No</td><td><strong>No</strong></td><td><strong>No</strong>, unless you add an <strong>Idempotency-Key</strong></td></tr>
+</tbody></table></div>
+<p>When a TCP connection drops <em>after</em> the request was sent but <em>before</em> the response arrived, the client can't tell whether the order was created. L4 can't answer that question. <strong>Only L7 idempotency can.</strong> That's why our request carries an <code>Idempotency-Key</code>.</p>
+<p><strong>3. Status codes: who generated them?</strong> In a proxy chain, the same code means different things depending on <em>which hop</em> produced it:</p>
+<div class="tbl"><table>
+<thead><tr><th>Code</th><th>From your app</th><th>From the load balancer / proxy</th></tr></thead>
+<tbody>
+<tr><td>400/401/403/404</td><td>App logic</td><td>Rare (WAF block → 403)</td></tr>
+<tr><td>500</td><td>Your code threw an exception</td><td>—</td></tr>
+<tr><td><strong>502 Bad Gateway</strong></td><td>—</td><td>The upstream sent an invalid response or <strong>closed the connection</strong> (crash, keep-alive race, protocol mismatch)</td></tr>
+<tr><td><strong>503 Service Unavailable</strong></td><td>Deliberate load shedding</td><td><strong>No healthy targets</strong> (all failing health checks)</td></tr>
+<tr><td><strong>504 Gateway Timeout</strong></td><td>—</td><td>Upstream <strong>didn't respond</strong> in time (slow DB, deadlock, network drop)</td></tr>
+</tbody></table></div>
+<blockquote class="note">
+<p><strong>Incident tip:</strong> always check whether a 5xx came from the <em>app's</em> access log or only the <em>LB's</em> log. A 502/504 that appears only in LB logs means the request never got a response from your code. It's a network, timeout, or crash problem, not a logic bug.</p>
+</blockquote>
+<p><strong>4. The L7 infrastructure you already run:</strong></p>
+<div class="tbl"><table>
+<thead><tr><th>Component</th><th>L7 superpower</th></tr></thead>
+<tbody>
+<tr><td>CDN</td><td>Caching by URL/headers, edge TLS termination, close to users</td></tr>
+<tr><td>WAF</td><td>Blocks malicious payloads (SQLi, XSS) by reading the HTTP content</td></tr>
+<tr><td>API gateway</td><td>Auth, rate limiting per API key, request transformation</td></tr>
+<tr><td>L7 load balancer / ingress</td><td>Routing by host/path/header, retries, health checks</td></tr>
+<tr><td>Service mesh sidecar (Envoy)</td><td>mTLS, per-request load balancing, retries, circuit breaking, telemetry</td></tr>
+</tbody></table></div>
+<p><strong>5. HTTP versions.</strong></p>
+<div class="tbl"><table>
+<thead><tr><th></th><th>HTTP/1.1</th><th>HTTP/2</th><th>HTTP/3</th></tr></thead>
+<tbody>
+<tr><td>Transport</td><td>TCP</td><td>TCP</td><td><strong>QUIC over UDP</strong></td></tr>
+<tr><td>Concurrency</td><td>One request per connection at a time (browsers open about 6 connections)</td><td>Many streams on one connection</td><td>Many streams, <strong>no TCP head-of-line blocking</strong></td></tr>
+<tr><td>Headers</td><td>Plain text</td><td>HPACK compressed</td><td>QPACK compressed</td></tr>
+<tr><td>Handshake (new connection)</td><td>TCP + TLS = 2 RTT</td><td>TCP + TLS = 2 RTT</td><td><strong>1 RTT</strong> (0-RTT on resumption)</td></tr>
+<tr><td>Connection migration (Wi-Fi → 4G)</td><td>No (new 4-tuple = new connection)</td><td>No</td><td><strong>Yes</strong> (connection IDs)</td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-practice"><h3 id="try-it-yourself-6" class="k-practice">Try it yourself</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="bash"><code># DNS: the answer, the full delegation chain, and the TTL
+dig shop.example.com +noall +answer
+dig +trace shop.example.com
+dig @1.1.1.1 shop.example.com A +short    # ask a specific resolver
+scutil --dns | head -20                   # macOS: which resolver am I using?
+
+# HTTP: full request/response with headers
+curl -v https://shop.example.com/api/v1/health
+
+# Force a specific IP (bypass DNS) while keeping SNI/Host correct: tests one backend/LB
+curl -v --resolve shop.example.com:443:198.51.100.20 https://shop.example.com/api/v1/health
+
+# HTTP/3, if your curl supports it
+curl --http3 -sI https://shop.example.com/
+
+# Browser: DevTools → Network → click a request → Timing tab</code></pre></div>
+</section>
+<section class="blk blk-confusion"><h3 id="what-breaks-6" class="k-confusion">What breaks</h3>
+<div class="tbl"><table>
+<thead><tr><th>Symptom</th><th>L7 cause</th></tr></thead>
+<tbody>
+<tr><td>"Works for me" but not for users after a DNS change</td><td>DNS TTL/caching. Old records live until they expire (and some resolvers ignore TTLs)</td></tr>
+<tr><td><code>NXDOMAIN</code> / <code>SERVFAIL</code></td><td>Missing record, broken delegation, DNSSEC validation failure</td></tr>
+<tr><td>Duplicate orders</td><td>Client or proxy retried a non-idempotent POST after a timeout</td></tr>
+<tr><td>503 from LB, app looks healthy</td><td>Health-check path misconfigured / returning non-200 / wrong port</td></tr>
+<tr><td>413 Payload Too Large / 431 headers too large</td><td>Proxy limits (body size, header size: watch for huge cookies/JWTs)</td></tr>
+<tr><td>Real client IP is the LB's IP in logs</td><td>Not reading <code>X-Forwarded-For</code> (or reading it insecurely, trusting spoofed values)</td></tr>
+<tr><td>CORS errors in the browser</td><td>Missing/incorrect <code>Access-Control-Allow-*</code> headers. A <em>browser</em> policy at L7</td></tr>
+</tbody></table></div>
+</section>
+<section class="blk blk-example"><h3 id="war-story-the-retry-storm" class="k-example">War story: "The retry storm"</h3>
+<p>A slow database caused <code>orders-service</code> latency to rise from 100 ms to 3 s. The ALB timed out at 2 s and returned 504. The mobile app retried 3 times. The API gateway <em>also</em> retried 2 times. Each hop's retries multiplied: one user tap became up to 3 × 3 = 9 requests to an already overloaded database, which then fell over completely. <strong>Fixes:</strong> retry at only one layer, use exponential backoff with jitter, set retry budgets, require idempotency keys for POSTs, and add a circuit breaker. <strong>Lesson:</strong> retries are an L7 <em>policy</em> that multiplies load across the whole stack. Somebody has to own the end-to-end retry design.</p>
+</section>
+<section class="blk blk-idea"><h3 id="why-it-matters-to-you-6" class="k-idea">Why it matters to you</h3>
+<ul>
+<li><strong>L7 is where business semantics live</strong>: idempotency, retries, auth, rate limits. Lower layers can't make those decisions for you.</li>
+<li><strong>DNS is part of your deployment and failover system.</strong> TTLs decide how fast you can move traffic. Lower them <em>before</em> a migration.</li>
+<li><strong>Know which hop generates each 5xx.</strong> It cuts incident time in half.</li>
+<li><strong>Every L7 proxy terminates the connection.</strong> Client IP, TLS, and timeouts all restart at each hop.</li>
+</ul>
+</section>
+<h3 id="go-deeper-in-the-series-6">Go deeper in the series</h3>
+<ul>
+<li><strong>DNS from raw bytes</strong> (<code>dnsquery</code>) and <strong>DNS operations</strong> (<code>dnsdiff</code>): <a href="tcp-ip/real-life-guide-v1-book.html#chapter-18-dns-turning-names-into-addresses">TCP/IP Chapters 18 and 55</a>.</li>
+<li><strong>HTTP versions and how HTTP/3 is discovered</strong> (<code>protoprobe</code>): <a href="../v2-https/real-life-guide-v1-book.html#chapter-14-http-version-negotiation-http-1-1-http-2-http-3-alt-svc-and-fallbacks">HTTPS Chapter 14</a>.</li>
+<li><strong>Caching done right</strong> (<code>edgecache</code>, including a cache leaking one user's data to another): <a href="../v2-https/real-life-guide-v1-book.html#chapter-15-cache-correctness-browser-cdn-proxy-and-application-caches">HTTPS Chapter 15</a>.</li>
+<li><strong>Idempotency keys and retries, measured</strong> (<code>resilience</code>): <a href="../v2-https/real-life-guide-v1-book.html#chapter-21-resilience-between-services-rate-limits-retries-idempotency-and-circuit-breakers">HTTPS Chapter 21</a>.</li>
+<li><strong>502/504 from a real reverse proxy</strong> (<code>revproxy</code>): <a href="../v2-https/real-life-guide-v1-book.html#chapter-20-reverse-proxies-in-go-the-client-s-identity-framing-and-request-smuggling">HTTPS Chapter 20</a>.</li>
+<li><strong>Attacking L7:</strong> request smuggling, cache poisoning, SSRF, XXE, races, and uploads, each with a lab: <a href="../security/real-life-security-guide-v1-book.html#part-6-advanced-web-and-api-exploitation">Security Engineering in Depth, Part 6</a>.</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-10-the-full-replay-a-millisecond-timeline" data-ch="part-10-the-full-replay-a-millisecond-timeline"><h2 id="part-10-the-full-replay-a-millisecond-timeline">Part 10 — The full replay: a millisecond timeline</h2>
+<p>Two versions of the same click: <strong>cold</strong> (first visit, nothing cached) and <strong>warm</strong> (what usually happens: the page you're on already has a connection).</p>
+<p>Assumptions: Wi-Fi + fibre, RTT to the region = <strong>40 ms</strong>, server work = <strong>90 ms</strong>.</p>
+<h3 id="cold-path">Cold path</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code> t (ms)  Layer   Event
+ ──────  ─────   ─────────────────────────────────────────────────────────────────
+      0  L7      fetch() called. Browser checks DNS cache: miss
+      0  L4/L3   DNS query over UDP → router → ISP resolver
+                   (each packet: L3 IP → L2 Wi-Fi frame → L1 radio, then Ethernet, then light)
+     25  L7      DNS answer: 198.51.100.20 (resolver had .com cached; went to authoritative)
+     25  L4      TCP SYN →
+     65  L4      ← SYN-ACK. ACK →. Connection ESTABLISHED          (1 RTT)
+     65  L5/L6   TLS ClientHello (SNI, ALPN h2, key share) →
+    105  L5/L6   ← ServerHello + cert + Finished. Keys ready       (1 RTT)
+    105  L5      HTTP/2 connection preface + SETTINGS
+    105  L7      POST /api/v1/orders (HEADERS + DATA frames, encrypted) →
+    125          request arrives at ALB (½ RTT)
+    126  L7      ALB: decrypt, parse, route, add X-Forwarded-For, pick pod
+    127  L4      ALB → pod over an existing keep-alive connection (~0.5 ms in-VPC)
+    128  L7      orders-service: auth (Redis 1 ms), idempotency check, payment call (60 ms),
+                 INSERT into Postgres (5 ms), build response
+    215  L7      201 Created → ALB → encrypt → TCP → IP → ... →
+    235  L7      Browser receives response (½ RTT), decrypts, parses JSON
+    240  L7      UI shows "Order confirmed"</code></pre></div>
+<h3 id="warm-path-connection-reused">Warm path (connection reused)</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>      0  L7      fetch() → reuse the existing HTTP/2 connection, new stream ID
+      0  L7      POST sent immediately
+     20          arrives at ALB (½ RTT)
+    110          server done (90 ms)
+    130  L7      response arrives. UI updates.</code></pre></div>
+<h3 id="where-the-time-goes">Where the time goes</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>COLD (240 ms)                                   WARM (130 ms)
+DNS        ████                     25 ms
+TCP        ███████                  40 ms
+TLS        ███████                  40 ms
+Network    ███████                  40 ms        ███████        40 ms
+Server     ███████████████          90 ms        ███████████████ 90 ms
+Client       █                       5 ms</code></pre></div>
+<p><strong>What a senior engineer reads from this:</strong></p>
+<ul>
+<li><strong>About 45% of the cold request is setup</strong> (DNS + TCP + TLS) before your code even runs. Connection reuse, DNS prefetching (<code>&lt;link rel="preconnect"&gt;</code>), and HTTP/3 attack exactly this.</li>
+<li><strong>Network RTT appears at least once in every request</strong>, and once per <em>sequential</em> round trip. A page that makes 5 dependent API calls pays 5 RTTs. Batch calls, or move the work closer to users.</li>
+<li><strong>Server time is the only part you fully control in code</strong>, and inside it the payment call (another network journey) dominates.</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-11-x-ray-of-one-packet" data-ch="part-11-x-ray-of-one-packet"><h2 id="part-11-x-ray-of-one-packet">Part 11 — X-ray of one packet</h2>
+<h3 id="11-1-the-byte-budget-of-one-full-size-packet">11.1 The byte budget of one full-size packet</h3>
+<p>A full-size segment of your response leaving the ALB on a standard 1500-byte-MTU Ethernet link:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code> Layer   Header                              Bytes   Running total on the wire
+ ─────   ──────────────────────────────────  ─────   ─────────────────────────
+  L1     Preamble + SFD                          8
+  L2     Ethernet header (dst, src, type)       14
+  L3     IPv4 header                            20   ┐
+  L4     TCP header + timestamps option          32   │  MTU = 1500
+  L6     TLS record header + tag + type (≈22)   (in the payload, amortised over a 16 KB record)
+  L7     HTTP/2 frame header (9)                 (in the payload)
+         Application payload                  1448   ┘
+  L2     FCS                                     4
+  L1     Inter-frame gap                        12
+                                              ─────
+                                              1538 bytes on the wire for 1448 bytes of TCP payload</code></pre></div>
+<p><strong>Efficiency ≈ 94%.</strong> With tiny packets (a 40-byte ACK) the ratio flips: a 64-byte minimum frame plus 20 bytes of L1 overhead carries almost nothing. That's why <strong>packets per second (pps)</strong>, not just bits per second, is a real limit on load balancers, firewalls, and NICs.</p>
+<p><strong>Overheads that quietly reduce your MTU:</strong></p>
+<div class="tbl"><table>
+<thead><tr><th>Technology</th><th>Overhead</th><th>Effective inner MTU</th></tr></thead>
+<tbody>
+<tr><td>PPPoE (many DSL/fibre ISPs)</td><td>8 B</td><td>1492</td></tr>
+<tr><td>VXLAN overlay (K8s, VMware)</td><td>50 B</td><td>1450</td></tr>
+<tr><td>IPsec VPN (tunnel mode)</td><td>~50–73 B</td><td>~1400–1430</td></tr>
+<tr><td>WireGuard</td><td>60 B (IPv4) / 80 B (IPv6)</td><td>1420 typical</td></tr>
+<tr><td>GRE</td><td>24 B</td><td>1476</td></tr>
+</tbody></table></div>
+<h3 id="11-2-hop-by-hop-what-each-device-reads-and-rewrites">11.2 Hop-by-hop: what each device reads and rewrites</h3>
+<p>Follow the first request packet. ✎ = rewritten; 👁 = read but unchanged; — = not looked at.</p>
+<div class="tbl"><table>
+<thead><tr><th>Hop</th><th>L2 MACs</th><th>L3 Src IP</th><th>L3 Dst IP</th><th>TTL</th><th>L4 ports</th><th>L5–L7 (TLS/HTTP)</th></tr></thead>
+<tbody>
+<tr><td>Laptop sends</td><td>laptop → router</td><td>192.168.1.23</td><td>198.51.100.20</td><td>64</td><td>54012 → 443</td><td>encrypted</td></tr>
+<tr><td>Wi-Fi AP (part of router)</td><td>✎ 802.11 → 802.3</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Home router (route + NAT)</td><td>✎ new frame</td><td>✎ <strong>203.0.113.7</strong></td><td>👁</td><td>✎ 63</td><td>✎ <strong>61001</strong> → 443</td><td>—</td></tr>
+<tr><td>ISP / Internet routers (×12)</td><td>✎ new frame each hop</td><td>👁</td><td>👁</td><td>✎ −1 each</td><td>—</td><td>—</td></tr>
+<tr><td>Stateful firewalls along the way</td><td>✎</td><td>👁</td><td>👁</td><td>✎</td><td>👁 (track state)</td><td>—</td></tr>
+<tr><td><strong>ALB (L7 proxy): connection ENDS</strong></td><td>✎</td><td>—</td><td>—</td><td>—</td><td>ends at 443</td><td><strong>decrypts, reads, routes</strong></td></tr>
+<tr><td><strong>ALB opens a new connection</strong></td><td>new</td><td><strong>10.0.1.15</strong></td><td><strong>10.0.2.77</strong></td><td>64 (fresh)</td><td><strong>new</strong> ephemeral → 8080</td><td>new HTTP request (+ X-Forwarded-For)</td></tr>
+<tr><td>K8s node / CNI</td><td>✎ (veth)</td><td>👁</td><td>👁 (or DNAT if via a Service IP)</td><td>✎</td><td>👁</td><td>—</td></tr>
+<tr><td>Pod</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>your handler reads it</td></tr>
+</tbody></table></div>
+<p>Three insights in that table that come up in architecture reviews:</p>
+<ol>
+<li><strong>Routers don't care about anything above L3.</strong> That's what lets the Internet carry any protocol.</li>
+<li><strong>NAT breaks end-to-end addressing.</strong> The server sees <code>203.0.113.7</code>, shared by your whole household.</li>
+<li><strong>An L7 proxy is a full endpoint.</strong> Two separate TCP connections, two separate TLS sessions, and the client's identity survives only in headers you deliberately add.</li>
+</ol>
+<hr>
+</section><section class="chapter" id="ch-part-12-inside-the-server-from-the-nic-to-your-handler" data-ch="part-12-inside-the-server-from-the-nic-to-your-handler"><h2 id="part-12-inside-the-server-from-the-nic-to-your-handler">Part 12 — Inside the server: from the NIC to your handler</h2>
+<p>"Moving up the stack" on the receiving side means a real sequence of hardware and kernel events. Here's what happens on the Kubernetes node hosting <code>orders-service</code>:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code> L1  Signal arrives at the (virtual) NIC; PHY decodes symbols → bits
+ L2  NIC checks FCS, matches dst MAC, DMA-copies the frame into a RAM ring buffer
+     ── NIC raises an interrupt; kernel switches to polling (NAPI) to batch packets
+     ── (offloads: the NIC may verify checksums, combine segments (GRO/LRO),
+         and spread flows across CPU cores by hashing the 5-tuple (RSS))
+ L2→3 Driver builds an sk_buff; EtherType 0x0800 → hand to IPv4
+ L3  Validate header; routing decision: "this is for a local pod address"
+     ── netfilter/iptables hooks: conntrack lookup, kube-proxy DNAT
+         (if addressed to a Service ClusterIP → rewritten to a pod IP)
+     ── forwarded across the node's bridge/veth pair into the pod's network namespace
+ L4  TCP: find the socket by 5-tuple; check seq numbers; queue in the socket's
+     receive buffer; send ACK (possibly delayed)
+     ── wakes the process blocked in epoll/kqueue: "socket readable"
+ L5-7 User space: the runtime's event loop reads bytes → TLS decrypt (if mTLS) →
+     HTTP parser → router → your handler(req)</code></pre></div>
+<p>Each step has a queue, and <strong>every queue can overflow and drop</strong>:</p>
+<div class="tbl"><table>
+<thead><tr><th>Queue</th><th>Overflow symptom</th><th>Where to look</th></tr></thead>
+<tbody>
+<tr><td>NIC ring buffer</td><td><code>rx_missed</code> / <code>rx_no_buffer</code> counters</td><td><code>ethtool -S</code></td></tr>
+<tr><td>Kernel backlog (<code>netdev_max_backlog</code>)</td><td>drops in <code>/proc/net/softnet_stat</code></td><td>softnet stats</td></tr>
+<tr><td>Conntrack table</td><td>"table full, dropping packet"</td><td><code>dmesg</code>, <code>conntrack -S</code></td></tr>
+<tr><td>SYN / accept backlog</td><td><code>ListenOverflows</code>, <code>ListenDrops</code></td><td><code>netstat -s</code>, <code>nstat</code></td></tr>
+<tr><td>Socket receive buffer</td><td><code>RcvbufErrors</code>, zero-window advertisements</td><td><code>ss -tm</code>, <code>nstat</code></td></tr>
+<tr><td>Application worker pool / event loop</td><td>latency rises, then timeouts</td><td>APM, event-loop lag metrics</td></tr>
+</tbody></table></div>
+<blockquote class="note">
+<p><strong>Rule of thumb:</strong> when a service is "slow but CPU is low", look for one of these queues being full, or for the app waiting on a downstream call.</p>
+</blockquote>
+<h3 id="go-deeper-in-the-series-7">Go deeper in the series</h3>
+<ul>
+<li><strong>The kernel receive path, netfilter hooks, and queue overflows</strong>, with a lab that fills an accept queue to 4,097: <a href="tcp-ip/real-life-guide-v1-book.html#chapter-52-host-networking-internals-namespaces-veth-bridges-conntrack">TCP/IP guide, Chapter 52</a>.</li>
+<li><strong>From the program's side:</strong> threads vs the netpoller (<a href="../os-linux/real-life-os-guide-book.html#chapter-73-go-meets-the-kernel-system-calls-threads-and-the-runtime">Linux Chapter 73</a>), file-descriptor limits (<a href="../os-linux/real-life-os-guide-book.html#chapter-78-file-descriptors-and-the-netpoller-holding-thousands-of-connections">Chapter 78</a>), and profiling a live Go service (<a href="../os-linux/real-life-os-guide-book.html#chapter-81-profiling-go-on-linux-pprof-the-execution-tracer-and-perf">Chapter 81</a>).</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-13-the-return-trip-and-the-goodbye" data-ch="part-13-the-return-trip-and-the-goodbye"><h2 id="part-13-the-return-trip-and-the-goodbye">Part 13 — The return trip and the goodbye</h2>
+<h3 id="the-response-goes-back-down-and-up-again">The response goes back down and up again</h3>
+<p>The pod writes <code>201 Created</code> + JSON. The data goes <strong>down</strong> the pod's stack (L7 → L1), crosses the VPC, goes <strong>up</strong> the ALB's stack to L7 (the ALB reads the response, may compress it, logs it), then <strong>down</strong> again into your TLS connection. It crosses the Internet (routers handle only L1–L3), and the home router reverses the NAT using its table (<code>203.0.113.7:61001</code> → <code>192.168.1.23:54012</code>). The laptop's stack takes it <strong>up</strong> from L1 to L7, and JavaScript's <code>await</code> resolves.</p>
+<p>Two details that surprise people:</p>
+<ul>
+<li><strong>The return path may differ from the forward path.</strong> BGP routing is per-direction. Your traceroute shows only <em>your</em> direction.</li>
+<li><strong>The NAT table entry is the only reason the reply finds you.</strong> If it had expired (an idle connection), the reply would be dropped and you'd see a timeout.</li>
+</ul>
+<h3 id="ending-the-conversation">Ending the conversation</h3>
+<p>Nothing closes after your click. <strong>That's on purpose.</strong> The browser keeps the HTTP/2 connection open for the next click. Eventually:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>After ~minutes idle:  browser or ALB sends HTTP/2 GOAWAY        (L7/L5 says "no more streams")
+                      TLS close_notify alert                    (L6 says "end of encrypted data")
+                      TCP FIN → ACK, FIN → ACK                  (L4 graceful close)
+                      closer holds TIME_WAIT for 60 s           (L4 hygiene)
+                      NAT mapping expires in the home router    (L3 state cleaned up)
+                      ARP entry for gateway stays (refreshed)   (L2)
+                      Wi-Fi stays associated                    (L1/L2)</code></pre></div>
+<p><strong>Graceful shutdown on deploys</strong> depends on getting this sequence right: stop accepting new connections, send GOAWAY / <code>Connection: close</code>, finish in-flight requests, <em>then</em> exit. Kubernetes adds a twist: removing a pod from load balancer targets is <strong>asynchronous</strong> with sending it SIGTERM, so a pod must keep serving for a few seconds after SIGTERM (a <code>preStop</code> sleep) or users get 502s on every deploy.</p>
+<h3 id="go-deeper-in-the-series-8">Go deeper in the series</h3>
+<ul>
+<li><strong>Graceful shutdown, measured:</strong> a draining backend lost 0 of 300 requests and <code>kill -9</code> lost 24 (<a href="tcp-ip/real-life-guide-v1-book.html#chapter-57-production-load-balancing-l4-vs-l7-health-checks-draining-retries">TCP/IP Chapter 57</a>).</li>
+<li><strong>Shutdown in Kubernetes</strong>, with the <code>preStop</code> sleep this section describes: <a href="../os-linux/real-life-os-guide-book.html#chapter-82-capstone-shipping-a-well-behaved-go-service-image-systemd-kubernetes">Linux guide, Chapter 82</a>.</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-14-debugging-by-layer-the-incident-playbook" data-ch="part-14-debugging-by-layer-the-incident-playbook"><h2 id="part-14-debugging-by-layer-the-incident-playbook">Part 14 — Debugging by layer: the incident playbook</h2>
+<h3 id="14-1-three-strategies">14.1 Three strategies</h3>
+<div class="tbl"><table>
+<thead><tr><th>Strategy</th><th>Start at</th><th>Use when</th></tr></thead>
+<tbody>
+<tr><td><strong>Bottom-up</strong></td><td>L1 (link, cables, errors) and work upward</td><td>"Nothing works"; new network/hardware; one host is affected</td></tr>
+<tr><td><strong>Top-down</strong></td><td>L7 (the error message, logs) and work downward</td><td>One app/endpoint is broken while others work</td></tr>
+<tr><td><strong>Divide and conquer</strong></td><td>L3/L4 (<code>ping</code>, <code>nc</code>)</td><td>Most of the time: one test splits the stack in half</td></tr>
+</tbody></table></div>
+<h3 id="14-2-the-ladder-one-command-per-layer">14.2 The ladder: one command per layer</h3>
+<p>Run these from the failing client, in order. <strong>The first one that fails tells you the layer.</strong></p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="bash"><code># L1/L2: do I have a link and an address?
+ifconfig en0 | grep -E 'status|inet '        # Linux: ip -br addr
+# L2/L3: can I reach my gateway?
+ping -c 3 $(route -n get default | awk '/gateway/{print $2}')   # Linux: ip route | awk '/default/{print $3}'
+# L3: can I reach the Internet by IP (no DNS)?
+ping -c 3 1.1.1.1
+# L7 (DNS): can I resolve the name?
+dig +short shop.example.com
+# L3: can I reach the target IP? (ICMP may be blocked; don't trust "fail" alone)
+ping -c 3 198.51.100.20 ; mtr -rwc 20 198.51.100.20
+# L4: is the port open?
+nc -vz shop.example.com 443
+# L5/L6: does TLS negotiate, with a valid certificate?
+openssl s_client -connect shop.example.com:443 -servername shop.example.com &lt;/dev/null
+# L7: does the app answer correctly?
+curl -sv https://shop.example.com/api/v1/health</code></pre></div>
+<h3 id="14-3-one-curl-command-that-splits-latency-by-layer">14.3 One <code>curl</code> command that splits latency by layer</h3>
+<p>This is the most useful single command in this guide:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="bash"><code>curl -o /dev/null -s -w '
+  DNS lookup  (L7 DNS)      : %{time_namelookup}s
+  TCP connect (L4)          : %{time_connect}s
+  TLS done    (L5/L6)       : %{time_appconnect}s
+  Request sent              : %{time_pretransfer}s
+  First byte  (server work) : %{time_starttransfer}s
+  Total                     : %{time_total}s
+  HTTP %{http_code}, %{size_download} bytes, remote %{remote_ip}, HTTP/%{http_version}
+' https://shop.example.com/api/v1/health</code></pre></div>
+<p>The values are <strong>cumulative</strong>. Subtract consecutive values to get each phase:</p>
+<div class="tbl"><table>
+<thead><tr><th>Large gap between…</th><th>Means</th><th>Look at</th></tr></thead>
+<tbody>
+<tr><td>0 → <code>namelookup</code></td><td>Slow DNS</td><td>Resolver, TTLs, DNS provider</td></tr>
+<tr><td><code>namelookup</code> → <code>connect</code></td><td>High RTT or SYN loss/retries (a gap ≈1 s or ≈3 s = retransmitted SYN)</td><td>Network path, firewall, backlog</td></tr>
+<tr><td><code>connect</code> → <code>appconnect</code></td><td>Slow TLS (OCSP, large cert chain, CPU-starved TLS terminator, extra RTT)</td><td>LB/TLS config</td></tr>
+<tr><td><code>pretransfer</code> → <code>starttransfer</code></td><td><strong>Server think time</strong> (the app or its dependencies)</td><td>APM traces, DB</td></tr>
+<tr><td><code>starttransfer</code> → <code>total</code></td><td>Large body / low throughput / loss</td><td>Payload size, compression, BDP</td></tr>
+</tbody></table></div>
+<h3 id="14-4-symptom-layer-quick-map">14.4 Symptom → layer quick map</h3>
+<div class="tbl"><table>
+<thead><tr><th>What the user/engineer says</th><th>Most likely layer(s)</th><th>First check</th></tr></thead>
+<tbody>
+<tr><td>"No internet at all"</td><td>L1–L3</td><td>Link, IP address, gateway ping</td></tr>
+<tr><td>"Some sites work, others don't"</td><td>L3 DNS/L7, MTU</td><td><code>dig</code>, PMTU ping test</td></tr>
+<tr><td>"It's slow, but only sometimes / only p99"</td><td>L1/L2 loss → L4 retransmits</td><td><code>mtr</code> loss, <code>ss -ti</code> retrans, interface errors</td></tr>
+<tr><td>"Connection refused"</td><td>L4 (nothing listening)</td><td>Process up? Right port?</td></tr>
+<tr><td>"Connection timed out"</td><td>L3/L4 filtering</td><td>Security groups, NACLs, routes</td></tr>
+<tr><td>"Connection reset"</td><td>L4/L5</td><td>Idle timeouts, crashes, keep-alive mismatch</td></tr>
+<tr><td>"SSL/certificate error"</td><td>L6</td><td>Expiry, chain, SNI, client clock</td></tr>
+<tr><td>"502 / 504"</td><td>L4–L7 between proxy and app</td><td>LB logs vs app logs, timeouts chain</td></tr>
+<tr><td>"500 / wrong data"</td><td>L7 (or L6 serialisation)</td><td>App logs, traces</td></tr>
+<tr><td>"Works locally, fails in Kubernetes"</td><td>L3 (network policy), L7 (DNS/service names), L2 (MTU)</td><td><code>kubectl exec</code> + the ladder from inside the pod</td></tr>
+</tbody></table></div>
+<h3 id="14-5-packet-capture-ground-truth">14.5 Packet capture: ground truth</h3>
+<p>When logs disagree, the packets decide:</p>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre data-lang="bash"><code># Capture on a server, filtered to one client, full packets, to a file
+sudo tcpdump -i any -nn -s0 -w /tmp/case123.pcap host 203.0.113.7 and port 443
+
+# On Kubernetes: capture inside a pod's network namespace
+kubectl debug -it pod/orders-7d9f --image=nicolaka/netshoot --target=orders -- tcpdump -nn -i any port 8080</code></pre></div>
+<p>Open it in <strong>Wireshark</strong> and use <em>Statistics → Conversations</em>, <em>Analyze → Expert Information</em> (retransmissions, zero windows, resets), and <em>Statistics → TCP Stream Graphs</em>. For TLS, export browser keys with <code>SSLKEYLOGFILE=/tmp/keys.log</code> and point Wireshark at that file to see decrypted HTTP.</p>
+<h3 id="go-deeper-in-the-series-9">Go deeper in the series</h3>
+<ul>
+<li><strong>The ladder as a program:</strong> <code>netcheck</code> stops at the first failing layer (<a href="tcp-ip/real-life-guide-v1-book.html#chapter-34-a-troubleshooting-method-that-works">TCP/IP Chapter 34</a>).</li>
+<li><strong><code>curl -w</code> in Go:</strong> <code>httptrace</code> times each phase and shows connection reuse (<a href="../v2-https/real-life-guide-v1-book.html#chapter-17-debugging-the-lifecycle-browser-devtools-curl-openssl-packet-capture-and-logs">HTTPS Chapter 17</a>).</li>
+<li><strong>Decode a capture yourself:</strong> <code>pcapread</code> (<a href="tcp-ip/real-life-guide-v1-book.html#chapter-32-wireshark-reading-a-conversation">TCP/IP Chapter 32</a>).</li>
+<li><strong>Running the incident:</strong> <a href="tcp-ip/real-life-guide-v1-book.html#chapter-60-incident-response-runbooks-packet-evidence-and-escalation">TCP/IP Chapter 60</a> and <a href="../os-linux/real-life-os-guide-book.html#chapter-72-incident-response-and-refactoring-on-real-linux-systems">Linux Chapter 72</a>.</li>
+<li><strong>Security incidents in cloud and containers</strong>, and detections as tested Go code: <a href="../security/real-life-security-guide-v1-book.html#chapter-55-incident-response-for-cloud-and-containers">Security Engineering in Depth, Chapters 51 and 55</a>.</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-15-architecture-decisions-by-layer-the-senior-and-manager-view" data-ch="part-15-architecture-decisions-by-layer-the-senior-and-manager-view"><h2 id="part-15-architecture-decisions-by-layer-the-senior-and-manager-view">Part 15 — Architecture decisions by layer: the senior and manager view</h2>
+<h3 id="15-1-l4-vs-l7-load-balancing">15.1 L4 vs L7 load balancing</h3>
+<div class="tbl"><table>
+<thead><tr><th></th><th>L4 (NLB, IPVS, Maglev)</th><th>L7 (ALB, nginx, Envoy, ingress)</th></tr></thead>
+<tbody>
+<tr><td>Sees</td><td>IPs, ports, TCP/UDP</td><td>Full HTTP: host, path, headers, cookies, body</td></tr>
+<tr><td>Terminates TCP/TLS</td><td>No (pass-through; optional TLS termination)</td><td>Yes</td></tr>
+<tr><td>Client IP preserved</td><td>Yes (or via PROXY protocol)</td><td>Only via <code>X-Forwarded-For</code></td></tr>
+<tr><td>Latency / throughput</td><td>Lowest overhead, millions of pps</td><td>More CPU per request</td></tr>
+<tr><td>Routing</td><td>Per <strong>connection</strong></td><td>Per <strong>request</strong></td></tr>
+<tr><td>Features</td><td>Static IPs, any TCP/UDP protocol</td><td>Path routing, retries, auth, WAF, canaries, header rewriting</td></tr>
+<tr><td>Pick when</td><td>Non-HTTP protocols, extreme throughput, static IPs, TLS pass-through for compliance</td><td>HTTP APIs and web apps (most of the time)</td></tr>
+</tbody></table></div>
+<p><strong>The gRPC trap:</strong> gRPC uses long-lived HTTP/2 connections. Behind an <strong>L4</strong> balancer, each client opens one connection to one backend and sends <em>every</em> request there, so new pods get no traffic and hot pods melt. You need <strong>per-request L7 balancing</strong> (Envoy/service mesh, an L7 LB with HTTP/2 support, or client-side load balancing with a lookaside resolver).</p>
+<h3 id="15-2-where-to-terminate-tls">15.2 Where to terminate TLS</h3>
+<div class="codewrap"><button class="copy" type="button" aria-label="Copy code">Copy</button><pre><code>Option A: edge only        Client ══TLS══ CDN/LB ──plain── app        simplest; plaintext inside VPC
+Option B: re-encrypt       Client ══TLS══ LB ══TLS══ app              compliance-friendly; certs on apps
+Option C: pass-through     Client ════════TLS════════ app (L4 LB)     LB can't do L7 routing
+Option D: mesh mTLS        Client ══TLS══ LB ══mTLS══ sidecar ─ app   zero-trust; identity per service</code></pre></div>
+<p>Ask: who can see plaintext? Where do certificates live, and who rotates them? What does the compliance scope (PCI, HIPAA) require?</p>
+<h3 id="15-3-ownership-map-who-owns-which-layer">15.3 Ownership map: who owns which layer</h3>
+<div class="tbl"><table>
+<thead><tr><th>Layer</th><th>Typically owned by</th><th>Typical vendor / product touchpoints</th></tr></thead>
+<tbody>
+<tr><td>L1–L2</td><td>Cloud provider / data-centre / IT networking</td><td>Instance network performance, Direct Connect / ExpressRoute links</td></tr>
+<tr><td>L3</td><td>Platform/network team</td><td>VPC design, IPAM, route tables, Transit Gateway, VPN, DDoS protection (L3/L4)</td></tr>
+<tr><td>L4</td><td>Platform team</td><td>NLB, security groups, NAT gateways, conntrack/port limits</td></tr>
+<tr><td>L5–L6</td><td>Platform + security</td><td>Certificates, TLS policy, mTLS/mesh, KMS</td></tr>
+<tr><td>L7</td><td>Product engineering teams (+ platform for shared infra)</td><td>API gateway, ALB/ingress rules, WAF rules, CDN config, DNS records</td></tr>
+</tbody></table></div>
+<p>Gaps in this table cause incidents. <strong>The most common orphaned items:</strong> certificate renewal, DNS records, timeout chains across proxies, NAT gateway capacity, and MTU on overlays and VPNs. Assign each one an owner explicitly.</p>
+<h3 id="15-4-design-checklist-by-layer">15.4 Design checklist by layer</h3>
+<p>Use this in design reviews for any new service:</p>
+<ul>
+<li><strong>L1/L2:</strong> Which regions/AZs? What RTT do users get? Any L2 assumptions (multicast, VRRP) that won't hold in the cloud? MTU across overlays and VPNs?</li>
+<li><strong>L3:</strong> Non-overlapping CIDR from central IPAM? Public vs private subnets? Egress through NAT, with capacity planned? IPv6 plan? Which ICMP is allowed?</li>
+<li><strong>L4:</strong> TCP or UDP/QUIC? Connection pooling on every client? Connect/read timeouts set explicitly? Expected connections per second and concurrent connections vs NAT and conntrack limits?</li>
+<li><strong>L5:</strong> Stateless servers? Where is session state stored? Idle timeouts documented per hop, each hop shorter than the next? Graceful shutdown and connection draining?</li>
+<li><strong>L6:</strong> TLS terminated where, and who can see plaintext? Certificates automated and monitored? Serialisation format and schema-evolution rules? UTF-8, timestamp, and ID conventions?</li>
+<li><strong>L7:</strong> Idempotency for writes? Retry policy owned at exactly one layer, with backoff, jitter, and a budget? Rate limiting by what key (not just IP)? Health checks that test real dependencies, but not too aggressively? DNS TTLs for failover?</li>
+</ul>
+<h3 id="15-5-cost-lives-at-layers-too">15.5 Cost lives at layers too</h3>
+<ul>
+<li><strong>Data transfer</strong> (L3): cross-AZ, cross-region, and Internet egress are billed per GB. A chatty service talking across AZs can cost more than its compute.</li>
+<li><strong>NAT gateway processing</strong> (L3/L4): billed per GB. Route traffic to cloud services through VPC endpoints instead.</li>
+<li><strong>L7 features</strong> (ALB LCUs, WAF rules, API gateway per-request pricing): grow with requests, not just bytes.</li>
+</ul>
+<h3 id="go-deeper-in-the-series-10">Go deeper in the series</h3>
+<ul>
+<li><strong>L4 vs L7, health checks, draining, the PROXY protocol:</strong> <a href="tcp-ip/real-life-guide-v1-book.html#chapter-57-production-load-balancing-l4-vs-l7-health-checks-draining-retries">TCP/IP Chapter 57</a>; the Go plan builds an <a href="../Golang/detailed-90-day-plan/week7.md#day-48-tcp-load-balancer-l4">L4 load balancer (Day 48)</a>.</li>
+<li><strong>TLS termination, X-Forwarded-For trust, request smuggling:</strong> <a href="../v2-https/real-life-guide-v1-book.html#chapter-20-reverse-proxies-in-go-the-client-s-identity-framing-and-request-smuggling">HTTPS Chapter 20</a>.</li>
+<li><strong>SLOs and error budgets</strong> for the decisions above: <a href="../v2-https/real-life-guide-v1-book.html#chapter-23-slis-slos-and-error-budgets-for-https-services">HTTPS Chapter 23</a>.</li>
+<li><strong>Kubernetes networking pitfalls</strong> (<code>ndots:5</code>, conntrack DNS race, source-IP loss): <a href="tcp-ip/real-life-guide-v1-book.html#chapter-58-kubernetes-networking-services-ingress-networkpolicy-cni">TCP/IP Chapter 58</a>.</li>
+<li><strong>Packaging the service</strong> (15 MB image, systemd, Kubernetes manifest): <a href="../os-linux/real-life-os-guide-book.html#chapter-82-capstone-shipping-a-well-behaved-go-service-image-systemd-kubernetes">Linux Chapter 82</a>.</li>
+<li><strong>The security review of the same architecture:</strong> attack paths and chokepoints (<a href="../security/real-life-security-guide-v1-book.html#chapter-1-from-vulnerabilities-to-attack-paths">Security in Depth, Chapter 1</a>) and the senior-engineer review playbook (<a href="../security/real-life-security-guide-v1-book.html#chapter-77-security-architecture-review-the-senior-engineer-playbook">Chapter 77</a>).</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-part-16-cheat-sheet" data-ch="part-16-cheat-sheet"><h2 id="part-16-cheat-sheet">Part 16 — Cheat sheet</h2>
+<div class="tbl"><table>
+<thead><tr><th>Layer</th><th>PDU</th><th>Address</th><th>Devices / software</th><th>Key protocols</th><th>Cloud equivalent</th><th>Go-to tools</th><th>Classic failures</th></tr></thead>
+<tbody>
+<tr><td><strong>7 Application</strong></td><td>Message</td><td>URL, hostname</td><td>Browser, app, ALB, API gateway, CDN, WAF</td><td>HTTP, DNS, gRPC, SMTP, Postgres</td><td>ALB, API Gateway, CloudFront, Route 53</td><td><code>curl -v</code>, <code>dig</code>, DevTools</td><td>5xx, retry storms, DNS caching, duplicate POSTs</td></tr>
+<tr><td><strong>6 Presentation</strong></td><td>Message</td><td>—</td><td>TLS libraries, serialisers</td><td>TLS, JSON, protobuf, UTF-8, gzip/brotli</td><td>ACM/certificate manager, KMS</td><td><code>openssl s_client</code>, <code>xxd</code></td><td>Expired/missing-chain certificates, mojibake, precision loss</td></tr>
+<tr><td><strong>5 Session</strong></td><td>Message</td><td>Session ID, ticket, cookie</td><td>TLS, HTTP/2, connection pools</td><td>TLS resumption, HTTP/2 streams, WebSocket</td><td>Sticky sessions, ElastiCache sessions</td><td><code>curl -v</code> (Re-using), <code>openssl -reconnect</code></td><td>Keep-alive 502s, sticky imbalance, idle disconnects</td></tr>
+<tr><td><strong>4 Transport</strong></td><td>Segment / datagram</td><td>Port</td><td>Kernel, L4 LB, firewall</td><td>TCP, UDP, QUIC</td><td>NLB, security groups</td><td><code>ss -ti</code>, <code>nc -vz</code>, <code>netstat -s</code></td><td>Refused vs timeout, port exhaustion, retransmits, backlog drops</td></tr>
+<tr><td><strong>3 Network</strong></td><td>Packet</td><td>IP address</td><td>Router, L3 switch, NAT, firewall</td><td>IPv4/6, ICMP, BGP, OSPF</td><td>VPC, subnets, route tables, NAT/IGW, TGW, NACL</td><td><code>ip route</code>, <code>traceroute</code>, <code>mtr</code>, <code>ping</code></td><td>Overlapping CIDRs, no route, PMTU black-hole, asymmetric routing</td></tr>
+<tr><td><strong>2 Data Link</strong></td><td>Frame</td><td>MAC address</td><td>Switch, Wi-Fi AP, bridge, NIC</td><td>Ethernet, 802.11, ARP, VLAN, STP, VXLAN</td><td>ENI, (hidden) virtual switch</td><td><code>arp -a</code>, <code>ip neigh</code>, <code>tcpdump -e</code></td><td>Stale ARP, loops/broadcast storms, VLAN mismatch, MTU</td></tr>
+<tr><td><strong>1 Physical</strong></td><td>Bit / symbol</td><td>—</td><td>Cables, optics, radios, NIC PHY, ONT</td><td>1000BASE-T, 802.11ax PHY, GPON, DWDM</td><td>Instance network bandwidth</td><td><code>ethtool</code>, <code>wdutil</code>, <code>iw</code>, <code>networkQuality</code></td><td>CRC errors, low SNR, duplex mismatch, distance (latency floor)</td></tr>
+</tbody></table></div>
+<p><strong>Numbers to remember</strong></p>
+<div class="tbl"><table>
+<thead><tr><th>Number</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td>~5 µs/km</td><td>Light in fibre. 1,000 km ≈ 10 ms RTT minimum</td></tr>
+<tr><td>1500</td><td>Standard Ethernet MTU (bytes). 1460 TCP MSS (1448 with timestamps)</td></tr>
+<tr><td>9001</td><td>AWS in-VPC jumbo MTU</td></tr>
+<tr><td>64 / 128</td><td>Default TTL (Linux/macOS / Windows)</td></tr>
+<tr><td>1 s, 200 ms</td><td>Initial TCP RTO (SYN retry) / Linux minimum RTO</td></tr>
+<tr><td>10 segments</td><td>TCP initial congestion window (~14 KB)</td></tr>
+<tr><td>60 s</td><td>Linux TIME_WAIT</td></tr>
+<tr><td>32768–60999</td><td>Linux ephemeral ports (~28k)</td></tr>
+<tr><td>1 RTT</td><td>TLS 1.3 handshake (TLS 1.2: 2 RTT; QUIC: 1 RTT including transport)</td></tr>
+<tr><td>2⁵³−1</td><td>Largest safe integer in a JavaScript Number</td></tr>
+</tbody></table></div>
+<hr>
+</section><section class="chapter" id="ch-part-17-self-check-questions" data-ch="part-17-self-check-questions"><h2 id="part-17-self-check-questions">Part 17 — Self-check questions</h2>
+<details class="qa"><summary>1. Your request crosses 15 routers. Which addresses change, and which stay the same?</summary>
+<p>MAC addresses change at <strong>every</strong> hop (each link has a new L2 frame). The IP addresses stay the same end to end, <strong>except</strong> where NAT rewrites them (your home router rewrites the source IP and port). TTL decrements at every router. Everything from L4 up is untouched by routers, but it's <em>terminated</em> by any L7 proxy (the ALB), which starts a brand-new connection with new IPs and ports.</p>
+</details>
+<details class="qa"><summary>2. A user reports "connection refused" and another reports "connection timed out" for the same service. What does each tell you?</summary>
+<p><strong>Refused:</strong> the packet reached the host and the kernel replied with RST because nothing is listening on that port (process down, wrong port, bound to 127.0.0.1 only). <strong>Timed out:</strong> the SYN got no answer at all. Something dropped it silently (security group, NACL, firewall, missing route, host down). Different causes, often different owners.</p>
+</details>
+<details class="qa"><summary>3. Why do small API responses work but large ones hang after enabling a VPN/overlay?</summary>
+<p>The MTU was reduced by the encapsulation overhead, but endpoints still send 1500-byte packets with DF set. The oversized packets are dropped, and the ICMP "fragmentation needed" message that would trigger Path MTU Discovery is blocked or never generated. Fix the inner MTU, clamp TCP MSS, or allow the ICMP.</p>
+</details>
+<details class="qa"><summary>4. Why does 0.5% packet loss hurt p99 latency so much more than p50?</summary>
+<p>Most requests see no loss (p50 unaffected), but a lost packet costs a retransmission timeout of at least 200 ms (Linux minimum RTO), and a lost SYN costs 1 s. Those rare, huge penalties concentrate in the tail. HTTP/2 makes it worse: one lost TCP packet stalls every multiplexed stream on that connection.</p>
+</details>
+<details class="qa"><summary>5. You're behind an ALB and see intermittent 502s with nothing in your app's logs. What's your first hypothesis?</summary>
+<p>A keep-alive / idle-timeout race: your server closes idle connections sooner than the load balancer does, so the LB occasionally sends a request on a socket the server is closing. Make the server's keep-alive timeout longer than the LB's idle timeout. Other candidates: pod crashes/OOM kills, or pods terminating during deploys without connection draining.</p>
+</details>
+<details class="qa"><summary>6. gRPC traffic all goes to one pod even though you have 10. Why, and what's the fix?</summary>
+<p>gRPC multiplexes all requests over a long-lived HTTP/2 connection. An L4 balancer (or a Kubernetes ClusterIP Service through kube-proxy) balances <em>connections</em>, not <em>requests</em>, so each client sticks to one pod. Use L7 per-request balancing (Envoy/service mesh, an HTTP/2-aware L7 LB) or client-side load balancing.</p>
+</details>
+<details class="qa"><summary>7. Why must a POST /orders carry an idempotency key when TCP already guarantees reliable delivery?</summary>
+<p>TCP guarantees delivery of <em>bytes on a live connection</em>. It can't tell the client whether the server <em>processed</em> a request if the connection died before the response arrived. Only the application knows whether the order exists. An idempotency key lets the client safely retry, and the server deduplicates. That's end-to-end reliability, which by its nature belongs at L7.</p>
+</details>
+<details class="qa"><summary>8. Where does TLS sit in the OSI model, and why is the better question "who terminates it"?</summary>
+<p>Its handshake acts like L5 (session setup and resumption), and its record protection acts like L6 (encryption). It runs on top of L4. In practice, the important facts are <em>which component decrypts traffic</em> (and can therefore read, route, and log it), where the certificates live, and who rotates them. Those answers drive security, compliance, and routing capabilities.</p>
+</details>
+<details class="qa"><summary>9. Your service rate-limits per client IP. A big customer complains that their whole office is blocked. What happened?</summary>
+<p>The whole office reaches you through one NAT IP (or a corporate proxy, or CGNAT), so all their users share one rate-limit bucket. Rate-limit on authenticated identity (API key, user ID, tenant) and use IP only as a coarse abuse signal.</p>
+</details>
+<details class="qa"><summary>10. A cold request takes 240 ms, a warm one 130 ms. Name three changes that reduce the cold cost without touching server code.</summary>
+<p>(1) <code>preconnect</code> / DNS prefetch so TCP and TLS happen before the click; (2) HTTP/3 (QUIC) to merge the transport and TLS handshakes, and TLS session resumption / 0-RTT for safe requests; (3) terminate TCP/TLS at a CDN edge close to the user, so the handshakes cost a short RTT and the edge reuses warm connections to the origin. Also: longer DNS TTLs where safe, and keeping connections alive longer.</p>
+</details>
+<hr>
+<h3 id="where-to-go-next">Where to go next</h3>
+<ul>
+<li><strong>The rest of the series</strong>, in order: this guide is step 2a. Next is <a href="tcp-ip/real-life-guide-v1-book.html">Networking from Zero (TCP/IP)</a> (L1–L4 in depth), then the security pair, <a href="../security/real-life-guide-book.html">Security from Zero</a> and <a href="../security/real-life-security-guide-v1-book.html">Security Engineering in Depth</a>, and finally <a href="../v2-https/real-life-guide-v1-book.html">The HTTPS Request Lifecycle</a>, whose <a href="../v2-https/real-life-guide-v1-book.html#chapter-25-one-https-request-every-layer-every-guide">Chapter 25</a> traces one request through every guide in Go. The machines at both ends are covered in step 1, <a href="../os-linux/real-life-os-guide-book.html">Operating Systems, Linux, and Containers</a>.</li>
+<li><strong>Hands-on:</strong> capture your own "Place order" click with Wireshark (<code>SSLKEYLOGFILE</code> enabled), and label every packet with its layer and the matching step in Part 10. Doing this once is worth more than reading any guide twice.</li>
+<li><strong>References:</strong> RFC 9293 (TCP), RFC 8446 (TLS 1.3), RFC 9000 (QUIC), RFC 9113 (HTTP/2), RFC 9114 (HTTP/3), RFC 1918 (private IPv4), RFC 6598 (CGNAT space).</li>
+</ul>
+<hr>
+</section><section class="chapter" id="ch-continue-the-series" data-ch="continue-the-series"><h2 id="continue-the-series">Continue the series</h2>
+<p><strong>Next, step 2b (Networking: in depth): <a href="tcp-ip/real-life-guide-v1-book.html">Networking from Zero (TCP/IP)</a>.</strong> It covers how machines talk: addressing, routing, TCP, TLS, packet capture, network operations. Hands-on: 23 Go labs (<a href="tcp-ip/real-life-guide-v1-book.html#0-8-the-go-labs-build-the-network-tools-yourself">§0.8</a>).</p>
+</section>
+</main>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var LS = {
+    get:function(k,d){ try{ var v=localStorage.getItem('bk_'+k); return v===null?d:v; }catch(e){ return d; } },
+    set:function(k,v){ try{ localStorage.setItem('bk_'+k,v); }catch(e){} }
+  };
+
+  /* ---------- settings: theme, font size, measure, dock ---------- */
+  var THEMES = ['paper','light','night'];
+  var theme = LS.get('theme', null);
+  if(!theme){
+    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'night' : 'paper';
+  }
+  function setTheme(t){ theme=t; root.setAttribute('data-theme',t); LS.set('theme',t);
+    var b=document.getElementById('themeBtn'); if(b) b.textContent = t==='paper'?'Paper':(t==='light'?'Light':'Night'); }
+  setTheme(theme);
+
+  var fs = parseFloat(LS.get('fs','19'));
+  function setFs(v){ fs=Math.min(26,Math.max(15,v)); root.style.setProperty('--fs',fs+'px'); LS.set('fs',fs); }
+  setFs(fs);
+
+  var WIDTHS=['narrow','normal','wide'];
+  var width = LS.get('width','normal');
+  function setWidth(w){ width=w; root.setAttribute('data-width',w); LS.set('width',w); }
+  setWidth(width);
+
+  var dock = LS.get('dock','0');
+  function setDock(d){ dock=d; root.setAttribute('data-dock',d); LS.set('dock',d);
+    var b=document.getElementById('dockBtn'); if(b) b.classList.toggle('on', d==='1'); }
+  setDock(dock);
+
+  /* ---------- TOC drawer ---------- */
+  var toc=document.getElementById('toc'), scrim=document.getElementById('scrim');
+  function openToc(o){
+    toc.classList.toggle('open',o); scrim.classList.toggle('open',o);
+    document.body.style.overflow = o && window.innerWidth<1200 ? 'hidden' : '';
+    var cur=toc.querySelector('a.here'); if(o&&cur) cur.scrollIntoView({block:'center'});
+  }
+  document.getElementById('tocBtn').addEventListener('click',function(){
+    openToc(!toc.classList.contains('open')); });
+  scrim.addEventListener('click',function(){ openToc(false); });
+  toc.addEventListener('click',function(e){
+    if(e.target.closest('a') && window.innerWidth<1200) openToc(false); });
+
+  /* ---------- controls ---------- */
+  document.getElementById('themeBtn').addEventListener('click',function(){
+    setTheme(THEMES[(THEMES.indexOf(theme)+1)%THEMES.length]); });
+  document.getElementById('fsUp').addEventListener('click',function(){ setFs(fs+1); });
+  document.getElementById('fsDown').addEventListener('click',function(){ setFs(fs-1); });
+  var wb=document.getElementById('widthBtn');
+  if(wb) wb.addEventListener('click',function(){
+    setWidth(WIDTHS[(WIDTHS.indexOf(width)+1)%WIDTHS.length]); });
+  var pb=document.getElementById('printBtn');
+  if(pb) pb.addEventListener('click',function(){ window.print(); });
+  var db=document.getElementById('dockBtn');
+  if(db) db.addEventListener('click',function(){ setDock(dock==='1'?'0':'1'); });
+
+  /* ---------- progress + current chapter + auto-hide bar ---------- */
+  var bar=document.getElementById('bar'), prog=document.getElementById('progress'),
+      where=document.getElementById('where');
+  var heads=[].slice.call(document.querySelectorAll('main h1, main h2'));
+  var links={}; [].forEach.call(document.querySelectorAll('#toc a'),function(a){
+    links[a.getAttribute('href').slice(1)]=a; });
+  var current=null, lastY=0, ticking=false;
+
+  function update(){
+    var y=window.scrollY;
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    prog.style.width=(h>0?(y/h*100):0)+'%';
+
+    var active=heads[0];
+    for(var i=0;i<heads.length;i++){
+      if(heads[i].getBoundingClientRect().top<=90) active=heads[i]; else break;
+    }
+    if(active && active!==current){
+      current=active;
+      where.textContent=active.textContent.replace(/\s+/g,' ').trim();
+      var a=links[active.id];
+      [].forEach.call(document.querySelectorAll('#toc a.here'),function(x){x.classList.remove('here');});
+      if(a){ a.classList.add('here');
+             if(toc.classList.contains('open')) a.scrollIntoView({block:'nearest'}); }
+      LS.set('pos', active.id);
+    }
+    if(y>240 && y>lastY+6){ bar.classList.add('hidden'); openTocSafe(); }
+    else if(y<lastY-6 || y<240){ bar.classList.remove('hidden'); }
+    lastY=y; ticking=false;
+  }
+  function openTocSafe(){ if(window.innerWidth<1200) openToc(false); }
+  window.addEventListener('scroll',function(){
+    if(!ticking){ ticking=true; requestAnimationFrame(update); } },{passive:true});
+  window.addEventListener('resize',update);
+  update();
+
+  /* ---------- resume where you left off ---------- */
+  var pos=LS.get('pos',null), resume=document.getElementById('resume');
+  if(pos && document.getElementById(pos) && !location.hash){
+    var el=document.getElementById(pos);
+    resume.style.display='block';
+    resume.innerHTML='<a href="#'+pos+'">Continue reading: '+
+      el.textContent.replace(/\s+/g,' ').trim()+'</a>';
+  }
+
+  /* ---------- persistent checklists ---------- */
+  [].forEach.call(document.querySelectorAll('ul.checklist input'),function(box,i){
+    var key='chk_'+i;
+    if(LS.get(key,'0')==='1'){ box.checked=true; }
+    box.addEventListener('change',function(){ LS.set(key, box.checked?'1':'0'); });
+  });
+
+  /* ---------- copy buttons ---------- */
+  [].forEach.call(document.querySelectorAll('.codewrap .copy'),function(btn){
+    btn.addEventListener('click',function(){
+      var code=btn.parentNode.querySelector('code').innerText;
+      (navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject())
+        .then(function(){ btn.textContent='Copied'; btn.classList.add('done');
+          setTimeout(function(){ btn.textContent='Copy'; btn.classList.remove('done'); },1400); })
+        .catch(function(){ btn.textContent='Select manually'; });
+    });
+  });
+
+  /* ---------- icons on the pedagogical cards ---------- */
+  var ICON={tldr:'◆', problem:'⁉', idea:'✻', how:'⚙',
+            example:'≡', practice:'▶', confusion:'⚠',
+            check:'✓', reading:'☰'};
+  [].forEach.call(document.querySelectorAll('.blk > h3'),function(h){
+    var m=/blk-([a-z]+)/.exec(h.parentNode.className);
+    if(m && ICON[m[1]]) h.setAttribute('data-icon', ICON[m[1]]);
+  });
+
+  /* ---------- chapter prev/next ---------- */
+  var chapters=[].slice.call(document.querySelectorAll('main section.chapter'));
+  chapters.forEach(function(sec,i){
+    var nav=document.createElement('div'); nav.className='chapnav';
+    var prev=chapters[i-1], next=chapters[i+1];
+    function title(s){ return s.querySelector('h2').textContent.replace(/\s+/g,' ').trim(); }
+    nav.innerHTML =
+      (prev? '<a class="prev" href="#'+prev.dataset.ch+'"><span>Previous</span>'+title(prev)+'</a>'
+           : '<a class="prev spacer" href="#">.</a>') +
+      (next? '<a class="next" href="#'+next.dataset.ch+'"><span>Next</span>'+title(next)+'</a>'
+           : '<a class="next spacer" href="#">.</a>');
+    sec.appendChild(nav);
+  });
+
+  /* ---------- keyboard (MacBook) ---------- */
+  document.addEventListener('keydown',function(e){
+    if(e.metaKey||e.ctrlKey||e.altKey) return;
+    var tag=(e.target.tagName||'').toLowerCase();
+    if(tag==='input'||tag==='textarea') return;
+    switch(e.key){
+      case 't': openToc(!toc.classList.contains('open')); break;
+      case 'd': setTheme(THEMES[(THEMES.indexOf(theme)+1)%THEMES.length]); break;
+      case '+': case '=': setFs(fs+1); break;
+      case '-': setFs(fs-1); break;
+      case 'w': setWidth(WIDTHS[(WIDTHS.indexOf(width)+1)%WIDTHS.length]); break;
+      case 'p': window.print(); break;
+      case 'Escape': openToc(false); break;
+      case 'n': case 'p': {
+        var idx=chapters.indexOf(current && current.closest? current.closest('section.chapter') : null);
+        if(idx<0){ idx = e.key==='n' ? -1 : chapters.length; }
+        var t = e.key==='n' ? chapters[idx+1] : chapters[idx-1];
+        if(t) t.scrollIntoView({behavior:'smooth', block:'start'});
+        break;
+      }
+    }
+  });
+
+  // print/PDF: expand collapsed Q&A answers, then restore
+  var wasClosed=[];
+  window.addEventListener('beforeprint', function(){
+    wasClosed=[].slice.call(document.querySelectorAll('details.qa:not([open])'));
+    wasClosed.forEach(function(d){ d.open=true; });
+  });
+  window.addEventListener('afterprint', function(){
+    wasClosed.forEach(function(d){ d.open=false; });
+  });
+})();
+</script>
+</body>
+</html>

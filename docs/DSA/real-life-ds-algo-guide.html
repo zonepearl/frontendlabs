@@ -1,0 +1,2255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>The Real-Life Guide to Data Structures &amp; Algorithms</title>
+<style>
+:root{
+  --maxw: 46rem;
+  --bg:#fbfbf9; --fg:#1f2328; --muted:#59636e; --rule:#d8dee4;
+  --link:#0a5ad6; --codebg:#f4f6f8; --codefg:#1f2328; --codeborder:#dfe3e8;
+  --thead:#eef1f4; --rowalt:#f7f9fa; --sidebg:#f4f3ef; --mark:#fff3bf;
+  --serif: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, "Noto Serif", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, "Menlo", "Consolas", "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1216; --fg:#d7dbe0; --muted:#9aa4af; --rule:#2a2f36;
+    --link:#5ea9ff; --codebg:#161a20; --codefg:#d7dbe0; --codeborder:#2a2f36;
+    --thead:#1a1f26; --rowalt:#14181d; --sidebg:#12151a; --mark:#5a4b12;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:var(--serif); font-size:18px; line-height:1.7;
+  -webkit-text-size-adjust:100%; text-rendering:optimizeLegibility;
+}
+.layout{display:flex; align-items:flex-start}
+
+/* ---- sidebar ---- */
+.sidebar{
+  position:sticky; top:0; align-self:flex-start;
+  width:20rem; min-width:20rem; height:100vh; overflow:auto;
+  background:var(--sidebg); border-right:1px solid var(--rule);
+  font-family:var(--sans); font-size:13.5px; line-height:1.45;
+  padding:1.1rem 0.5rem 3rem 1.1rem;
+}
+.sidebar .book-mini{font-weight:700; font-size:14px; padding:.2rem .4rem .8rem; color:var(--muted)}
+#toc .toc-head{font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+  font-size:11px; color:var(--muted); margin:.3rem .4rem .5rem}
+#toc ul{list-style:none; margin:0; padding:0}
+#toc .toc-part>a{display:block; font-weight:700; margin-top:.7rem; padding:.2rem .4rem;
+  color:var(--fg); text-decoration:none}
+#toc .toc-part>ul{margin:.1rem 0 .3rem}
+#toc .toc-ch a{display:block; padding:.12rem .4rem .12rem .9rem; color:var(--muted);
+  text-decoration:none; border-left:2px solid transparent}
+#toc .toc-ch.toc-loose a{padding-left:.4rem}
+#toc a:hover{color:var(--link)}
+#toc a.active{color:var(--fg); border-left-color:var(--link); background:rgba(10,90,214,.08)}
+
+/* ---- content ---- */
+.content{flex:1; min-width:0; display:flex; justify-content:center}
+article{
+  width:100%; max-width:var(--maxw);
+  padding:2.4rem 1.6rem 8rem;
+}
+h1,h2,h3,h4,h5,h6{font-family:var(--sans); line-height:1.25; font-weight:700;
+  margin:2.2em 0 .7em; scroll-margin-top:1rem; position:relative}
+h1{font-size:1.95rem; padding-bottom:.3em; border-bottom:2px solid var(--rule); margin-top:2.6em}
+h1.doc-title{font-size:2.5rem; border:0; margin:.2em 0 .1em}
+h2{font-size:1.5rem; padding-bottom:.25em; border-bottom:1px solid var(--rule)}
+h3{font-size:1.2rem}
+h4{font-size:1.03rem; color:var(--muted); text-transform:uppercase; letter-spacing:.03em}
+.anchor{position:absolute; left:-1.1em; padding-right:.4em; color:var(--muted);
+  opacity:0; text-decoration:none; font-weight:400}
+h1:hover .anchor,h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:.6}
+.anchor:hover{opacity:1 !important; color:var(--link)}
+p{margin:0 0 1.05em}
+a{color:var(--link); text-decoration:none}
+a:hover{text-decoration:underline}
+strong{font-weight:700}
+hr{border:0; border-top:1px solid var(--rule); margin:2.4em 0}
+
+ul,ol{margin:0 0 1.1em; padding-left:1.5em}
+li{margin:.3em 0}
+li>ul,li>ol{margin:.35em 0 .35em}
+li>p{margin:.4em 0}
+
+blockquote{margin:1.2em 0; padding:.6em 1.1em; border-left:4px solid var(--link);
+  background:var(--codebg); border-radius:0 6px 6px 0; color:var(--fg)}
+blockquote p:last-child{margin-bottom:0}
+
+/* ---- code: preserve alignment, scroll instead of wrap ---- */
+code{font-family:var(--mono); font-size:.86em; background:var(--codebg);
+  border:1px solid var(--codeborder); border-radius:4px; padding:.08em .35em}
+pre{position:relative; background:var(--codebg); color:var(--codefg);
+  border:1px solid var(--codeborder); border-radius:8px;
+  padding:1rem 1.1rem; margin:1.2em 0; overflow-x:auto;
+  font-family:var(--mono); font-size:13.5px; line-height:1.5;
+  -moz-tab-size:4; tab-size:4;}
+pre code{background:none; border:0; padding:0; font-size:inherit;
+  white-space:pre; display:block}
+pre[data-lang]::before{content:attr(data-lang); position:absolute; top:0; right:0;
+  font-family:var(--sans); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--muted); background:var(--bg); border:1px solid var(--codeborder);
+  border-top:0; border-right:0; border-radius:0 8px 0 6px; padding:.12em .55em}
+
+/* ---- tables ---- */
+.tbl{overflow-x:auto; margin:1.3em 0; border:1px solid var(--rule); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-family:var(--sans); font-size:13.5px; line-height:1.45}
+th,td{border:1px solid var(--rule); padding:7px 11px; text-align:left; vertical-align:top}
+thead th{background:var(--thead); font-weight:700; position:sticky; top:0}
+tbody tr:nth-child(even){background:var(--rowalt)}
+td code,th code{font-size:12.5px}
+
+/* ---- topbar (mobile) ---- */
+.topbar{display:none; position:sticky; top:0; z-index:30;
+  background:var(--bg); border-bottom:1px solid var(--rule);
+  font-family:var(--sans); padding:.5rem .8rem; align-items:center; gap:.7rem}
+.topbar button{font:inherit; padding:.35rem .7rem; border:1px solid var(--rule);
+  background:var(--sidebg); color:var(--fg); border-radius:6px; cursor:pointer}
+.topbar .t-title{font-weight:700; font-size:14px; color:var(--muted); overflow:hidden;
+  white-space:nowrap; text-overflow:ellipsis}
+
+.totop{position:fixed; right:1rem; bottom:1rem; z-index:40;
+  font-family:var(--sans); font-size:12px; padding:.5rem .7rem; border-radius:20px;
+  border:1px solid var(--rule); background:var(--sidebg); color:var(--fg);
+  cursor:pointer; opacity:0; pointer-events:none; transition:opacity .2s}
+.totop.show{opacity:.92; pointer-events:auto}
+
+@media (max-width: 1024px){
+  .sidebar{position:fixed; z-index:50; left:0; top:0; transform:translateX(-102%);
+    transition:transform .22s ease; box-shadow:0 0 40px rgba(0,0,0,.25)}
+  .sidebar.open{transform:none}
+  .topbar{display:flex}
+  article{padding:1.6rem 1.1rem 6rem}
+  .anchor{display:none}
+  body{font-size:17px}
+}
+
+/* ---- print / PDF: a real book ---- */
+@media print{
+  .sidebar,.topbar,.totop,.anchor{display:none !important}
+  .layout{display:block}
+  article{max-width:none; padding:0}
+  body{background:#fff; color:#000; font-size:11pt; line-height:1.5}
+  h1{page-break-before:always; border-bottom:2px solid #000}
+  h1.doc-title,h1:first-of-type{page-break-before:avoid}
+  h2{page-break-before:auto}
+  h1,h2,h3,h4{page-break-after:avoid}
+  pre,table,blockquote,.tbl{page-break-inside:avoid}
+  pre{font-size:8.5pt; white-space:pre-wrap; word-break:break-word;
+      border:1px solid #999; background:#f4f4f4}
+  a{color:#000; text-decoration:none}
+  thead th{position:static}
+  @page{margin:18mm 16mm}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button id="navToggle" aria-label="Toggle contents">☰ Contents</button>
+  <span class="t-title">The Real-Life Guide to Data Structures &amp; Algorithms</span>
+</div>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="book-mini">The Real-Life Guide to Data Structures &amp; Algorithms</div>
+    <nav id="toc"><div class="toc-head">Contents</div>
+<ul class="toc-list">
+<li class="toc-ch toc-loose"><a href="#why-does-this-exist">Why does this exist?</a></li>
+<li class="toc-part"><a href="#big-o-notation-how-slow-does-this-get">📏 Big-O Notation — "How Slow Does This Get?"</a><ul>
+</ul></li>
+<li class="toc-part"><a href="#beginner">🟢 BEGINNER</a><ul>
+<li class="toc-ch"><a href="#1-arrays">1. Arrays</a></li>
+<li class="toc-ch"><a href="#2-strings">2. Strings</a></li>
+<li class="toc-ch"><a href="#3-linked-lists">3. Linked Lists</a></li>
+<li class="toc-ch"><a href="#4-stacks">4. Stacks</a></li>
+<li class="toc-ch"><a href="#5-queues">5. Queues</a></li>
+<li class="toc-ch"><a href="#6-linear-search">6. Linear Search</a></li>
+<li class="toc-ch"><a href="#7-bubble-sort">7. Bubble Sort</a></li>
+</ul></li>
+<li class="toc-part"><a href="#intermediate">🟡 INTERMEDIATE</a><ul>
+<li class="toc-ch"><a href="#8-binary-search">8. Binary Search</a></li>
+<li class="toc-ch"><a href="#9-recursion">9. Recursion</a></li>
+<li class="toc-ch"><a href="#10-hash-maps-a-k-a-dictionaries-hash-tables">10. Hash Maps (a.k.a. Dictionaries / Hash Tables)</a></li>
+<li class="toc-ch"><a href="#11-trees">11. Trees</a></li>
+<li class="toc-ch"><a href="#12-binary-search-trees-bst">12. Binary Search Trees (BST)</a></li>
+<li class="toc-ch"><a href="#13-merge-sort-quick-sort">13. Merge Sort &amp; Quick Sort</a></li>
+<li class="toc-ch"><a href="#14-graphs">14. Graphs</a></li>
+<li class="toc-ch"><a href="#15-bfs-dfs-graph-tree-traversal">15. BFS &amp; DFS (Graph/Tree Traversal)</a></li>
+</ul></li>
+<li class="toc-part"><a href="#advanced">🔴 ADVANCED</a><ul>
+<li class="toc-ch"><a href="#16-dynamic-programming-dp">16. Dynamic Programming (DP)</a></li>
+<li class="toc-ch"><a href="#17-greedy-algorithms">17. Greedy Algorithms</a></li>
+<li class="toc-ch"><a href="#18-backtracking">18. Backtracking</a></li>
+<li class="toc-ch"><a href="#19-heaps-priority-queues">19. Heaps / Priority Queues</a></li>
+<li class="toc-ch"><a href="#20-union-find-disjoint-set">20. Union-Find (Disjoint Set)</a></li>
+<li class="toc-ch"><a href="#21-trie-prefix-tree">21. Trie (Prefix Tree)</a></li>
+<li class="toc-ch"><a href="#22-dijkstra-s-algorithm-shortest-path">22. Dijkstra's Algorithm (Shortest Path)</a></li>
+<li class="toc-ch"><a href="#23-topological-sort">23. Topological Sort</a></li>
+</ul></li>
+<li class="toc-part"><a href="#cheat-sheet-when-do-i-use-what">Cheat Sheet: When Do I Use What?</a><ul>
+<li class="toc-ch"><a href="#the-one-sentence-version-of-everything">The one-sentence version of everything</a></li>
+</ul></li>
+<li class="toc-part"><a href="#further-reading">📚 Further Reading</a><ul>
+<li class="toc-ch"><a href="#books">Books</a></li>
+<li class="toc-ch"><a href="#blogs-written-guides">Blogs &amp; Written Guides</a></li>
+<li class="toc-ch"><a href="#video-tutorials">Video Tutorials</a></li>
+</ul></li>
+</ul></nav>
+
+    <div class="book-mini" style="font-weight:400;margin-top:1.5rem">Generated 2026-09-15</div>
+  </aside>
+  <div class="content">
+    <article>
+<h1 id="the-real-life-guide-to-data-structures-algorithms" class="doc-title">The Real-Life Guide to Data Structures &amp; Algorithms<a class="anchor" href="#the-real-life-guide-to-data-structures-algorithms" aria-hidden="true">#</a></h1>
+<blockquote>
+<p>Explained like you're five, coded like you're a Go engineer — and, for every topic, coded like a C engineer too.</p>
+</blockquote>
+<h2 id="why-does-this-exist">Why does this exist?<a class="anchor" href="#why-does-this-exist" aria-hidden="true">#</a></h2>
+<p>Imagine your toys are scattered all over your room. <strong>Data Structures</strong> are the different types of toy boxes you use to organize them — a bin for blocks, a shelf for books, a hook for backpacks. <strong>Algorithms</strong> are the steps you follow to <em>do something</em> with the toys — like "how do I find my favorite car the fastest?" or "how do I line up my stuffed animals from smallest to biggest?"</p>
+<p>Every data structure is just: <strong>a box + rules for how you're allowed to put things in and take things out.</strong> Every algorithm is just: <strong>a recipe — a list of steps that always gets you the right answer.</strong></p>
+<p>That's it. Everything below is that idea, over and over, in fancier clothes.</p>
+<p>We'll go <strong>Beginner → Intermediate → Advanced</strong>. Every topic has:</p>
+<ul>
+<li>🧸 <strong>ELI5</strong> — the toy-box explanation</li>
+<li>🌍 <strong>Real life</strong> — where you <em>already</em> use this without knowing it</li>
+<li>📝 <strong>Pseudocode</strong> — the recipe in plain steps</li>
+<li>🐹 <strong>Go code</strong> — the real thing, with the standard library doing the heavy lifting</li>
+<li>🇨 <strong>C code</strong> — the <em>same</em> structure with no standard library to hide behind: you write the <code>malloc</code>, the pointer chasing, and the array-index math yourself</li>
+<li>⏱️ <strong>Complexity</strong> — how the recipe scales when you have way more toys</li>
+</ul>
+<p><strong>Why both languages?</strong> Go's <code>map</code>, <code>container/heap</code>, and garbage collector do real work you don't see. Writing the same data structure in C forces every piece of that work into view — which is exactly why this guide's C examples are paired with <strong><a href="../c-lang/real-life-c-guide.md"><code>wiki/c-lang/real-life-c-guide.md</code></a></strong>, a full C field guide: its Part III ("Data structures from scratch," §17–19) builds the linked lists, hash tables, and trees used below in more depth, and its Part VIII covers the memory-safety discipline (leak patterns, ownership rules) every one of this guide's <code>malloc</code>/<code>free</code> pairs relies on. Each 🇨 block below links to the exact section that goes deeper.</p>
+<hr>
+<h1 id="big-o-notation-how-slow-does-this-get">📏 Big-O Notation — "How Slow Does This Get?"<a class="anchor" href="#big-o-notation-how-slow-does-this-get" aria-hidden="true">#</a></h1>
+<p>Before we meet any data structure, we need a way to talk about <strong>how a recipe behaves when the pile of toys gets huge</strong>. That's all Big-O is.</p>
+<p>🧸 <strong>ELI5</strong>: Imagine you have 3 toys — checking every single one to find your favorite is quick, maybe 3 seconds. Now imagine you have 3 <em>million</em> toys. Big-O is just the answer to: <strong>"if I 1,000x the toys, does the search take 1,000x longer, the same time, or something in between?"</strong> It's not a stopwatch — it's a <em>shape of growth</em>. We use the letter <code>n</code> to mean "however many things you have."</p>
+<p>🌍 <strong>Real life</strong>: Big-O is why a phone book with a million names is only slightly slower to search than one with a thousand names (binary search — <code>O(log n)</code>), but why checking every student against every other student in a class for "who has the same birthday" gets painful fast as the class grows (<code>O(n²)</code>).</p>
+<p>Here's the full scale, from best to worst, each with something you already do in real life:</p>
+<div class="tbl"><table>
+<thead><tr><th>Big-O</th><th>Name</th><th>ELI5</th><th>Real-world example</th></tr></thead>
+<tbody>
+<tr><td><code>O(1)</code></td><td>Constant</td><td>Doesn't matter how many toys exist — this is always instant.</td><td>Swiping a keycard at a door. Checking if a light switch is on. Hash map lookup.</td></tr>
+<tr><td><code>O(log n)</code></td><td>Logarithmic</td><td>Cuts the problem in half every step.</td><td>Guessing a number 1-100 in ≤7 tries. Looking up a word in a paper dictionary. Binary search.</td></tr>
+<tr><td><code>O(n)</code></td><td>Linear</td><td>You touch every item exactly once.</td><td>Reading every page of a book once. Counting every kid in a classroom. Linear search.</td></tr>
+<tr><td><code>O(n log n)</code></td><td>Linearithmic</td><td>Split the pile up, then do a little work on each piece.</td><td>Efficiently sorting a deck of cards (merge sort / quick sort).</td></tr>
+<tr><td><code>O(n²)</code></td><td>Quadratic</td><td>Compare every item to every other item.</td><td>Checking every student against every other student for matching birthdays. Bubble sort.</td></tr>
+<tr><td><code>O(2ⁿ)</code></td><td>Exponential</td><td>Every new item <em>doubles</em> your work — tries every possible combination.</td><td>Trying every possible pizza topping combination (add 1 topping = the choices double). Naive recursive Fibonacci.</td></tr>
+<tr><td><code>O(n!)</code></td><td>Factorial</td><td>Tries every possible <em>ordering</em> of everything.</td><td>Trying every possible seating arrangement for <code>n</code> wedding guests. Brute-force Traveling Salesman.</td></tr>
+</tbody></table></div>
+<p><strong>Why <code>n</code> matters at scale</strong> — say you have 1,000,000 items:</p>
+<pre><code>O(1)        -&gt;  1 step            (instant, always)
+O(log n)    -&gt;  ~20 steps         (binary search on a million records)
+O(n)        -&gt;  1,000,000 steps   (scan everything once)
+O(n log n)  -&gt;  ~20,000,000 steps (a good sort)
+O(n²)       -&gt;  1,000,000,000,000 steps  (bubble sort on a million items — do NOT try this)</code></pre>
+<p>That jump from <code>O(n log n)</code> to <code>O(n²)</code> is <em>the</em> reason engineers care so much about picking the right data structure — it's the difference between a page loading instantly and a server timing out.</p>
+<p>📝 <strong>Pseudocode</strong> (spotting Big-O by counting loops):</p>
+<pre><code>function example(list):        // n = length(list)
+    for item in list:          // one loop over n items -&gt; O(n)
+        print(item)
+
+function example2(list):
+    for a in list:              // loop 1: n
+        for b in list:          // loop 2 nested inside: n
+            print(a, b)          // nested loops -&gt; O(n * n) = O(n²)</code></pre>
+<p>🐹 <strong>Go</strong> (same shapes, real code):</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+// O(1) — constant time, no matter how big `nums` is
+func firstItem(nums []int) int {
+    return nums[0]
+}
+
+// O(n) — linear, one pass over every item
+func sum(nums []int) int {
+    total := 0
+    for _, n := range nums {
+        total += n
+    }
+    return total
+}
+
+// O(n²) — quadratic, a loop inside a loop
+func hasDuplicatePair(nums []int) bool {
+    for i := range nums {
+        for j := range nums {
+            if i != j &amp;&amp; nums[i] == nums[j] {
+                return true
+            }
+        }
+    }
+    return false
+}
+
+func main() {
+    nums := []int{4, 8, 15, 16, 23, 42}
+    fmt.Println(firstItem(nums))        // O(1)
+    fmt.Println(sum(nums))              // O(n)
+    fmt.Println(hasDuplicatePair(nums)) // O(n²)
+}</code></pre>
+<p>⏱️ <strong>The rule of thumb</strong>: every topic below lists its own <code>⏱️ Complexity</code>. When you're choosing a data structure or algorithm for a real project, ask <strong>"how big can <code>n</code> get?"</strong> — <code>O(n²)</code> is perfectly fine for 50 items and a real problem for 5,000,000.</p>
+<hr>
+<h1 id="beginner">🟢 BEGINNER<a class="anchor" href="#beginner" aria-hidden="true">#</a></h1>
+<p>Big-O gave you the ruler for measuring "how slow does this get." This tier gives you the actual toy boxes — the containers and the two slowest ways to search and sort — that every fancier structure later in this guide is built on top of. None of these seven topics are hard; each one just solves exactly one "how do I organize/find/undo this" problem.</p>
+<h2 id="1-arrays">1. Arrays<a class="anchor" href="#1-arrays" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: An array is an egg carton. It has a fixed number of slots, all lined up, each with a number on it (0, 1, 2, 3...). You can look inside slot #4 instantly because you know exactly where it is — you don't have to open every slot first.</p>
+<p>🌍 <strong>Real life</strong>: A parking garage with numbered spots. A row of mailboxes in an apartment building. Seats in a movie theater (Row C, Seat 12).</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>array = [10, 20, 30, 40]
+read array[2]        // instantly returns 30</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func main() {
+    parkingSpots := [5]string{"Car", "", "Bike", "", "Truck"}
+    fmt.Println(parkingSpots[2]) // "Bike" — instant lookup
+}</code></pre>
+<p>🇨 <strong>C</strong> (<a href="../c-lang/real-life-c-guide.md#6-arrays-pointers-and-the-arithmetic-that-explains-everything-else">deep dive: real-life-c-guide.md §6</a>):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+
+int main(void) {
+    const char *parkingSpots[5] = {"Car", "", "Bike", "", "Truck"};
+    printf("%s\n", parkingSpots[2]); // "Bike" — instant lookup, same address-math trick
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Read by index = <code>O(1)</code> (instant). Insert/delete in the middle = <code>O(n)</code> (you have to shift everyone over, like asking every car to move up one spot).</p>
+<hr>
+<h2 id="2-strings">2. Strings<a class="anchor" href="#2-strings" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: A string is just an array of letter-beads on a necklace string. "CAT" is 3 beads in a row: C, A, T.</p>
+<p>🌍 <strong>Real life</strong>: A text message. A license plate. A word in your favorite book.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>word = "cat"
+for each letter in word:
+    print(letter)</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func main() {
+    word := "cat"
+    for i, letter := range word {
+        fmt.Printf("bead %d is %c\n", i, letter)
+    }
+}</code></pre>
+<p>🇨 <strong>C</strong> (<a href="../c-lang/real-life-c-guide.md#7-strings-in-c-buffers-ownership-and-why-gets-was-removed">deep dive: real-life-c-guide.md §7</a>):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+
+int main(void) {
+    const char *word = "cat";       // in C, a "string" IS just an array of letter-beads + '\0'
+    for (int i = 0; word[i] != '\0'; i++) {
+        printf("bead %d is %c\n", i, word[i]);
+    }
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Reading a character by position = <code>O(1)</code>. Scanning the whole word = <code>O(n)</code>.</p>
+<hr>
+<h2 id="3-linked-lists">3. Linked Lists<a class="anchor" href="#3-linked-lists" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: Instead of an egg carton, imagine a <strong>treasure hunt</strong>. Each clue (node) tells you two things: the treasure at this spot, and where to find the <em>next</em> clue. You can't jump straight to clue #5 — you must follow clue #1 → #2 → #3 → #4 → #5.</p>
+<p>🌍 <strong>Real life</strong>: A conga line / train cars — each car is only connected to the one behind and in front. A scavenger hunt. Your browser history's "back" chain (kind of).</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>node = { value, next }
+head -&gt; node(1) -&gt; node(2) -&gt; node(3) -&gt; null
+
+function printAll(head):
+    current = head
+    while current != null:
+        print(current.value)
+        current = current.next</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+type Node struct {
+    Value int
+    Next  *Node
+}
+
+func printAll(head *Node) {
+    for cur := head; cur != nil; cur = cur.Next {
+        fmt.Println(cur.Value)
+    }
+}
+
+func main() {
+    third := &amp;Node{Value: 3}
+    second := &amp;Node{Value: 2, Next: third}
+    first := &amp;Node{Value: 1, Next: second}
+    printAll(first) // 1, 2, 3
+}</code></pre>
+<p>🇨 <strong>C</strong> (<a href="../c-lang/real-life-c-guide.md#181-singly-linked-list">deep dive: real-life-c-guide.md §18.1</a>) — this is the language linked lists were <em>born</em> in; a <code>Node</code> here is a <code>malloc</code>'d block plus a pointer, nothing more:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+typedef struct Node {
+    int value;
+    struct Node *next;
+} Node;
+
+Node *node_new(int value, Node *next) {
+    Node *n = malloc(sizeof(Node));
+    n-&gt;value = value;
+    n-&gt;next = next;
+    return n;
+}
+
+void print_all(Node *head) {
+    for (Node *cur = head; cur != NULL; cur = cur-&gt;next) {
+        printf("%d\n", cur-&gt;value);
+    }
+}
+
+void list_free(Node *head) {   // unlike Go, nothing frees this for you — Section 10.3
+    while (head) { Node *next = head-&gt;next; free(head); head = next; }
+}
+
+int main(void) {
+    Node *third = node_new(3, NULL);
+    Node *second = node_new(2, third);
+    Node *first = node_new(1, second);
+    print_all(first); // 1, 2, 3
+    list_free(first);
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Access by position = <code>O(n)</code> (follow the clues one by one). Insert at the front = <code>O(1)</code> (just point to a new first clue) — much faster than an array's <code>O(n)</code> shift.</p>
+<hr>
+<h2 id="4-stacks">4. Stacks<a class="anchor" href="#4-stacks" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: A stack is a stack of pancakes. You can only add a pancake to the <strong>top</strong>, and you can only eat from the <strong>top</strong>. You can never grab the bottom pancake without removing all the ones above it first. <strong>Last one in, first one out</strong> (LIFO).</p>
+<p>🌍 <strong>Real life</strong>: The "Undo" button (Ctrl+Z) — it undoes your <em>most recent</em> action first. Your browser's "Back" button. A stack of trays in a cafeteria.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>stack = []
+push(stack, "plate1")
+push(stack, "plate2")
+pop(stack)   // removes "plate2" (the last one added)</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+type Stack struct {
+    items []string
+}
+
+func (s *Stack) Push(item string) {
+    s.items = append(s.items, item)
+}
+
+func (s *Stack) Pop() (string, bool) {
+    if len(s.items) == 0 {
+        return "", false
+    }
+    last := s.items[len(s.items)-1]
+    s.items = s.items[:len(s.items)-1]
+    return last, true
+}
+
+func main() {
+    undoHistory := &amp;Stack{}
+    undoHistory.Push("typed 'hello'")
+    undoHistory.Push("typed 'world'")
+    action, _ := undoHistory.Pop()
+    fmt.Println("undo:", action) // undo: typed 'world'
+}</code></pre>
+<p>🇨 <strong>C</strong> (a fixed-capacity array-backed stack — no dynamic growth needed for a stack of pancakes):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#define STACK_CAP 32
+
+typedef struct {
+    char items[STACK_CAP][64];
+    int  top; // -1 means empty
+} Stack;
+
+void stack_push(Stack *s, const char *item) {
+    if (s-&gt;top + 1 &gt;= STACK_CAP) return;
+    strncpy(s-&gt;items[++s-&gt;top], item, sizeof s-&gt;items[0] - 1);
+}
+
+int stack_pop(Stack *s, char *out, size_t out_cap) {
+    if (s-&gt;top &lt; 0) return 0;
+    strncpy(out, s-&gt;items[s-&gt;top--], out_cap - 1);
+    return 1;
+}
+
+int main(void) {
+    Stack undoHistory = { .top = -1 };
+    stack_push(&amp;undoHistory, "typed 'hello'");
+    stack_push(&amp;undoHistory, "typed 'world'");
+
+    char action[64];
+    if (stack_pop(&amp;undoHistory, action, sizeof action)) {
+        printf("undo: %s\n", action); // undo: typed 'world'
+    }
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Push/Pop = <code>O(1)</code> — always fast, no matter how tall the stack.</p>
+<hr>
+<h2 id="5-queues">5. Queues<a class="anchor" href="#5-queues" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: A queue is the line at an ice cream truck. Whoever got in line <strong>first</strong> gets their ice cream <strong>first</strong>. No cutting! You join at the back, you leave from the front. <strong>First one in, first one out</strong> (FIFO).</p>
+<p>🌍 <strong>Real life</strong>: A printer queue (the first document you sent prints first). People waiting for a rollercoaster. Customer support tickets.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>queue = []
+enqueue(queue, "Alice")
+enqueue(queue, "Bob")
+dequeue(queue)   // removes "Alice" (the first one who joined)</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+type Queue struct {
+    items []string
+}
+
+func (q *Queue) Enqueue(item string) {
+    q.items = append(q.items, item)
+}
+
+func (q *Queue) Dequeue() (string, bool) {
+    if len(q.items) == 0 {
+        return "", false
+    }
+    first := q.items[0]
+    q.items = q.items[1:]
+    return first, true
+}
+
+func main() {
+    iceCreamLine := &amp;Queue{}
+    iceCreamLine.Enqueue("Alice")
+    iceCreamLine.Enqueue("Bob")
+    served, _ := iceCreamLine.Dequeue()
+    fmt.Println("served:", served) // served: Alice
+}</code></pre>
+<p>🇨 <strong>C</strong> (a circular buffer — <code>head</code>/<code>tail</code> indices wrap around with <code>%</code>, so unlike Go's slice trick, nothing ever gets shifted in memory):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#define QUEUE_CAP 32
+
+typedef struct {
+    char items[QUEUE_CAP][64];
+    int  head, tail, count;
+} Queue;
+
+void queue_enqueue(Queue *q, const char *item) {
+    if (q-&gt;count &gt;= QUEUE_CAP) return;
+    strncpy(q-&gt;items[q-&gt;tail], item, sizeof q-&gt;items[0] - 1);
+    q-&gt;tail = (q-&gt;tail + 1) % QUEUE_CAP;
+    q-&gt;count++;
+}
+
+int queue_dequeue(Queue *q, char *out, size_t out_cap) {
+    if (q-&gt;count == 0) return 0;
+    strncpy(out, q-&gt;items[q-&gt;head], out_cap - 1);
+    q-&gt;head = (q-&gt;head + 1) % QUEUE_CAP;
+    q-&gt;count--;
+    return 1;
+}
+
+int main(void) {
+    Queue iceCreamLine = {0};
+    queue_enqueue(&amp;iceCreamLine, "Alice");
+    queue_enqueue(&amp;iceCreamLine, "Bob");
+
+    char served[64];
+    if (queue_dequeue(&amp;iceCreamLine, served, sizeof served)) {
+        printf("served: %s\n", served); // served: Alice
+    }
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Enqueue/Dequeue = <code>O(1)</code> (with a proper ring buffer/linked list; Go's slice trick above is <code>O(1)</code> amortized but not perfectly optimal).</p>
+<hr>
+<h2 id="6-linear-search">6. Linear Search<a class="anchor" href="#6-linear-search" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: You lost your favorite toy car in a toy box full of 50 toys. You pick up toy #1, check if it's the car, put it down, pick up toy #2, check... You keep going until you find it. No shortcuts.</p>
+<p>🌍 <strong>Real life</strong>: Scanning every song in an unsorted playlist looking for one title. Checking every locker in a hallway for your friend's name because lockers aren't sorted by name.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>function linearSearch(list, target):
+    for i from 0 to length(list) - 1:
+        if list[i] == target:
+            return i
+    return -1</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func linearSearch(toys []string, target string) int {
+    for i, toy := range toys {
+        if toy == target {
+            return i
+        }
+    }
+    return -1
+}
+
+func main() {
+    toys := []string{"ball", "robot", "car", "doll"}
+    fmt.Println(linearSearch(toys, "car")) // 2
+}</code></pre>
+<p>🇨 <strong>C</strong>:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+int linear_search(const char *toys[], int n, const char *target) {
+    for (int i = 0; i &lt; n; i++) {
+        if (strcmp(toys[i], target) == 0) return i;
+    }
+    return -1;
+}
+
+int main(void) {
+    const char *toys[] = {"ball", "robot", "car", "doll"};
+    printf("%d\n", linear_search(toys, 4, "car")); // 2
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: <code>O(n)</code> — worst case, you check every single toy.</p>
+<hr>
+<h2 id="7-bubble-sort">7. Bubble Sort<a class="anchor" href="#7-bubble-sort" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: Line up your friends by height. You compare the first two — if the shorter one is standing <em>behind</em> the taller one, they swap. You keep walking down the line doing this, and each pass, the tallest kid "bubbles up" to the end. Repeat until nobody needs to swap anymore.</p>
+<p>🌍 <strong>Real life</strong>: Manually sorting playing cards by comparing two adjacent cards at a time and swapping. Simple, but slow for a big deck.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>function bubbleSort(list):
+    for i from 0 to length(list) - 1:
+        for j from 0 to length(list) - i - 2:
+            if list[j] &gt; list[j+1]:
+                swap(list[j], list[j+1])</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func bubbleSort(heights []int) {
+    n := len(heights)
+    for i := 0; i &lt; n; i++ {
+        for j := 0; j &lt; n-i-1; j++ {
+            if heights[j] &gt; heights[j+1] {
+                heights[j], heights[j+1] = heights[j+1], heights[j]
+            }
+        }
+    }
+}
+
+func main() {
+    kids := []int{140, 120, 160, 130}
+    bubbleSort(kids)
+    fmt.Println(kids) // [120 130 140 160]
+}</code></pre>
+<p>🇨 <strong>C</strong>:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+
+void bubble_sort(int *heights, int n) {
+    for (int i = 0; i &lt; n; i++) {
+        for (int j = 0; j &lt; n - i - 1; j++) {
+            if (heights[j] &gt; heights[j + 1]) {
+                int tmp = heights[j];
+                heights[j] = heights[j + 1];
+                heights[j + 1] = tmp;
+            }
+        }
+    }
+}
+
+int main(void) {
+    int kids[] = {140, 120, 160, 130};
+    bubble_sort(kids, 4);
+    for (int i = 0; i &lt; 4; i++) printf("%d ", kids[i]); // 120 130 140 160
+    printf("\n");
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: <code>O(n²)</code> — fine for a handful of kids, terrible for a stadium of them.</p>
+<hr>
+<h1 id="intermediate">🟡 INTERMEDIATE<a class="anchor" href="#intermediate" aria-hidden="true">#</a></h1>
+<p>The beginner tier gave you raw containers and the two slowest ways to search (check every slot) and sort (compare neighbors, over and over). This tier is where those get <em>fast</em> — binary search, hash maps with near-instant lookup — and introduces the two shapes, trees and graphs, that most real systems (file systems, org charts, social networks, road maps) are actually built from underneath.</p>
+<h2 id="8-binary-search">8. Binary Search<a class="anchor" href="#8-binary-search" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: You're playing a guessing game: "I'm thinking of a number between 1 and 100." Instead of guessing 1, 2, 3, 4... you guess <strong>50</strong> (the middle). Too high? Now you know it's between 1-49, so you guess <strong>25</strong>. Too low? Now you know it's between 26-49, so you guess... You cut the possibilities in <strong>half</strong> every single time.</p>
+<p>🌍 <strong>Real life</strong>: Looking up a word in a paper dictionary — you don't start at "A," you flip to the middle, see you're past your word, flip back halfway, and narrow in. This <em>only</em> works if the list is already <strong>sorted</strong>.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>function binarySearch(sortedList, target):
+    low = 0
+    high = length(sortedList) - 1
+    while low &lt;= high:
+        mid = (low + high) / 2
+        if sortedList[mid] == target:
+            return mid
+        else if sortedList[mid] &lt; target:
+            low = mid + 1
+        else:
+            high = mid - 1
+    return -1</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func binarySearch(sorted []int, target int) int {
+    low, high := 0, len(sorted)-1
+    for low &lt;= high {
+        mid := (low + high) / 2
+        switch {
+        case sorted[mid] == target:
+            return mid
+        case sorted[mid] &lt; target:
+            low = mid + 1
+        default:
+            high = mid - 1
+        }
+    }
+    return -1
+}
+
+func main() {
+    pages := []int{2, 8, 15, 23, 42, 71, 99}
+    fmt.Println(binarySearch(pages, 42)) // 4
+}</code></pre>
+<p>🇨 <strong>C</strong>:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+
+int binary_search(const int *sorted, int n, int target) {
+    int low = 0, high = n - 1;
+    while (low &lt;= high) {
+        int mid = low + (high - low) / 2;   // avoids (low+high) overflowing for huge arrays
+        if (sorted[mid] == target) return mid;
+        if (sorted[mid] &lt; target) low = mid + 1;
+        else high = mid - 1;
+    }
+    return -1;
+}
+
+int main(void) {
+    int pages[] = {2, 8, 15, 23, 42, 71, 99};
+    printf("%d\n", binary_search(pages, 7, 42)); // 4
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: <code>O(log n)</code> — doubling the toy box size only adds <em>one more</em> guess. 1,000,000 items? Just ~20 guesses.</p>
+<hr>
+<h2 id="9-recursion">9. Recursion<a class="anchor" href="#9-recursion" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: Recursion is a set of Russian nesting dolls (matryoshka). To find the smallest doll, you open a doll, and inside is... a smaller version of the <em>exact same problem</em>: "open a doll and look inside." You keep doing the same tiny step until you hit the smallest doll (the <strong>base case</strong>) that doesn't open anymore — then you're done.</p>
+<p>🌍 <strong>Real life</strong>: Standing between two mirrors facing each other — the reflection repeats itself smaller and smaller. Folders inside folders inside folders on your computer.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>function factorial(n):
+    if n == 0:               // base case — the smallest doll
+        return 1
+    return n * factorial(n - 1)   // same problem, smaller size</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func factorial(n int) int {
+    if n == 0 { // base case: stop opening dolls
+        return 1
+    }
+    return n * factorial(n-1) // same task, one size smaller
+}
+
+func main() {
+    fmt.Println(factorial(5)) // 120
+}</code></pre>
+<p>🇨 <strong>C</strong> (<a href="../c-lang/real-life-c-guide.md#51-what-actually-happens-on-a-function-call">deep dive: real-life-c-guide.md §5.1</a>) — this is the guide where "the call stack" stops being an abstraction: every recursive call really is a new stack frame, and you can watch it overflow:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+
+long factorial(int n) {
+    if (n == 0) return 1;          // base case: stop opening dolls
+    return n * factorial(n - 1);   // same task, one size smaller
+}
+
+int main(void) {
+    printf("%ld\n", factorial(5)); // 120
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Depends on the problem — <code>factorial</code> is <code>O(n)</code> calls deep. Watch out: every call uses memory (the "call stack"), so too much recursion without a base case = <strong>stack overflow</strong> (imagine infinite nesting dolls that never end — you run out of room).</p>
+<hr>
+<h2 id="10-hash-maps-a-k-a-dictionaries-hash-tables">10. Hash Maps (a.k.a. Dictionaries / Hash Tables)<a class="anchor" href="#10-hash-maps-a-k-a-dictionaries-hash-tables" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: A hash map is a <strong>coat check</strong> at a party. You hand over your coat, they give you ticket #42. Later, you show ticket #42, and they go <strong>directly</strong> to hook #42 and grab your coat — no searching through every coat in the building.</p>
+<p>🌍 <strong>Real life</strong>: Your phone's contacts app — you type a name, and it instantly finds the number (it's not scanning every contact one by one). A locker with your name mapped to locker #17.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>map = {}
+map["Alice"] = "555-1234"
+map["Bob"]   = "555-5678"
+print(map["Alice"])   // instantly -&gt; "555-1234"</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func main() {
+    contacts := make(map[string]string)
+    contacts["Alice"] = "555-1234"
+    contacts["Bob"] = "555-5678"
+
+    number, found := contacts["Alice"]
+    if found {
+        fmt.Println(number) // 555-1234
+    }
+}</code></pre>
+<p>🇨 <strong>C</strong> (<a href="../c-lang/real-life-c-guide.md#182-a-real-hash-table-separate-chaining-djb2-hash">deep dive: real-life-c-guide.md §18.2</a>) — C has no built-in map, so this coat-check counter is the <em>actual mechanism</em> Go's <code>map</code> and Python's <code>dict</code> hide from you: a hash function plus separate-chaining buckets:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+#define BUCKETS 16
+
+typedef struct HTEntry {
+    char *key, *value;
+    struct HTEntry *next;
+} HTEntry;
+
+static HTEntry *buckets[BUCKETS];
+
+static unsigned long djb2(const char *s) {   // Section 18.2's hash function
+    unsigned long hash = 5381;
+    int c;
+    while ((c = (unsigned char)*s++)) hash = ((hash &lt;&lt; 5) + hash) + (unsigned long)c;
+    return hash;
+}
+
+void ht_set(const char *key, const char *value) {
+    unsigned long idx = djb2(key) % BUCKETS;
+    for (HTEntry *e = buckets[idx]; e; e = e-&gt;next) {
+        if (strcmp(e-&gt;key, key) == 0) { free(e-&gt;value); e-&gt;value = strdup(value); return; }
+    }
+    HTEntry *e = malloc(sizeof(HTEntry));
+    e-&gt;key = strdup(key);
+    e-&gt;value = strdup(value);
+    e-&gt;next = buckets[idx];   // insert at the head of this ticket number's coat rack
+    buckets[idx] = e;
+}
+
+const char *ht_get(const char *key) {
+    unsigned long idx = djb2(key) % BUCKETS;
+    for (HTEntry *e = buckets[idx]; e; e = e-&gt;next) {
+        if (strcmp(e-&gt;key, key) == 0) return e-&gt;value;
+    }
+    return NULL;
+}
+
+int main(void) {
+    ht_set("Alice", "555-1234");
+    ht_set("Bob", "555-5678");
+
+    const char *number = ht_get("Alice");
+    if (number) printf("%s\n", number); // 555-1234
+    return 0;
+}</code></pre>
+<p><em>(compile with <code>-std=gnu17</code>, not strict <code>-std=c17</code> — <code>strdup</code> is POSIX, hidden under strict ANSI on Linux/glibc; see the C guide's §2.2 note.)</em></p>
+<p>⏱️ <strong>Complexity</strong>: Insert/lookup/delete = <code>O(1)</code> average — the magic of "hashing" the key straight to its slot, like ticket #42 pointing straight to hook #42.</p>
+<hr>
+<h2 id="11-trees">11. Trees<a class="anchor" href="#11-trees" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: A tree is your <strong>family tree</strong>. You (the root) have parents, they have parents (grandparents), and so on. Or flip it: you have children, they might have children. Everyone is connected, but there's exactly <strong>one path</strong> from you to any relative — no loops.</p>
+<p>🌍 <strong>Real life</strong>: Folders and subfolders on your computer (<code>Documents &gt; Photos &gt; Vacation &gt; Beach.jpg</code>). A company's org chart (CEO → VPs → Managers → Employees). The <code>&lt;div&gt;</code> structure of a webpage (HTML DOM).</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>node = { value, children[] }
+
+function printTree(node, depth=0):
+    print(indent(depth) + node.value)
+    for child in node.children:
+        printTree(child, depth + 1)</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import (
+    "fmt"
+    "strings"
+)
+
+type TreeNode struct {
+    Name     string
+    Children []*TreeNode
+}
+
+func printTree(node *TreeNode, depth int) {
+    fmt.Println(strings.Repeat("  ", depth) + node.Name)
+    for _, child := range node.Children {
+        printTree(child, depth+1)
+    }
+}
+
+func main() {
+    grandpa := &amp;TreeNode{Name: "Grandpa"}
+    dad := &amp;TreeNode{Name: "Dad"}
+    uncle := &amp;TreeNode{Name: "Uncle"}
+    me := &amp;TreeNode{Name: "Me"}
+
+    grandpa.Children = []*TreeNode{dad, uncle}
+    dad.Children = []*TreeNode{me}
+
+    printTree(grandpa, 0)
+    // Grandpa
+    //   Dad
+    //     Me
+    //   Uncle
+}</code></pre>
+<p>🇨 <strong>C</strong> (children stored as a <code>realloc</code>-grown array of pointers — Section 16.1's dynamic-array trick, applied per-node):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct TreeNode {
+    char name[32];
+    struct TreeNode **children;
+    int   num_children;
+} TreeNode;
+
+TreeNode *tree_new(const char *name) {
+    TreeNode *n = calloc(1, sizeof(TreeNode));
+    strncpy(n-&gt;name, name, sizeof n-&gt;name - 1);
+    return n;
+}
+
+void tree_add_child(TreeNode *parent, TreeNode *child) {
+    parent-&gt;children = realloc(parent-&gt;children,
+                                (size_t)(parent-&gt;num_children + 1) * sizeof(TreeNode *));
+    parent-&gt;children[parent-&gt;num_children++] = child;
+}
+
+void print_tree(TreeNode *node, int depth) {
+    for (int i = 0; i &lt; depth; i++) printf("  ");
+    printf("%s\n", node-&gt;name);
+    for (int i = 0; i &lt; node-&gt;num_children; i++) print_tree(node-&gt;children[i], depth + 1);
+}
+
+void tree_free(TreeNode *node) {
+    for (int i = 0; i &lt; node-&gt;num_children; i++) tree_free(node-&gt;children[i]);
+    free(node-&gt;children);
+    free(node);
+}
+
+int main(void) {
+    TreeNode *grandpa = tree_new("Grandpa");
+    TreeNode *dad = tree_new("Dad");
+    TreeNode *uncle = tree_new("Uncle");
+    TreeNode *me = tree_new("Me");
+
+    tree_add_child(grandpa, dad);
+    tree_add_child(grandpa, uncle);
+    tree_add_child(dad, me);
+
+    print_tree(grandpa, 0);
+    // Grandpa / Dad / Me / Uncle
+    tree_free(grandpa);
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Traversing every node = <code>O(n)</code>. Height of a balanced tree with <code>n</code> nodes = <code>O(log n)</code>.</p>
+<hr>
+<h2 id="12-binary-search-trees-bst">12. Binary Search Trees (BST)<a class="anchor" href="#12-binary-search-trees-bst" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: Imagine organizing your library books on a special shelf: for every book, <strong>all books with a smaller title go to its left</strong>, and <strong>all books with a bigger title go to its right</strong>. Now finding any book is like the guessing game (binary search) — go left or right at every shelf.</p>
+<p>🌍 <strong>Real life</strong>: Auto-complete style organized dictionaries. Any "sorted lookup" structure like a phone book organized as a tree instead of a flat list.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>function insert(node, value):
+    if node == null: return newNode(value)
+    if value &lt; node.value: node.left = insert(node.left, value)
+    else: node.right = insert(node.right, value)
+    return node
+
+function search(node, value):
+    if node == null: return false
+    if node.value == value: return true
+    if value &lt; node.value: return search(node.left, value)
+    return search(node.right, value)</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+type BSTNode struct {
+    Value       int
+    Left, Right *BSTNode
+}
+
+func insert(node *BSTNode, value int) *BSTNode {
+    if node == nil {
+        return &amp;BSTNode{Value: value}
+    }
+    if value &lt; node.Value {
+        node.Left = insert(node.Left, value)
+    } else {
+        node.Right = insert(node.Right, value)
+    }
+    return node
+}
+
+func search(node *BSTNode, value int) bool {
+    if node == nil {
+        return false
+    }
+    if node.Value == value {
+        return true
+    }
+    if value &lt; node.Value {
+        return search(node.Left, value)
+    }
+    return search(node.Right, value)
+}
+
+func main() {
+    var root *BSTNode
+    for _, v := range []int{50, 30, 70, 20, 40} {
+        root = insert(root, v)
+    }
+    fmt.Println(search(root, 40)) // true
+    fmt.Println(search(root, 99)) // false
+}</code></pre>
+<p>🇨 <strong>C</strong> (<a href="../c-lang/real-life-c-guide.md#183-a-binary-search-tree-for-completeness">deep dive: real-life-c-guide.md §18.3</a>):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+typedef struct BSTNode {
+    int value;
+    struct BSTNode *left, *right;
+} BSTNode;
+
+BSTNode *bst_insert(BSTNode *node, int value) {
+    if (!node) {
+        BSTNode *n = malloc(sizeof(BSTNode));
+        n-&gt;value = value; n-&gt;left = n-&gt;right = NULL;
+        return n;
+    }
+    if (value &lt; node-&gt;value) node-&gt;left = bst_insert(node-&gt;left, value);
+    else                     node-&gt;right = bst_insert(node-&gt;right, value);
+    return node;
+}
+
+int bst_search(BSTNode *node, int value) {
+    if (!node) return 0;
+    if (node-&gt;value == value) return 1;
+    return value &lt; node-&gt;value ? bst_search(node-&gt;left, value) : bst_search(node-&gt;right, value);
+}
+
+void bst_free(BSTNode *node) {
+    if (!node) return;
+    bst_free(node-&gt;left);
+    bst_free(node-&gt;right);
+    free(node);
+}
+
+int main(void) {
+    BSTNode *root = NULL;
+    int values[] = {50, 30, 70, 20, 40};
+    for (int i = 0; i &lt; 5; i++) root = bst_insert(root, values[i]);
+
+    printf("%d\n", bst_search(root, 40)); // 1 (true)
+    printf("%d\n", bst_search(root, 99)); // 0 (false)
+    bst_free(root);
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Balanced tree: search/insert/delete = <code>O(log n)</code>. Worst case (all books added in sorted order, forming a straight line): <code>O(n)</code> — this is why balanced trees (AVL, Red-Black) exist.</p>
+<hr>
+<h2 id="13-merge-sort-quick-sort">13. Merge Sort &amp; Quick Sort<a class="anchor" href="#13-merge-sort-quick-sort" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5 (Merge Sort)</strong>: You have a huge pile of shuffled cards. Split the pile in half, then split those halves in half, keep splitting until each pile has just <strong>1 card</strong> (a single card is always "sorted"). Now merge pairs of tiny sorted piles back together in order, then merge those bigger piles, until you have one giant sorted pile. <strong>Divide, then combine.</strong></p>
+<p>🧸 <strong>ELI5 (Quick Sort)</strong>: Pick one card as the "pivot" (say, a 7). Put all smaller cards in one pile to the left, all bigger cards in a pile to the right. Now do the <em>same trick</em> on each smaller pile. Eventually every pile has 1 card and everything is sorted.</p>
+<p>🌍 <strong>Real life</strong>: How you'd actually sort a huge stack of exam papers by grade if you had friends helping — split the stack among friends, each sorts their small stack, then you merge the stacks back together in order.</p>
+<p>📝 <strong>Pseudocode (Merge Sort)</strong>:</p>
+<pre><code>function mergeSort(list):
+    if length(list) &lt;= 1: return list
+    mid = length(list) / 2
+    left = mergeSort(list[0:mid])
+    right = mergeSort(list[mid:])
+    return merge(left, right)
+
+function merge(left, right):
+    result = []
+    while left and right are not empty:
+        append smaller of left[0], right[0] to result
+    append any leftovers from left or right
+    return result</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func mergeSort(list []int) []int {
+    if len(list) &lt;= 1 {
+        return list
+    }
+    mid := len(list) / 2
+    left := mergeSort(list[:mid])
+    right := mergeSort(list[mid:])
+    return merge(left, right)
+}
+
+func merge(left, right []int) []int {
+    result := make([]int, 0, len(left)+len(right))
+    i, j := 0, 0
+    for i &lt; len(left) &amp;&amp; j &lt; len(right) {
+        if left[i] &lt;= right[j] {
+            result = append(result, left[i])
+            i++
+        } else {
+            result = append(result, right[j])
+            j++
+        }
+    }
+    result = append(result, left[i:]...)
+    result = append(result, right[j:]...)
+    return result
+}
+
+func main() {
+    exams := []int{88, 45, 92, 67, 71, 30}
+    fmt.Println(mergeSort(exams)) // [30 45 67 71 88 92]
+}</code></pre>
+<p>🇨 <strong>C</strong> (in-place on one array, with two small <code>malloc</code>'d scratch buffers per merge — no garbage collector to clean up the intermediate slices Go's version allocates):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+void merge(int *arr, int lo, int mid, int hi) {
+    int n1 = mid - lo + 1, n2 = hi - mid;
+    int *left = malloc((size_t)n1 * sizeof(int));
+    int *right = malloc((size_t)n2 * sizeof(int));
+    memcpy(left, arr + lo, (size_t)n1 * sizeof(int));
+    memcpy(right, arr + mid + 1, (size_t)n2 * sizeof(int));
+
+    int i = 0, j = 0, k = lo;
+    while (i &lt; n1 &amp;&amp; j &lt; n2) arr[k++] = (left[i] &lt;= right[j]) ? left[i++] : right[j++];
+    while (i &lt; n1) arr[k++] = left[i++];
+    while (j &lt; n2) arr[k++] = right[j++];
+
+    free(left);
+    free(right);
+}
+
+void merge_sort(int *arr, int lo, int hi) {
+    if (lo &gt;= hi) return;
+    int mid = lo + (hi - lo) / 2;
+    merge_sort(arr, lo, mid);
+    merge_sort(arr, mid + 1, hi);
+    merge(arr, lo, mid, hi);
+}
+
+int main(void) {
+    int exams[] = {88, 45, 92, 67, 71, 30};
+    merge_sort(exams, 0, 5);
+    for (int i = 0; i &lt; 6; i++) printf("%d ", exams[i]); // 30 45 67 71 88 92
+    printf("\n");
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Merge Sort: <code>O(n log n)</code> always, but needs extra space (<code>O(n)</code>). Quick Sort: <code>O(n log n)</code> average, <code>O(n²)</code> worst case (bad pivot choices), but sorts <strong>in place</strong> (little extra memory) — that's why it's often the default in real libraries.</p>
+<hr>
+<h2 id="14-graphs">14. Graphs<a class="anchor" href="#14-graphs" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: A tree is like a family — no loops. A <strong>graph</strong> is like your group of <strong>friends</strong> — you can be friends with anyone, friendships can loop around (your friend's friend can also be your friend directly), and there's no single "boss" at the top.</p>
+<p>🌍 <strong>Real life</strong>: A social network (people = dots/"nodes", friendships = lines/"edges"). A road map (cities = nodes, roads = edges). Flight routes between airports.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>graph = {
+    "Alice": ["Bob", "Carol"],
+    "Bob": ["Alice"],
+    "Carol": ["Alice"]
+}</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+type Graph struct {
+    adjacency map[string][]string
+}
+
+func NewGraph() *Graph {
+    return &amp;Graph{adjacency: make(map[string][]string)}
+}
+
+func (g *Graph) AddFriendship(a, b string) {
+    g.adjacency[a] = append(g.adjacency[a], b)
+    g.adjacency[b] = append(g.adjacency[b], a)
+}
+
+func main() {
+    social := NewGraph()
+    social.AddFriendship("Alice", "Bob")
+    social.AddFriendship("Alice", "Carol")
+    fmt.Println(social.adjacency["Alice"]) // [Bob Carol]
+}</code></pre>
+<p>🇨 <strong>C</strong> — without a built-in map, people become integer indices (0, 1, 2...) into a fixed-size names/adjacency table; this same integer-indexed shape is reused for BFS/DFS right below:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+#define MAX_NODES 16
+
+typedef struct {
+    char names[MAX_NODES][32];
+    int  adj[MAX_NODES][MAX_NODES];       // adj[i][j] = 1 if a friendship exists
+    int  adj_list[MAX_NODES][MAX_NODES];  // neighbor indices, in insertion order
+    int  adj_count[MAX_NODES];
+    int  num_nodes;
+} Graph;
+
+int graph_add_node(Graph *g, const char *name) {
+    strncpy(g-&gt;names[g-&gt;num_nodes], name, 31);
+    return g-&gt;num_nodes++;
+}
+
+void graph_add_friendship(Graph *g, int a, int b) {
+    if (!g-&gt;adj[a][b]) { g-&gt;adj[a][b] = 1; g-&gt;adj_list[a][g-&gt;adj_count[a]++] = b; }
+    if (!g-&gt;adj[b][a]) { g-&gt;adj[b][a] = 1; g-&gt;adj_list[b][g-&gt;adj_count[b]++] = a; }
+}
+
+int main(void) {
+    Graph social = {0};
+    int alice = graph_add_node(&amp;social, "Alice");
+    int bob   = graph_add_node(&amp;social, "Bob");
+    int carol = graph_add_node(&amp;social, "Carol");
+
+    graph_add_friendship(&amp;social, alice, bob);
+    graph_add_friendship(&amp;social, alice, carol);
+
+    for (int i = 0; i &lt; social.adj_count[alice]; i++) {
+        printf("%s ", social.names[social.adj_list[alice][i]]); // Bob Carol
+    }
+    printf("\n");
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Storage = <code>O(V + E)</code> (V = number of people/nodes, E = number of friendships/edges).</p>
+<hr>
+<h2 id="15-bfs-dfs-graph-tree-traversal">15. BFS &amp; DFS (Graph/Tree Traversal)<a class="anchor" href="#15-bfs-dfs-graph-tree-traversal" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5 (BFS - Breadth First Search)</strong>: You're spreading a rumor at school. First you tell your close friends (1 step away). Then <em>they</em> tell <em>their</em> friends (2 steps away). You spread outward in <strong>rings</strong>, layer by layer — like ripples in a pond.</p>
+<p>🧸 <strong>ELI5 (DFS - Depth First Search)</strong>: You're exploring a maze. You pick a path and go <strong>as deep as possible</strong> until you hit a dead end, then backtrack to the last fork and try a different path. You commit fully to one direction before trying another.</p>
+<p>🌍 <strong>Real life</strong>: BFS = "how many people are within 2 friendship-steps of me?" (LinkedIn's "2nd degree connections"), finding the <strong>shortest path</strong> in an unweighted maze. DFS = solving a maze by hand, exploring a file system recursively, detecting cycles.</p>
+<p>📝 <strong>Pseudocode (BFS)</strong>:</p>
+<pre><code>function bfs(graph, start):
+    visited = {start}
+    queue = [start]
+    while queue is not empty:
+        current = dequeue(queue)
+        print(current)
+        for neighbor in graph[current]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                enqueue(queue, neighbor)</code></pre>
+<p>📝 <strong>Pseudocode (DFS)</strong>:</p>
+<pre><code>function dfs(graph, current, visited={}):
+    if current in visited: return
+    visited.add(current)
+    print(current)
+    for neighbor in graph[current]:
+        dfs(graph, neighbor, visited)</code></pre>
+<p>🐹 <strong>Go (BFS)</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func bfs(graph map[string][]string, start string) {
+    visited := map[string]bool{start: true}
+    queue := []string{start}
+
+    for len(queue) &gt; 0 {
+        current := queue[0]
+        queue = queue[1:]
+        fmt.Println("visiting:", current)
+
+        for _, neighbor := range graph[current] {
+            if !visited[neighbor] {
+                visited[neighbor] = true
+                queue = append(queue, neighbor)
+            }
+        }
+    }
+}
+
+func main() {
+    friendGraph := map[string][]string{
+        "Alice": {"Bob", "Carol"},
+        "Bob":   {"Alice", "Dave"},
+        "Carol": {"Alice"},
+        "Dave":  {"Bob"},
+    }
+    bfs(friendGraph, "Alice") // Alice, Bob, Carol, Dave (ring by ring)
+}</code></pre>
+<p>🐹 <strong>Go (DFS)</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func dfs(graph map[string][]string, current string, visited map[string]bool) {
+    if visited[current] {
+        return
+    }
+    visited[current] = true
+    fmt.Println("visiting:", current)
+
+    for _, neighbor := range graph[current] {
+        dfs(graph, neighbor, visited)
+    }
+}
+
+func main() {
+    maze := map[string][]string{
+        "Start": {"A", "B"},
+        "A":     {"Start", "DeadEnd"},
+        "B":     {"Start", "Exit"},
+    }
+    dfs(maze, "Start", map[string]bool{}) // dives deep down one path first
+}</code></pre>
+<p>🇨 <strong>C</strong> (both BFS and DFS on the same integer-indexed adjacency-list <code>Graph</code> from #14 — BFS's queue is a plain array with <code>head</code>/<code>tail</code> indices, exactly Section 23.2's ring-buffer idea; DFS is recursion, exactly #9's "same problem, smaller size"):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#define MAX_NODES 16
+
+typedef struct {
+    char names[MAX_NODES][32];
+    int  adj_list[MAX_NODES][MAX_NODES];
+    int  adj_count[MAX_NODES];
+    int  num_nodes;
+} Graph;
+
+int graph_add_node(Graph *g, const char *name) {
+    strncpy(g-&gt;names[g-&gt;num_nodes], name, 31);
+    return g-&gt;num_nodes++;
+}
+
+void graph_add_edge(Graph *g, int a, int b) {
+    g-&gt;adj_list[a][g-&gt;adj_count[a]++] = b;
+    g-&gt;adj_list[b][g-&gt;adj_count[b]++] = a;
+}
+
+void bfs(Graph *g, int start) {
+    int visited[MAX_NODES] = {0};
+    int queue[MAX_NODES], head = 0, tail = 0;
+
+    visited[start] = 1;
+    queue[tail++] = start;
+
+    while (head &lt; tail) {
+        int current = queue[head++];
+        printf("visiting: %s\n", g-&gt;names[current]);
+        for (int i = 0; i &lt; g-&gt;adj_count[current]; i++) {
+            int neighbor = g-&gt;adj_list[current][i];
+            if (!visited[neighbor]) { visited[neighbor] = 1; queue[tail++] = neighbor; }
+        }
+    }
+}
+
+void dfs(Graph *g, int current, int *visited) {
+    if (visited[current]) return;
+    visited[current] = 1;
+    printf("visiting: %s\n", g-&gt;names[current]);
+    for (int i = 0; i &lt; g-&gt;adj_count[current]; i++) {
+        dfs(g, g-&gt;adj_list[current][i], visited);
+    }
+}
+
+int main(void) {
+    Graph friendGraph = {0};
+    int alice = graph_add_node(&amp;friendGraph, "Alice");
+    int bob   = graph_add_node(&amp;friendGraph, "Bob");
+    int carol = graph_add_node(&amp;friendGraph, "Carol");
+    int dave  = graph_add_node(&amp;friendGraph, "Dave");
+    graph_add_edge(&amp;friendGraph, alice, bob);
+    graph_add_edge(&amp;friendGraph, alice, carol);
+    graph_add_edge(&amp;friendGraph, bob, dave);
+
+    printf("-- BFS --\n");
+    bfs(&amp;friendGraph, alice); // Alice, Bob, Carol, Dave (ring by ring)
+
+    printf("-- DFS --\n");
+    int visited[MAX_NODES] = {0};
+    dfs(&amp;friendGraph, alice, visited); // dives deep down one path first
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Both BFS and DFS = <code>O(V + E)</code> — you visit every person/place and every friendship/path once.</p>
+<hr>
+<h1 id="advanced">🔴 ADVANCED<a class="anchor" href="#advanced" aria-hidden="true">#</a></h1>
+<p>Everything so far had one obvious way to solve it. This tier is about <em>choice</em> — problems where many valid paths exist and you need a strategy: try everything but remember what you've already solved (DP), grab the locally-best option and hope it's globally best too (Greedy), explore and back up on dead ends (Backtracking), or always know the most urgent item without re-sorting the whole pile (Heaps). These eight topics are also where technical interviews spend most of their time, for exactly that reason.</p>
+<h2 id="16-dynamic-programming-dp">16. Dynamic Programming (DP)<a class="anchor" href="#16-dynamic-programming-dp" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: Imagine you're climbing a staircase and someone asks "how many ways can you climb 30 steps if you can take 1 or 2 steps at a time?" Instead of recalculating from scratch every time (which is <em>super</em> slow), you <strong>write the answer for small staircases on sticky notes</strong> (2 steps = 2 ways, 3 steps = 3 ways...) and reuse those notes to quickly build up the answer for 30 steps. <strong>Never solve the same sub-problem twice — remember it!</strong></p>
+<p>🌍 <strong>Real life</strong>: A cashier making change with the <em>fewest coins possible</em> remembers the best way to make smaller amounts and builds up. GPS apps remembering the best sub-routes to avoid recalculating the same road segment's cost repeatedly. Netflix computing "best next recommendation" using cached sub-results.</p>
+<p>📝 <strong>Pseudocode (Fibonacci with memoization)</strong>:</p>
+<pre><code>memo = {}
+function fib(n):
+    if n &lt;= 1: return n
+    if n in memo: return memo[n]     // check the sticky note first!
+    memo[n] = fib(n-1) + fib(n-2)    // write a new sticky note
+    return memo[n]</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func fib(n int, memo map[int]int) int {
+    if n &lt;= 1 {
+        return n
+    }
+    if val, found := memo[n]; found { // check the sticky note
+        return val
+    }
+    result := fib(n-1, memo) + fib(n-2, memo)
+    memo[n] = result // write the sticky note for next time
+    return result
+}
+
+func main() {
+    memo := make(map[int]int)
+    fmt.Println(fib(30, memo)) // 832040 — instant, thanks to memoization
+}</code></pre>
+<p>🇨 <strong>C</strong> (the "sticky notes" are a plain array here — <code>have[n]</code> marks whether <code>memo[n]</code> has been written yet, since a C array has no built-in "key not found" like a Go map does):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+
+#define MEMO_SIZE 64
+static long memo[MEMO_SIZE];
+static int  have[MEMO_SIZE];
+
+long fib(int n) {
+    if (n &lt;= 1) return n;
+    if (have[n]) return memo[n];        // check the sticky note first!
+    long result = fib(n - 1) + fib(n - 2);
+    memo[n] = result;                    // write a new sticky note
+    have[n] = 1;
+    return result;
+}
+
+int main(void) {
+    printf("%ld\n", fib(30)); // 832040 — instant, thanks to memoization
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Without memoization, naive Fibonacci is <code>O(2ⁿ)</code> (extremely slow — it re-solves the same problem millions of times). With memoization: <code>O(n)</code> — each sub-problem solved exactly once.</p>
+<hr>
+<h2 id="17-greedy-algorithms">17. Greedy Algorithms<a class="anchor" href="#17-greedy-algorithms" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: A greedy algorithm always grabs the <strong>best-looking option right now</strong>, without worrying about the future. Like when a cashier gives you change: for $0.67, they hand you a quarter, then a quarter, then a dime, a nickel, and 2 pennies — always picking the <strong>biggest coin that still fits</strong>, one decision at a time, never going back to reconsider.</p>
+<p>🌍 <strong>Real life</strong>: Making change with the fewest coins (works great with US coins!). Picking the meeting room schedule that lets you attend the most meetings (always pick the meeting that ends soonest). Google Maps sometimes uses greedy-like shortcuts for quick estimates.</p>
+<p>⚠️ <strong>Watch out</strong>: Greedy is fast but doesn't <em>always</em> give the perfect answer for every problem — it works great for some problems (coin change with normal coins, interval scheduling) and fails for others (coin change with weird coin values like {1, 3, 4} for target 6 — greedy might pick 4+1+1=3 coins instead of the true best, 3+3=2 coins).</p>
+<p>📝 <strong>Pseudocode (coin change, greedy)</strong>:</p>
+<pre><code>function greedyChange(coins, amount):
+    sort coins descending
+    result = []
+    for coin in coins:
+        while amount &gt;= coin:
+            result.add(coin)
+            amount -= coin
+    return result</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import (
+    "fmt"
+    "sort"
+)
+
+func greedyChange(coins []int, amount int) []int {
+    sort.Sort(sort.Reverse(sort.IntSlice(coins)))
+    var used []int
+    for _, coin := range coins {
+        for amount &gt;= coin {
+            used = append(used, coin)
+            amount -= coin
+        }
+    }
+    return used
+}
+
+func main() {
+    fmt.Println(greedyChange([]int{25, 10, 5, 1}, 67))
+    // [25 25 10 5 1 1] -&gt; 67 cents using 6 coins
+}</code></pre>
+<p>🇨 <strong>C</strong> (coins pre-sorted descending — sorting them in C means either a hand-rolled sort like #7's bubble sort or <code>qsort</code> from Section 11.2, so this version takes the sort as a precondition to keep the greedy logic itself front and center):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+
+int greedy_change(const int *coins, int n, int amount, int *used, int used_cap) {
+    int count = 0;
+    for (int i = 0; i &lt; n &amp;&amp; count &lt; used_cap; i++) {
+        while (amount &gt;= coins[i] &amp;&amp; count &lt; used_cap) {
+            used[count++] = coins[i];
+            amount -= coins[i];
+        }
+    }
+    return count;
+}
+
+int main(void) {
+    int coins[] = {25, 10, 5, 1}; // pre-sorted descending
+    int used[16];
+    int count = greedy_change(coins, 4, 67, used, 16);
+    for (int i = 0; i &lt; count; i++) printf("%d ", used[i]); // 25 25 10 5 1 1
+    printf("\n");
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Usually <code>O(n log n)</code> (dominated by the sort) — very fast, since it never backtracks or reconsiders.</p>
+<hr>
+<h2 id="18-backtracking">18. Backtracking<a class="anchor" href="#18-backtracking" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: You're solving a maze (or a Sudoku puzzle). You try a path. If it leads to a dead end, you <strong>walk back</strong> (backtrack) to your last choice and try a <em>different</em> path instead. You keep exploring and undoing until you find a path that works — or discover none exist.</p>
+<p>🌍 <strong>Real life</strong>: Solving a Sudoku puzzle — try a number, if it breaks a rule later, erase it and try the next number. Solving a maze on paper with a pencil, backing up when you hit a wall. A GPS trying alternate routes when one turns out to be blocked.</p>
+<p>📝 <strong>Pseudocode (N-Queens style: place items without conflicts)</strong>:</p>
+<pre><code>function solve(board, row):
+    if row == size(board): return true    // all placed successfully!
+    for col in 0..size(board):
+        if isSafe(board, row, col):
+            place(board, row, col)         // try it
+            if solve(board, row + 1): return true
+            remove(board, row, col)        // backtrack — undo and try next
+    return false                            // no option worked from here</code></pre>
+<p>🐹 <strong>Go (N-Queens: place N queens on a chessboard so none attack each other)</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func isSafe(cols []int, row, col int) bool {
+    for r := 0; r &lt; row; r++ {
+        c := cols[r]
+        if c == col || r-c == row-col || r+c == row+col {
+            return false // same column or same diagonal — queens attack!
+        }
+    }
+    return true
+}
+
+func solve(cols []int, row, n int) bool {
+    if row == n {
+        return true // placed every queen safely
+    }
+    for col := 0; col &lt; n; col++ {
+        if isSafe(cols, row, col) {
+            cols[row] = col       // try placing the queen here
+            if solve(cols, row+1, n) {
+                return true
+            }
+            // backtrack is implicit: next loop iteration overwrites cols[row]
+        }
+    }
+    return false // dead end — go back further
+}
+
+func main() {
+    n := 4
+    cols := make([]int, n)
+    if solve(cols, 0, n) {
+        fmt.Println("Queen positions (row -&gt; col):", cols)
+    }
+}</code></pre>
+<p>🇨 <strong>C</strong> — line for line the same recursion as the Go version; backtracking here is <em>literally</em> "the loop moves to its next iteration and overwrites <code>cols[row]</code>," with no explicit "undo" step needed:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+
+int is_safe(const int *cols, int row, int col) {
+    for (int r = 0; r &lt; row; r++) {
+        int c = cols[r];
+        if (c == col || r - c == row - col || r + c == row + col) return 0; // same column or diagonal
+    }
+    return 1;
+}
+
+int solve(int *cols, int row, int n) {
+    if (row == n) return 1;               // placed every queen safely
+    for (int col = 0; col &lt; n; col++) {
+        if (is_safe(cols, row, col)) {
+            cols[row] = col;               // try placing the queen here
+            if (solve(cols, row + 1, n)) return 1;
+            // backtrack is implicit: next loop iteration overwrites cols[row]
+        }
+    }
+    return 0;                               // dead end — go back further
+}
+
+int main(void) {
+    int n = 4;
+    int cols[4];
+    if (solve(cols, 0, n)) {
+        printf("Queen positions (row -&gt; col):");
+        for (int i = 0; i &lt; n; i++) printf(" %d", cols[i]);
+        printf("\n");
+    }
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Often exponential in the worst case (<code>O(kⁿ)</code>-ish) — but backtracking prunes dead ends early, so it's much faster in practice than trying every possibility blindly.</p>
+<hr>
+<h2 id="19-heaps-priority-queues">19. Heaps / Priority Queues<a class="anchor" href="#19-heaps-priority-queues" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: Imagine a hospital emergency room. It's <em>not</em> first-come-first-served — the person with the <strong>worst injury</strong> gets seen first, no matter when they arrived. A heap is a special box that always lets you grab the "most urgent" item instantly, and it reorganizes itself automatically whenever something new comes in.</p>
+<p>🌍 <strong>Real life</strong>: Hospital triage. Task schedulers in your OS deciding which program gets the CPU next. "Top K" trending topics on Twitter. Dijkstra's algorithm (next!) uses a heap to always process the "closest" unexplored city next.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>heap = new MinHeap()
+heap.insert(5)
+heap.insert(1)
+heap.insert(3)
+heap.extractMin()   // returns 1, the smallest/most urgent</code></pre>
+<p>🐹 <strong>Go</strong> (using the standard library's <code>container/heap</code>):</p>
+<pre data-lang="go"><code>package main
+
+import (
+    "container/heap"
+    "fmt"
+)
+
+type PatientHeap []int // lower number = more urgent
+
+func (h PatientHeap) Len() int            { return len(h) }
+func (h PatientHeap) Less(i, j int) bool  { return h[i] &lt; h[j] }
+func (h PatientHeap) Swap(i, j int)       { h[i], h[j] = h[j], h[i] }
+func (h *PatientHeap) Push(x interface{}) { *h = append(*h, x.(int)) }
+func (h *PatientHeap) Pop() interface{} {
+    old := *h
+    n := len(old)
+    item := old[n-1]
+    *h = old[:n-1]
+    return item
+}
+
+func main() {
+    er := &amp;PatientHeap{5, 1, 3}
+    heap.Init(er)
+    heap.Push(er, 0) // a critical patient just arrived!
+
+    for er.Len() &gt; 0 {
+        fmt.Println("treating urgency level:", heap.Pop(er))
+    }
+    // treating urgency level: 0, 1, 3, 5
+}</code></pre>
+<p>🇨 <strong>C</strong> — C has no <code>container/heap</code> to import, so this <em>is</em> what that package does internally: an array where index <code>i</code>'s children live at <code>2i+1</code>/<code>2i+2</code>, kept valid by "bubbling" a value up or down after every change:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+
+#define HEAP_CAP 64
+
+typedef struct { int items[HEAP_CAP]; int size; } MinHeap;
+
+void heap_swap(MinHeap *h, int i, int j) {
+    int t = h-&gt;items[i]; h-&gt;items[i] = h-&gt;items[j]; h-&gt;items[j] = t;
+}
+
+void heap_push(MinHeap *h, int value) {
+    int i = h-&gt;size++;
+    h-&gt;items[i] = value;
+    while (i &gt; 0) {                              // bubble up to restore the min-heap property
+        int parent = (i - 1) / 2;
+        if (h-&gt;items[parent] &lt;= h-&gt;items[i]) break;
+        heap_swap(h, parent, i);
+        i = parent;
+    }
+}
+
+int heap_pop(MinHeap *h) {
+    int top = h-&gt;items[0];
+    h-&gt;items[0] = h-&gt;items[--h-&gt;size];
+    int i = 0;
+    while (1) {                                    // bubble down to restore the min-heap property
+        int left = 2 * i + 1, right = 2 * i + 2, smallest = i;
+        if (left &lt; h-&gt;size &amp;&amp; h-&gt;items[left] &lt; h-&gt;items[smallest]) smallest = left;
+        if (right &lt; h-&gt;size &amp;&amp; h-&gt;items[right] &lt; h-&gt;items[smallest]) smallest = right;
+        if (smallest == i) break;
+        heap_swap(h, i, smallest);
+        i = smallest;
+    }
+    return top;
+}
+
+int main(void) {
+    MinHeap er = {0};
+    heap_push(&amp;er, 5);
+    heap_push(&amp;er, 1);
+    heap_push(&amp;er, 3);
+    heap_push(&amp;er, 0);  // a critical patient just arrived!
+
+    while (er.size &gt; 0) printf("treating urgency level: %d\n", heap_pop(&amp;er));
+    // treating urgency level: 0, 1, 3, 5
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Insert / extract-min = <code>O(log n)</code>. Peek at the top = <code>O(1)</code>.</p>
+<hr>
+<h2 id="20-union-find-disjoint-set">20. Union-Find (Disjoint Set)<a class="anchor" href="#20-union-find-disjoint-set" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: Imagine everyone at a party starts in their own tiny friend group of 1. Whenever two people become friends, you <strong>merge</strong> their whole friend groups into one. Union-Find quickly answers: "are Alice and Bob in the same friend group?" and "merge these two groups together" — both almost instantly, even with millions of people.</p>
+<p>🌍 <strong>Real life</strong>: Detecting if adding a road would create a cycle (used in building efficient road networks — Kruskal's algorithm). Grouping friends into "friend circles" on a social network. Detecting connected components in an image (like the "magic wand" tool in Photoshop grouping similar-colored pixels).</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>function find(x):
+    if parent[x] != x:
+        parent[x] = find(parent[x])   // path compression: flatten the group
+    return parent[x]
+
+function union(x, y):
+    rootX = find(x)
+    rootY = find(y)
+    if rootX != rootY:
+        parent[rootX] = rootY          // merge the two groups</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+type UnionFind struct {
+    parent []int
+}
+
+func NewUnionFind(n int) *UnionFind {
+    parent := make([]int, n)
+    for i := range parent {
+        parent[i] = i // everyone starts as their own group leader
+    }
+    return &amp;UnionFind{parent: parent}
+}
+
+func (uf *UnionFind) Find(x int) int {
+    if uf.parent[x] != x {
+        uf.parent[x] = uf.Find(uf.parent[x]) // flatten the chain on the way up
+    }
+    return uf.parent[x]
+}
+
+func (uf *UnionFind) Union(x, y int) {
+    rootX, rootY := uf.Find(x), uf.Find(y)
+    if rootX != rootY {
+        uf.parent[rootX] = rootY // merge the friend groups
+    }
+}
+
+func main() {
+    people := NewUnionFind(5) // people 0,1,2,3,4
+    people.Union(0, 1)        // 0 and 1 become friends
+    people.Union(1, 2)        // now 0,1,2 are one group
+
+    fmt.Println(people.Find(0) == people.Find(2)) // true, same group
+    fmt.Println(people.Find(0) == people.Find(3)) // false, different group
+}</code></pre>
+<p>🇨 <strong>C</strong> — the "path compression" line (<code>uf-&gt;parent[x] = uf_find(uf, uf-&gt;parent[x])</code>) is the entire trick: every lookup flattens the chain a little more, so future lookups get faster:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+
+typedef struct { int parent[64]; } UnionFind;
+
+void uf_init(UnionFind *uf, int n) {
+    for (int i = 0; i &lt; n; i++) uf-&gt;parent[i] = i; // everyone starts as their own group leader
+}
+
+int uf_find(UnionFind *uf, int x) {
+    if (uf-&gt;parent[x] != x) uf-&gt;parent[x] = uf_find(uf, uf-&gt;parent[x]); // flatten on the way up
+    return uf-&gt;parent[x];
+}
+
+void uf_union(UnionFind *uf, int x, int y) {
+    int root_x = uf_find(uf, x), root_y = uf_find(uf, y);
+    if (root_x != root_y) uf-&gt;parent[root_x] = root_y; // merge the friend groups
+}
+
+int main(void) {
+    UnionFind people;
+    uf_init(&amp;people, 5); // people 0,1,2,3,4
+    uf_union(&amp;people, 0, 1); // 0 and 1 become friends
+    uf_union(&amp;people, 1, 2); // now 0,1,2 are one group
+
+    printf("%d\n", uf_find(&amp;people, 0) == uf_find(&amp;people, 2)); // 1 (true), same group
+    printf("%d\n", uf_find(&amp;people, 0) == uf_find(&amp;people, 3)); // 0 (false), different group
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: With path compression, find/union are nearly <code>O(1)</code> (technically <code>O(α(n))</code>, an incredibly slow-growing function — for all practical purposes, instant).</p>
+<hr>
+<h2 id="21-trie-prefix-tree">21. Trie (Prefix Tree)<a class="anchor" href="#21-trie-prefix-tree" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: A trie is like a tree where each <strong>branch is a single letter</strong>, and words that share the same beginning <strong>share the same branches</strong>. "CAT" and "CAR" share the "CA" branch, then split into "T" and "R". This is exactly how your phone keyboard guesses what you're about to type.</p>
+<p>🌍 <strong>Real life</strong>: Autocomplete/predictive text on your phone. Search engine "did you mean" and autosuggest dropdowns. Spell checkers.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>trieNode = { children: {}, isEndOfWord: false }
+
+function insert(root, word):
+    node = root
+    for letter in word:
+        if letter not in node.children:
+            node.children[letter] = new trieNode()
+        node = node.children[letter]
+    node.isEndOfWord = true
+
+function search(root, word):
+    node = root
+    for letter in word:
+        if letter not in node.children: return false
+        node = node.children[letter]
+    return node.isEndOfWord</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+type TrieNode struct {
+    children map[rune]*TrieNode
+    isWord   bool
+}
+
+func newTrieNode() *TrieNode {
+    return &amp;TrieNode{children: make(map[rune]*TrieNode)}
+}
+
+type Trie struct {
+    root *TrieNode
+}
+
+func NewTrie() *Trie {
+    return &amp;Trie{root: newTrieNode()}
+}
+
+func (t *Trie) Insert(word string) {
+    node := t.root
+    for _, letter := range word {
+        if node.children[letter] == nil {
+            node.children[letter] = newTrieNode()
+        }
+        node = node.children[letter]
+    }
+    node.isWord = true
+}
+
+func (t *Trie) Search(word string) bool {
+    node := t.root
+    for _, letter := range word {
+        if node.children[letter] == nil {
+            return false
+        }
+        node = node.children[letter]
+    }
+    return node.isWord
+}
+
+func main() {
+    keyboard := NewTrie()
+    keyboard.Insert("cat")
+    keyboard.Insert("car")
+
+    fmt.Println(keyboard.Search("cat")) // true
+    fmt.Println(keyboard.Search("ca"))  // false (only a prefix, not a full word)
+}</code></pre>
+<p>🇨 <strong>C</strong> — Go's version uses a <code>map[rune]*TrieNode</code> per node; C swaps that for a fixed 26-pointer array indexed by <code>letter - 'a'</code>, trading "any Unicode letter" for "no hash map needed":</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+typedef struct TrieNode {
+    struct TrieNode *children[26];
+    int is_word;
+} TrieNode;
+
+TrieNode *trie_new_node(void) { return calloc(1, sizeof(TrieNode)); }
+
+void trie_insert(TrieNode *root, const char *word) {
+    TrieNode *node = root;
+    for (int i = 0; word[i]; i++) {
+        int idx = word[i] - 'a';
+        if (!node-&gt;children[idx]) node-&gt;children[idx] = trie_new_node();
+        node = node-&gt;children[idx];
+    }
+    node-&gt;is_word = 1;
+}
+
+int trie_search(TrieNode *root, const char *word) {
+    TrieNode *node = root;
+    for (int i = 0; word[i]; i++) {
+        int idx = word[i] - 'a';
+        if (!node-&gt;children[idx]) return 0;
+        node = node-&gt;children[idx];
+    }
+    return node-&gt;is_word;
+}
+
+void trie_free(TrieNode *node) {
+    if (!node) return;
+    for (int i = 0; i &lt; 26; i++) trie_free(node-&gt;children[i]);
+    free(node);
+}
+
+int main(void) {
+    TrieNode *keyboard = trie_new_node();
+    trie_insert(keyboard, "cat");
+    trie_insert(keyboard, "car");
+
+    printf("%d\n", trie_search(keyboard, "cat")); // 1 (true)
+    printf("%d\n", trie_search(keyboard, "ca"));   // 0 (false — only a prefix, not a full word)
+
+    trie_free(keyboard);
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: Insert/search = <code>O(k)</code> where <code>k</code> is the word length — independent of how many <em>other</em> words are stored! That's why autocomplete feels instant even with a huge dictionary.</p>
+<hr>
+<h2 id="22-dijkstra-s-algorithm-shortest-path">22. Dijkstra's Algorithm (Shortest Path)<a class="anchor" href="#22-dijkstra-s-algorithm-shortest-path" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: You're using GPS to find the fastest way to grandma's house, and some roads are slower than others (traffic, distance). Dijkstra's algorithm always explores the <strong>closest unvisited place first</strong> (using a heap/priority queue, like #19!), gradually building the shortest-distance map to <em>everywhere</em> from your starting point.</p>
+<p>🌍 <strong>Real life</strong>: GPS/Google Maps shortest route calculation. Network routers finding the fastest path for your internet data to travel. Flight-booking sites finding the cheapest connecting flights.</p>
+<p>📝 <strong>Pseudocode</strong>:</p>
+<pre><code>function dijkstra(graph, start):
+    distances = { all nodes: infinity }
+    distances[start] = 0
+    priorityQueue = [(0, start)]
+
+    while priorityQueue is not empty:
+        (dist, current) = extractMin(priorityQueue)
+        for (neighbor, weight) in graph[current]:
+            newDist = dist + weight
+            if newDist &lt; distances[neighbor]:
+                distances[neighbor] = newDist
+                priorityQueue.add((newDist, neighbor))
+    return distances</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import (
+    "container/heap"
+    "fmt"
+    "math"
+)
+
+type Edge struct {
+    to     string
+    weight int
+}
+
+type Item struct {
+    node string
+    dist int
+}
+
+type PriorityQueue []Item
+
+func (pq PriorityQueue) Len() int            { return len(pq) }
+func (pq PriorityQueue) Less(i, j int) bool  { return pq[i].dist &lt; pq[j].dist }
+func (pq PriorityQueue) Swap(i, j int)       { pq[i], pq[j] = pq[j], pq[i] }
+func (pq *PriorityQueue) Push(x interface{}) { *pq = append(*pq, x.(Item)) }
+func (pq *PriorityQueue) Pop() interface{} {
+    old := *pq
+    n := len(old)
+    item := old[n-1]
+    *pq = old[:n-1]
+    return item
+}
+
+func dijkstra(graph map[string][]Edge, start string) map[string]int {
+    distances := make(map[string]int)
+    for node := range graph {
+        distances[node] = math.MaxInt32
+    }
+    distances[start] = 0
+
+    pq := &amp;PriorityQueue{{node: start, dist: 0}}
+    heap.Init(pq)
+
+    for pq.Len() &gt; 0 {
+        current := heap.Pop(pq).(Item)
+        for _, edge := range graph[current.node] {
+            newDist := current.dist + edge.weight
+            if newDist &lt; distances[edge.to] {
+                distances[edge.to] = newDist
+                heap.Push(pq, Item{node: edge.to, dist: newDist})
+            }
+        }
+    }
+    return distances
+}
+
+func main() {
+    roadMap := map[string][]Edge{
+        "Home":   {{"School", 5}, {"Park", 2}},
+        "Park":   {{"School", 1}},
+        "School": {},
+    }
+    fmt.Println(dijkstra(roadMap, "Home"))
+    // Home:0, Park:2, School:3 (Home-&gt;Park-&gt;School is faster than Home-&gt;School directly!)
+}</code></pre>
+<p>🇨 <strong>C</strong> — this version picks the closest unvisited place with a plain <code>O(V)</code> scan each round instead of #19's heap, trading <code>O((V+E) log V)</code> for a simpler <code>O(V²)</code>; wiring the heap from #19 into this loop instead of the scan is exactly how you'd get the faster version:</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;string.h&gt;
+
+#define MAX_NODES 8
+
+typedef struct {
+    char names[MAX_NODES][32];
+    int  weight[MAX_NODES][MAX_NODES]; // 0 = no direct road
+    int  num_nodes;
+} RoadMap;
+
+int roadmap_add_node(RoadMap *g, const char *name) {
+    strncpy(g-&gt;names[g-&gt;num_nodes], name, 31);
+    return g-&gt;num_nodes++;
+}
+
+void roadmap_add_road(RoadMap *g, int a, int b, int weight) {
+    g-&gt;weight[a][b] = weight;   // directed; call twice for a two-way road
+}
+
+void dijkstra(RoadMap *g, int start, int *dist) {
+    int visited[MAX_NODES] = {0};
+    for (int i = 0; i &lt; g-&gt;num_nodes; i++) dist[i] = INT_MAX;
+    dist[start] = 0;
+
+    for (int iter = 0; iter &lt; g-&gt;num_nodes; iter++) {
+        int current = -1;
+        for (int i = 0; i &lt; g-&gt;num_nodes; i++) {      // pick the closest unvisited place —
+            if (!visited[i] &amp;&amp; (current == -1 || dist[i] &lt; dist[current])) current = i;
+        }
+        if (current == -1 || dist[current] == INT_MAX) break;
+        visited[current] = 1;
+
+        for (int next = 0; next &lt; g-&gt;num_nodes; next++) {
+            if (g-&gt;weight[current][next] &gt; 0 &amp;&amp; dist[current] + g-&gt;weight[current][next] &lt; dist[next]) {
+                dist[next] = dist[current] + g-&gt;weight[current][next];
+            }
+        }
+    }
+}
+
+int main(void) {
+    RoadMap roadMap = {0};
+    int home = roadmap_add_node(&amp;roadMap, "Home");
+    int park = roadmap_add_node(&amp;roadMap, "Park");
+    int school = roadmap_add_node(&amp;roadMap, "School");
+
+    roadmap_add_road(&amp;roadMap, home, school, 5);
+    roadmap_add_road(&amp;roadMap, home, park, 2);
+    roadmap_add_road(&amp;roadMap, park, school, 1);
+
+    int dist[MAX_NODES];
+    dijkstra(&amp;roadMap, home, dist);
+
+    for (int i = 0; i &lt; roadMap.num_nodes; i++) printf("%s:%d ", roadMap.names[i], dist[i]);
+    printf("\n"); // Home:0 Park:2 School:3 — Home-&gt;Park-&gt;School beats Home-&gt;School directly
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: <code>O((V + E) log V)</code> using a heap — fast enough for GPS to recalculate routes on the fly.</p>
+<hr>
+<h2 id="23-topological-sort">23. Topological Sort<a class="anchor" href="#23-topological-sort" aria-hidden="true">#</a></h2>
+<p>🧸 <strong>ELI5</strong>: You can't put on your shoes before your socks. Some tasks <strong>must</strong> happen before others. Topological sort takes a pile of "this-before-that" rules and gives you <strong>one valid order</strong> to do everything in, respecting every rule.</p>
+<p>🌍 <strong>Real life</strong>: Getting dressed in the right order (underwear → pants → belt). University course prerequisites (must take Calculus 1 before Calculus 2). Build systems compiling code (compile library A before the app that depends on it). Spreadsheet formulas that depend on other cells.</p>
+<p>📝 <strong>Pseudocode (Kahn's algorithm, using in-degrees + a queue)</strong>:</p>
+<pre><code>function topologicalSort(graph):
+    inDegree = count incoming edges for every node
+    queue = all nodes with inDegree == 0     // no prerequisites
+    order = []
+
+    while queue is not empty:
+        node = dequeue(queue)
+        order.add(node)
+        for neighbor in graph[node]:
+            inDegree[neighbor] -= 1
+            if inDegree[neighbor] == 0:
+                enqueue(queue, neighbor)
+    return order</code></pre>
+<p>🐹 <strong>Go</strong>:</p>
+<pre data-lang="go"><code>package main
+
+import "fmt"
+
+func topologicalSort(graph map[string][]string) []string {
+    inDegree := make(map[string]int)
+    for node := range graph {
+        inDegree[node] = 0
+    }
+    for _, deps := range graph {
+        for _, dep := range deps {
+            inDegree[dep]++
+        }
+    }
+
+    var queue []string
+    for node, degree := range inDegree {
+        if degree == 0 {
+            queue = append(queue, node) // no prerequisites — start here
+        }
+    }
+
+    var order []string
+    for len(queue) &gt; 0 {
+        current := queue[0]
+        queue = queue[1:]
+        order = append(order, current)
+
+        for _, next := range graph[current] {
+            inDegree[next]--
+            if inDegree[next] == 0 {
+                queue = append(queue, next)
+            }
+        }
+    }
+    return order
+}
+
+func main() {
+    gettingDressed := map[string][]string{
+        "Underwear": {"Pants"},
+        "Pants":     {"Belt"},
+        "Socks":     {"Shoes"},
+        "Belt":      {},
+        "Shoes":     {},
+    }
+    fmt.Println(topologicalSort(gettingDressed))
+    // e.g. [Underwear Socks Pants Shoes Belt] — a valid order respecting all rules
+}</code></pre>
+<p>🇨 <strong>C</strong> (Kahn's algorithm, same integer-indexed <code>Graph</code> shape as #14/#15, with the ready-to-schedule queue as a plain array):</p>
+<pre data-lang="c"><code>#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#define MAX_NODES 8
+
+typedef struct {
+    char names[MAX_NODES][32];
+    int  adj_list[MAX_NODES][MAX_NODES];
+    int  adj_count[MAX_NODES];
+    int  num_nodes;
+} Graph;
+
+int graph_add_node(Graph *g, const char *name) {
+    strncpy(g-&gt;names[g-&gt;num_nodes], name, 31);
+    return g-&gt;num_nodes++;
+}
+
+void graph_add_prereq(Graph *g, int before, int after) {
+    g-&gt;adj_list[before][g-&gt;adj_count[before]++] = after; // "before" must happen before "after"
+}
+
+int topological_sort(Graph *g, int *order) {
+    int in_degree[MAX_NODES] = {0};
+    for (int i = 0; i &lt; g-&gt;num_nodes; i++) {
+        for (int j = 0; j &lt; g-&gt;adj_count[i]; j++) in_degree[g-&gt;adj_list[i][j]]++;
+    }
+
+    int queue[MAX_NODES], head = 0, tail = 0, order_len = 0;
+    for (int i = 0; i &lt; g-&gt;num_nodes; i++) {
+        if (in_degree[i] == 0) queue[tail++] = i; // no prerequisites — start here
+    }
+
+    while (head &lt; tail) {
+        int current = queue[head++];
+        order[order_len++] = current;
+        for (int i = 0; i &lt; g-&gt;adj_count[current]; i++) {
+            int next = g-&gt;adj_list[current][i];
+            if (--in_degree[next] == 0) queue[tail++] = next;
+        }
+    }
+    return order_len;
+}
+
+int main(void) {
+    Graph gettingDressed = {0};
+    int underwear = graph_add_node(&amp;gettingDressed, "Underwear");
+    int pants     = graph_add_node(&amp;gettingDressed, "Pants");
+    int belt      = graph_add_node(&amp;gettingDressed, "Belt");
+    int socks     = graph_add_node(&amp;gettingDressed, "Socks");
+    int shoes     = graph_add_node(&amp;gettingDressed, "Shoes");
+
+    graph_add_prereq(&amp;gettingDressed, underwear, pants);
+    graph_add_prereq(&amp;gettingDressed, pants, belt);
+    graph_add_prereq(&amp;gettingDressed, socks, shoes);
+
+    int order[MAX_NODES];
+    int n = topological_sort(&amp;gettingDressed, order);
+    for (int i = 0; i &lt; n; i++) printf("%s ", gettingDressed.names[order[i]]);
+    printf("\n"); // e.g. Underwear Socks Pants Shoes Belt — a valid order respecting all rules
+    return 0;
+}</code></pre>
+<p>⏱️ <strong>Complexity</strong>: <code>O(V + E)</code> — visit every task and every "must happen before" rule once.</p>
+<hr>
+<p><strong>That's the full toolkit</strong> — 23 topics across three tiers, from egg-carton arrays to Dijkstra's shortest path. What follows isn't more to learn; it's the quick-reference for the moment that actually matters: staring at a new problem and recognizing which of these 23 tools it's asking for.</p>
+<h1 id="cheat-sheet-when-do-i-use-what">Cheat Sheet: When Do I Use What?<a class="anchor" href="#cheat-sheet-when-do-i-use-what" aria-hidden="true">#</a></h1>
+<div class="tbl"><table>
+<thead><tr><th>Problem sounds like...</th><th>Reach for...</th></tr></thead>
+<tbody>
+<tr><td>"I need instant lookup by a key/name"</td><td>Hash Map</td></tr>
+<tr><td>"First come, first served"</td><td>Queue</td></tr>
+<tr><td>"Undo my last action"</td><td>Stack</td></tr>
+<tr><td>"The list is sorted, find something fast"</td><td>Binary Search</td></tr>
+<tr><td>"Find the shortest path / fewest steps"</td><td>BFS or Dijkstra</td></tr>
+<tr><td>"Explore every possibility, backing up on dead ends"</td><td>DFS / Backtracking</td></tr>
+<tr><td>"This must happen before that"</td><td>Topological Sort</td></tr>
+<tr><td>"I keep recalculating the same sub-answer"</td><td>Dynamic Programming (memoize)</td></tr>
+<tr><td>"Just grab the biggest/cheapest option each time"</td><td>Greedy</td></tr>
+<tr><td>"Always give me the most urgent/smallest/biggest item next"</td><td>Heap / Priority Queue</td></tr>
+<tr><td>"Are these two things in the same group?"</td><td>Union-Find</td></tr>
+<tr><td>"Autocomplete as the user types"</td><td>Trie</td></tr>
+<tr><td>"Organize hierarchical data (folders, org charts)"</td><td>Tree</td></tr>
+<tr><td>"Model relationships between things (people, cities)"</td><td>Graph</td></tr>
+</tbody></table></div>
+<h2 id="the-one-sentence-version-of-everything">The one-sentence version of everything<a class="anchor" href="#the-one-sentence-version-of-everything" aria-hidden="true">#</a></h2>
+<ul>
+<li><strong>Array</strong>: numbered boxes in a row, instant access by number.</li>
+<li><strong>String</strong>: an array of letters.</li>
+<li><strong>Linked List</strong>: a chain of clues, each pointing to the next.</li>
+<li><strong>Stack</strong>: last in, first out — like a pile of pancakes.</li>
+<li><strong>Queue</strong>: first in, first out — like a checkout line.</li>
+<li><strong>Linear Search</strong>: check everything, one by one.</li>
+<li><strong>Bubble Sort</strong>: repeatedly swap neighbors until sorted.</li>
+<li><strong>Binary Search</strong>: cut the possibilities in half every guess.</li>
+<li><strong>Recursion</strong>: solve a smaller version of the same problem.</li>
+<li><strong>Hash Map</strong>: instant lookup via a coat-check ticket.</li>
+<li><strong>Tree</strong>: a family tree — one path to every relative.</li>
+<li><strong>BST</strong>: a tree where left is always smaller, right is always bigger.</li>
+<li><strong>Merge/Quick Sort</strong>: divide the mess into tiny pieces, then combine/sort smartly.</li>
+<li><strong>Graph</strong>: friendships that can loop around, unlike a family tree.</li>
+<li><strong>BFS/DFS</strong>: explore ring-by-ring, or dive deep-first.</li>
+<li><strong>Dynamic Programming</strong>: remember answers so you never redo work.</li>
+<li><strong>Greedy</strong>: always take the best option available right now.</li>
+<li><strong>Backtracking</strong>: try, and undo if it doesn't work out.</li>
+<li><strong>Heap</strong>: always know the most urgent item instantly.</li>
+<li><strong>Union-Find</strong>: quickly track which friend groups have merged.</li>
+<li><strong>Trie</strong>: a tree of letters, for lightning-fast prefix lookups.</li>
+<li><strong>Dijkstra</strong>: GPS logic — always expand the closest place first.</li>
+<li><strong>Topological Sort</strong>: one valid order that respects all the "do this before that" rules.</li>
+</ul>
+<hr>
+<h1 id="further-reading">📚 Further Reading<a class="anchor" href="#further-reading" aria-hidden="true">#</a></h1>
+<h2 id="books">Books<a class="anchor" href="#books" aria-hidden="true">#</a></h2>
+<ul>
+<li><strong>Grokking Algorithms</strong> — Aditya Bhargava. The friendliest possible print introduction — hand-drawn illustrations, no heavy math. Basically this guide's spirit, in book form.</li>
+<li><strong>A Common-Sense Guide to Data Structures and Algorithms</strong> — Jay Wengrow. Plain-English explanations with a strong focus on <em>why</em> Big-O matters in real code.</li>
+<li><strong>Cracking the Coding Interview</strong> — Gayle Laakmann McDowell. The standard reference once you're comfortable with the basics and want interview-style practice problems.</li>
+<li><strong>Introduction to Algorithms (CLRS)</strong> — Cormen, Leiserson, Rivest, Stein. The rigorous, formal textbook (a.k.a. "the DSA bible") — dense, but the definitive reference once you want proofs and deep detail.</li>
+<li><strong>The Algorithm Design Manual</strong> — Steven Skiena. Great for connecting algorithms to real engineering problems, with a "war stories" section of applied case studies.</li>
+<li><strong>Algorithms, 4th Edition</strong> — Robert Sedgewick &amp; Kevin Wayne. Clean Java-based explanations; pairs well with the free Princeton course below.</li>
+</ul>
+<h2 id="blogs-written-guides">Blogs &amp; Written Guides<a class="anchor" href="#blogs-written-guides" aria-hidden="true">#</a></h2>
+<ul>
+<li><a href="https://visualgo.net/"><strong>VisuAlgo</strong></a> — visualizes data structures and algorithms step-by-step; excellent for building intuition before reading code.</li>
+<li><a href="https://www.geeksforgeeks.org/data-structures/"><strong>GeeksforGeeks — DSA</strong></a> — huge library of explanations, complexity breakdowns, and practice problems per topic.</li>
+<li><a href="https://neetcode.io/roadmap"><strong>NeetCode Roadmap</strong></a> — a curated, structured path through the classic interview problems, organized by pattern (not just by topic).</li>
+<li><strong>The Go blog &amp; <code>container/heap</code>/<code>sort</code> package docs</strong> (<a href="https://pkg.go.dev/container/heap">pkg.go.dev/container/heap</a>, <a href="https://pkg.go.dev/sort">pkg.go.dev/sort</a>) — see how these exact structures are implemented in Go's own standard library.</li>
+<li><a href="https://www.bigocheatsheet.com/"><strong>Big-O Cheat Sheet</strong></a> — a single-page reference for the time/space complexity of nearly every common data structure and algorithm.</li>
+<li><strong><a href="../c-lang/real-life-c-guide.md"><code>wiki/c-lang/real-life-c-guide.md</code></a></strong> — this guide's C companion. Every 🇨 block above is a stripped-down version of a pattern that guide covers in full: Part III (§17–23) builds linked lists, hash tables, BSTs, and thread-safe structures from scratch; Part VI walks the <em>exact same data structures</em> inside real SQLite/Redis/curl source; Part VIII is the memory-leak and defensive-C checklist behind every <code>malloc</code>/<code>free</code> pair used here.</li>
+</ul>
+<h2 id="video-tutorials">Video Tutorials<a class="anchor" href="#video-tutorials" aria-hidden="true">#</a></h2>
+<ul>
+<li><a href="https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/"><strong>MIT 6.006 — Introduction to Algorithms</strong></a> (MIT OpenCourseWare) — free, full-rigor university course, lecture videos included.</li>
+<li><a href="https://www.youtube.com/@abdul_bari"><strong>Abdul Bari — Algorithms Playlist</strong></a> (YouTube) — widely loved for extremely clear whiteboard walkthroughs of sorting, graphs, and DP.</li>
+<li><a href="https://www.youtube.com/@NeetCode"><strong>NeetCode — Coding Interview Solutions</strong></a> (YouTube) — short, focused walkthroughs of individual problems mapped to the patterns in this guide.</li>
+<li><a href="https://www.youtube.com/@BackToBackSWE"><strong>Back To Back SWE</strong></a> (YouTube) — deep, intuition-first explanations of dynamic programming, graphs, and heaps.</li>
+<li><a href="https://www.coursera.org/learn/algorithms-part1"><strong>Princeton Algorithms, Part I &amp; II</strong></a> (Coursera, free to audit) — the video companion to the Sedgewick &amp; Wayne book above.</li>
+<li><a href="https://cs50.harvard.edu/x/"><strong>CS50's Introduction to Computer Science</strong></a> (Harvard, free) — not DSA-only, but its data structures/algorithms weeks are a superb, beginner-friendly on-ramp.</li>
+</ul>
+
+    </article>
+  </div>
+</div>
+<button class="totop" id="toTop" title="Back to top">↑ Top</button>
+<script>
+(function(){
+  var side = document.querySelector('.sidebar');
+  var btn  = document.getElementById('navToggle');
+  if(btn){ btn.addEventListener('click', function(){ side.classList.toggle('open'); }); }
+  document.querySelectorAll('#toc a').forEach(function(a){
+    a.addEventListener('click', function(){ if(window.innerWidth<=1024) side.classList.remove('open'); });
+  });
+
+  // scroll-spy
+  var links = {};
+  document.querySelectorAll('#toc a').forEach(function(a){
+    var id = a.getAttribute('href').slice(1); links[id] = a;
+  });
+  var targets = Object.keys(links).map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  var current = null;
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        if(current) current.classList.remove('active');
+        var l = links[e.target.id];
+        if(l){ l.classList.add('active'); current = l;
+          l.scrollIntoView({block:'nearest'}); }
+      }
+    });
+  }, {rootMargin:'0px 0px -80% 0px', threshold:0});
+  targets.forEach(function(t){ obs.observe(t); });
+
+  // back to top
+  var top = document.getElementById('toTop');
+  window.addEventListener('scroll', function(){
+    if(window.scrollY > 1200) top.classList.add('show'); else top.classList.remove('show');
+  }, {passive:true});
+  top.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+})();
+</script>
+</body>
+</html>

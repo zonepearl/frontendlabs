@@ -1,0 +1,57 @@
+{{define "head"}}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/png" sizes="32x32" href="{{rel .PageURL "assets/brand/logo-32.png"}}">
+<link rel="icon" type="image/png" sizes="64x64" href="{{rel .PageURL "assets/brand/logo-64.png"}}">
+<link rel="apple-touch-icon" href="{{rel .PageURL "assets/brand/logo-180.png"}}">
+<link rel="canonical" href="{{.Site.Abs .PageURL}}">
+<meta property="og:site_name" content="Frontend Labs">
+<meta property="og:type" content="{{if .PageURL}}article{{else}}website{{end}}">
+<meta property="og:url" content="{{.Site.Abs .PageURL}}">
+<meta property="og:image" content="{{.Site.Abs "assets/brand/logo-512.png"}}">
+<meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="{{rel .PageURL "assets/app.css"}}">
+<script>
+  // Apply saved reader preferences before first paint (no flash of the wrong theme).
+  (function () {
+    try {
+      var p = JSON.parse(localStorage.getItem("fl:prefs") || "{}");
+      var d = document.documentElement;
+      var q = new URLSearchParams(location.search).get("theme"); // ?theme=light for one visit, not saved
+      d.dataset.theme = q || p.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "night" : "paper");
+      if (p.font) d.style.setProperty("--font-scale", p.font);
+      if (p.width) d.dataset.width = p.width;
+    } catch (e) {}
+  })();
+</script>
+{{end}}
+
+{{define "live"}}
+{{if .Live}}
+<script>
+  // Development preview only (`guides serve`); production builds never include this.
+  // serve mode only: reload this tab when its page is regenerated, keeping the scroll position.
+  (function () {
+    var y = sessionStorage.getItem("fl:scroll:" + location.pathname);
+    if (y) { sessionStorage.removeItem("fl:scroll:" + location.pathname); addEventListener("load", function () { scrollTo(0, +y); }); }
+    if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+    var es = new EventSource("/__live");
+    es.onmessage = function (e) {
+      if (e.data === "*" || e.data === location.pathname) {
+        sessionStorage.setItem("fl:scroll:" + location.pathname, String(scrollY));
+        location.reload();
+      }
+    };
+  })();
+</script>
+{{end}}
+{{end}}
+
+{{define "brand"}}
+<a href="{{rel .PageURL ""}}" class="flex shrink-0 items-center gap-2 no-underline" aria-label="Frontend Labs home">
+  <span class="flex h-12 items-center rounded-xl bg-white px-2.5 shadow-sm ring-1 ring-black/5">
+    <img src="{{rel .PageURL "assets/brand/wordmark-96.png"}}" alt="Frontend Labs" width="79" height="40" class="h-10 w-auto">
+  </span>
+</a>
+{{end}}
