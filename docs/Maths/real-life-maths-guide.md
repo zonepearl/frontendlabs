@@ -63,7 +63,7 @@ python3
 ## Contents
 
 **Part 0 — Start here**
-- How to use this guide · Role-based learning paths · Notation cheat sheet · How to read a formula
+- How to use this guide · Role-based learning paths · Notation cheat sheet (every symbol, constant and unit) · How to read a formula
 
 **Part 1 — Beginner: the foundations everyone needs**
 1. Number systems & bit-level math
@@ -101,7 +101,7 @@ python3
 29. Control theory basics (stability, dead time, steady-state error, the Kubernetes HPA)
 
 **Part 4 — Putting it together**
-- Role-based priority map · Formula cheat sheet · Practice labs
+- Role-based priority map · Formula cheat sheet · Theorem index · Practice labs
 
 ---
 
@@ -141,40 +141,284 @@ You don't need all 29 chapters at equal depth. Use this as a priority map —
 
 ## Notation cheat sheet
 
-| Symbol | Meaning | Symbol | Meaning |
+Every symbol, operator, decoration and constant used in this guide, grouped
+by topic. Each entry says how to read it aloud, what it means, gives a small
+example, and names the chapter where it does the most work. When a symbol
+has several meanings (`λ`, `σ`, `π`, `e`), all of them are listed. The
+chapter you're reading always says which one applies.
+
+### Arithmetic, comparison and rounding
+
+| Symbol | Read it as | Meaning | Example | Ch. |
+|---|---|---|---|---|
+| `+`, `-` / `−` | "plus", "minus" | addition, subtraction (or a negative sign) | `5 − 3 = 2` | all |
+| `·` or `×` | "times" | multiplication (`·` is used inside formulas, `×` in prose) | `3·4 = 12` | all |
+| `/` or `÷` | "divided by" | division | `12/4 = 3` | all |
+| `±` | "plus or minus" | a range, or both signs | `50 ± 9.8 ms` = 40.2 to 59.8 | 14, 22 |
+| `=` | "equals" | exactly equal | `2 + 2 = 4` | all |
+| `≠` | "is not equal to" | different | `AB ≠ BA` | 10 |
+| `≈` | "approximately" | close enough for the purpose | `π ≈ 3.14` | all |
+| `≡` | "is congruent to" (or "is defined as") | equal after reducing mod `n` | `17 ≡ 2 (mod 5)` | 2, 19 |
+| `∝` | "is proportional to" | equal up to a constant factor | `P(spam\|words) ∝ …` | 16 |
+| `<` `>` `≤` `≥` | "less than", "greater than or equal" … | ordering | `ρ < 1` | all |
+| `≪` / `<<` | "much less than" | orders of magnitude smaller | `r ≪ n` in LoRA | 20 |
+| `\|x\|` | "absolute value of x" | drop the sign | `\|-3\| = 3` | 9, 10 |
+| `⌊x⌋` | "floor of x" | round down | `⌊2.7⌋ = 2` | 2 |
+| `ceil(x)` / `⌈x⌉` | "ceiling of x" | round up | `ceil(6.1) = 7` | 1, 29 |
+| `√x` | "square root of x" | the number that squared gives `x` | `√144 = 12` | 9, 14 |
+| `xⁿ`, `x^n` | "x to the n" | `x` multiplied by itself `n` times | `2¹⁰ = 1024` | 5 |
+| `x⁻¹` | "x inverse" | `1/x`, or the modular / matrix inverse | `3⁻¹ ≡ 4 (mod 11)` | 10, 19 |
+| `n!` | "n factorial" | `n·(n-1)·…·1` | `4! = 24` | 14, 15 |
+| `%` | "percent" or, in code, "mod" | per hundred; in Python `a % n` is the remainder | `17 % 5 = 2` | 2 |
+| `∞` | "infinity" | grows without bound | `W → ∞` as `ρ → 1` | 12, 25 |
+| `½`, `¼` | "a half", "a quarter" | fractions | `½λw²` | 13, 21 |
+| `→` | "goes to" / "maps to" | a limit, or a function's input → output | `h → 0` | 4, 12 |
+| `°` | "degrees" | angle; `360° = 2π` radians | `90°` rotation | 7, 10 |
+| `↔` | "swaps with" / "if and only if" | two-way correspondence | rows `↔` columns | 10 |
+| `∎` | "end of proof" | the argument is complete | | 17 |
+
+### Decorations on letters: subscripts, superscripts, hats, bars
+
+| Notation | Read it as | Meaning | Example | Ch. |
+|---|---|---|---|---|
+| `xᵢ`, `x_i`, `xₖ`, `x₁` | "x sub i" | a subscript is an *index or label*: the `i`-th item, or a named variant (`β₁`, `f_max`, `d_k`) | `x₃` = third value | all |
+| `x_{n+1}` | "x sub n plus one" | the next value in a sequence or iteration | Newton's `x_{n+1}` | 12 |
+| `A[i][j]`, `Aᵢⱼ` | "A i j" | the entry in row `i`, column `j` | `A²[R1][R4] = 1` | 10 |
+| `x²`, `xᵏ`, `xᵗ`, `gᵉ` | "x squared", "x to the k" | a superscript is a *power* (not an index), except `ᵀ` (transpose) and `⁻¹` (inverse) | `σ²` = variance | all |
+| `x̄`, `ȳ` | "x bar", "y bar" | the average of the `x` (or `y`) values | `x̄ = 3` | 9, 14 |
+| `p̂`, `θ̂` | "p hat" | an *estimate* computed from data | `p̂ = k/n` | 21, 22 |
+| `x*`, `θ*` | "x star" | the optimal value | `n* = 20` servers | 12, 13 |
+| `f'(x)`, `f''(x)` | "f prime", "f double prime" | first and second derivatives | `(x²)' = 2x` | 12 |
+| `Δx` | "delta x" | a (finite) change in `x` | slice width in a Riemann sum | 12 |
+| `x_new ← …` | "x becomes …" | assignment / an update step | `w ← w - η·g` | 9, 21 |
+| `[i = c]` | "one if i equals c, else zero" | indicator (Iverson bracket) | used in the softmax gradient | 13 |
+
+### Sets and logic
+
+| Symbol | Read it as | Meaning | Example | Ch. |
+|---|---|---|---|---|
+| `{…}` | "the set of …" | a collection with no duplicates | `{2, 3, 5, 7}` | 4 |
+| `∈` / `∉` | "is in" / "is not in" | membership | `3 ∈ {1,2,3}` | 4 |
+| `⊆` | "is a subset of" | every element is also in the other set | `{1} ⊆ {1,2}` | 4 |
+| `∪` | "union" | in either set | `A ∪ B` | 4, 8 |
+| `∩` | "intersection" | in both sets | `A ∩ B` | 4, 8 |
+| `∅` | "the empty set" | no elements, an impossible event | `A ∩ B = ∅` | 8 |
+| `Ω` | "omega" | sample space: every possible outcome | coin: `{H, T}` | 8 |
+| `ℝ` | "the reals" | all real numbers | `x ∈ ℝ` | 10 |
+| `ℝⁿ` | "R n" | lists (vectors) of `n` real numbers | an embedding `∈ ℝ⁷⁶⁸` | 10, 20 |
+| `ℤ`, `ℤₙ` | "the integers", "Z mod n" | whole numbers; `{0, …, n-1}` with wrap-around | `ℤ₁₇` | 19, 24 |
+| `ℤₙ*` | "the units mod n" | elements of `ℤₙ` that have an inverse; there are `φ(n)` | `ℤ₁₀* = {1,3,7,9}` | 19 |
+| `∀` / `∃` | "for all" / "there exists" | quantifiers | `∀x: x² ≥ 0` | 4 |
+| `¬`, `NOT` | "not" | negation | `¬true = false` | 3 |
+| `∧`, `AND`, `&` | "and" | both | `1 ∧ 0 = 0` | 3 |
+| `∨`, `OR`, `\|` | "or" | either (or both) | `1 ∨ 0 = 1` | 3 |
+| `⊕`, `XOR`, `^` | "x-or" | exactly one of the two | `1 ⊕ 1 = 0` | 3 |
+| `<<`, `>>` | "shift left / right" | multiply / divide by powers of 2 (in code) | `1 << 4 = 16` | 1 |
+| `f: A → B` | "f maps A to B" | a function from inputs `A` to outputs `B` | `hash: str → int` | 4 |
+
+### Number theory and cryptography
+
+| Symbol | Read it as | Meaning | Example | Ch. |
+|---|---|---|---|---|
+| `a mod n` | "a mod n" | remainder of `a ÷ n` | `17 mod 5 = 2` | 2 |
+| `a ≡ b (mod n)` | "a is congruent to b mod n" | `n` divides `a - b` | `38 ≡ 2 (mod 12)` | 2, 19 |
+| `a \| b` / `a ∤ b` | "a divides b" / "does not divide" | `b` is (not) a multiple of `a` | `5 \| 15`, `p ∤ a` | 19 |
+| `gcd(a, b)` | "greatest common divisor" | largest number dividing both | `gcd(48, 18) = 6` | 19 |
+| `a⁻¹ (mod n)` | "inverse of a mod n" | the `x` with `a·x ≡ 1`; exists iff `gcd(a,n)=1` | `17⁻¹ ≡ 2753 (mod 3120)` | 19, 24 |
+| `φ(n)` | "phi of n", Euler's totient | count of `1…n` coprime to `n` | `φ(61·53) = 3120` | 19, 24 |
+| `π(N)` | "pi of N", prime-counting function | number of primes `≤ N` (not 3.14…) | `π(100) = 25` | 19 |
+| `p`, `q` | | large secret primes (RSA) / a public prime (DH) | 61, 53 | 24 |
+| `n = p·q` | "the modulus" | RSA public modulus; also a curve's group order in ECDSA | 3233 | 24 |
+| `e`, `d` | "public / private exponent" | RSA keys, `e·d ≡ 1 (mod φ(n))` (this `e` is not 2.718…) | 17, 2753 | 24 |
+| `g`, `a`, `b`, `A`, `B` | | DH generator, private exponents, public values | `A = gᵃ mod p` | 24 |
+| `G`, `k·G` | "G", "k times G" | elliptic-curve base point; adding `G` to itself `k` times | `3G = (10, 6)` | 24 |
+| `O` | "the point at infinity" | the identity ("zero") of an elliptic-curve group | `19G = O` | 24 |
+| `(r, s)`, `k`, `z` | | ECDSA signature, per-signature nonce, message hash | | 24 |
+| `H(·)` | "hash of" | a cryptographic hash function | `SHA-256(m)` | 24 |
+| `2ᵇ` "bits of security" | | an attack needs about `2ᵇ` operations | AES-128: `2¹²⁸` | 24 |
+
+### Functions, sums and calculus
+
+| Symbol | Read it as | Meaning | Example | Ch. |
+|---|---|---|---|---|
+| `f(x)` | "f of x" | function `f` applied to input `x` | `f(3) = 9` for `x²` | 4 |
+| `f(g(x))`, `f∘g` | "f of g of x", "f composed with g" | composition: apply `g`, then `f` | layers of a network | 13 |
+| `Σᵢ₌₁ⁿ xᵢ` | "sum from i equals 1 to n of x i" | add up a sequence (a `for` loop with `+=`) | `Σ₁³ i = 6` | 6, all |
+| `∏ᵢ xᵢ` | "product over i" | multiply a sequence | `∏(1 - i/N)` | 24 |
+| `lim(h→0)` | "the limit as h goes to 0" | the value approached as `h` shrinks | slope of a tangent | 12 |
+| `d/dx`, `dy/dx` | "d by d x", "d y d x" | derivative: rate of change of `y` per unit `x` | `d/dx x² = 2x` | 12 |
+| `∂f/∂x` | "partial f partial x" | derivative w.r.t. `x`, others held fixed | `∂(x²y)/∂x = 2xy` | 13 |
+| `∂²f/∂xᵢ∂xⱼ` | "second partial" | curvature; an entry of the Hessian | | 13 |
+| `∇f` | "grad f" / "nabla f" | vector of all partial derivatives | `∇f = (4, 13)` | 13, 21 |
+| `∇ₓL` | "gradient of L with respect to x" | gradient taken w.r.t. one specific variable | input gradient in FGSM | 28 |
+| `D_u f` | "directional derivative along u" | slope in direction `u`, `= ∇f·u` | `12.8` | 13 |
+| `J` | "the Jacobian" | matrix of derivatives of a vector function | | 13 |
+| `H` (calculus) | "the Hessian" | matrix of second derivatives | `[[2,1],[1,2]]` | 13, 21 |
+| `∫ₐᵇ f(x) dx` | "integral from a to b of f of x d x" | area under `f`; the total accumulated | `∫₀³ x² dx = 9` | 12 |
+| `dx` | "d x" | an infinitely thin slice of `x` | | 12 |
+| `F(x)` | "big F" | an antiderivative (`F' = f`), or a CDF | `F(x) = x³/3` | 12, 14 |
+| `C` (integration) | "plus C" | the constant of integration | `∫2x dx = x² + C` | 12 |
+| `e^x`, `exp(x)` | "e to the x" | the exponential function | `e⁰ = 1` | 5, 12 |
+| `ln x` | "natural log" | log base `e` | `ln e = 1` | 5 |
+| `log₂ x`, `log₁₀ x` | "log base 2 / base 10" | bits; decibels and orders of magnitude | `log₂ 1024 = 10` | 5, 23, 27 |
+| `sin θ`, `cos θ`, `tanh x` | "sine", "cosine", "tanch" | trigonometric / hyperbolic functions | `cos 0 = 1` | 7, 12 |
+| `σ(x)` | "sigmoid of x" | `1/(1 + e⁻ˣ)`, squashes to `(0, 1)` | `σ(0) = 0.5` | 12 |
+| `ReLU(z)` | "rel-u" | `max(0, z)` | `ReLU(-1.4) = 0` | 10, 21 |
+| `softmax(z)` | "softmax" | `eᶻⁱ / Σ eᶻʲ`, turns scores into probabilities | `(0.66, 0.24, 0.10)` | 13, 20 |
+| `sign(x)` | "sign of x" | `+1`, `0` or `-1` | `sign(-0.3) = -1` | 28 |
+| `max`, `min` | "max", "min" | largest / smallest value | `max(0, -2) = 0` | all |
+| `argmax_θ f(θ)` | "arg max over theta" | the `θ` that makes `f` largest (not the max value) | MLE, greedy decoding | 14, 22 |
+| `O(f(n))` | "big O of f of n" | grows no faster than `f(n)` | binary search `O(log n)` | 18 |
+| `i` (complex) | "i" | the imaginary unit, `i² = -1` | `e^(iπ) = -1` | 27 |
+| `X_k`, `x_n` | "big X sub k", "little x sub n" | DFT output (frequency) and input (time samples) | | 27 |
+| `f * g` | "f convolved with g" | slide, multiply, sum | a blur filter | 27 |
+| `z` (control) | "z" | the root of a characteristic equation; stable iff `\|z\| < 1` | `z² - z + K = 0` | 29 |
+
+### Linear algebra
+
+| Symbol | Read it as | Meaning | Example | Ch. |
+|---|---|---|---|---|
+| `x`, `v`, `w` (lower-case) | "vector x" | an ordered list of numbers | `x = (1, 2)` | 10 |
+| `A`, `W`, `M` (upper-case) | "matrix A" | a grid of numbers / a linear transformation | `[[0.5,-1],[2,0.25]]` | 10 |
+| `m × n` | "m by n" | shape: `m` rows, `n` columns | `(2×3)·(3×4) = 2×4` | 10 |
+| `A·B`, `A @ B` | "A times B" | matrix product (row · column) | `A@B` in NumPy | 10 |
+| `a · b` (vectors) | "a dot b" | dot product, `Σ aᵢbᵢ` | `(3,4)·(4,3) = 24` | 10 |
+| `⊙`, `*` (NumPy) | "element-wise product" | multiply matching entries | `[1,2]⊙[3,4] = [3,8]` | 10 |
+| `Aᵀ`, `xᵀ` | "A transpose" | swap rows and columns | `[1 2]ᵀ` = a column | 10, 13 |
+| `A⁻¹` | "A inverse" | undoes `A`: `A⁻¹A = I` | | 10 |
+| `I` | "the identity" | 1s on the diagonal, "do nothing" | `I·x = x` | 10, 11 |
+| `det(A)` | "determinant of A" | volume scaling; `0` means not invertible | `det([[1,2],[3,4]]) = -2` | 11 |
+| `trace(A)` | "trace of A" | sum of the diagonal = sum of eigenvalues | `trace = 4` | 11 |
+| `rank(A)` | "rank of A" | number of independent rows/columns | low-rank LoRA update | 20 |
+| `‖x‖₁`, `‖x‖₂`, `‖x‖∞` | "L1 / L2 / L-infinity norm" | sum of abs values / length / largest abs value | `(3,4)`: 7, 5, 4 | 10, 28 |
+| `‖A‖_F` | "Frobenius norm" | `√(Σ all entries²)` | `√50` | 20 |
+| `λ`, `v` (eigen) | "eigenvalue", "eigenvector" | `A·v = λ·v` | `λ = 1, 3` | 11 |
+| `P`, `D` | | eigenvector matrix and diagonal eigenvalue matrix, `A = PDP⁻¹` | | 11 |
+| `U`, `Σ`, `V` | "U, sigma, V" | SVD factors, `A = UΣVᵀ`; `σᵢ` = singular values | `σ = 6.71, 2.24` | 20 |
+| `L = D - A` (graphs) | "the Laplacian" | degree matrix minus adjacency matrix | | 11, 17 |
+| `λ₂` | "lambda two", Fiedler value | algebraic connectivity of a graph | ring of 4: `λ₂ = 2` | 11 |
+| `κ` | "kappa", condition number | `λ_max / λ_min`: how ill-conditioned a problem is | | 21 |
+| `Q`, `K`, `V`, `d_k` | "queries, keys, values, key dimension" | attention inputs | `d_k = 64` | 20 |
+
+### Probability and statistics
+
+| Symbol | Read it as | Meaning | Example | Ch. |
+|---|---|---|---|---|
+| `P(A)` | "probability of A" | a number in `[0, 1]` | `P(heads) = 0.5` | 8 |
+| `P(A \| B)` | "probability of A given B" | probability once `B` is known | `P(fail \| checkout) = 0.25` | 8, 16 |
+| `P(A ∩ B)`, `P(A ∪ B)` | "A and B", "A or B" | joint / either | | 8 |
+| `X`, `Y` (capitals) | "random variable X" | a number decided by chance | latency of a request | 8, 14 |
+| `X ~ D` | "X is distributed as D" | `X` is drawn from distribution `D` | `X ~ N(100, 20²)` | 14 |
+| `p(x)`, `f(x)`, `F(x)` | "PMF / PDF / CDF" | mass, density, cumulative probability | `F(250 ms) = 0.99` | 14 |
+| `E[X]` | "expected value of X" | the probability-weighted average | `E[attempts] = 1/p` | 8 |
+| `Var(X)`, `σ²` | "variance" | average squared distance from the mean | `p(1-p)` | 8, 9 |
+| `σ`, `s` | "sigma", "s" | standard deviation (population / sample) | `s ≈ 22.17` | 9 |
+| `μ`, `x̄` | "mu", "x bar" | mean (population / sample) | | 9 |
+| `Cov(X,Y)`, `r` | "covariance", "correlation" | how two variables move together; `r ∈ [-1, 1]` | `r ≈ 0.77` | 9 |
+| `z` | "z-score" | distance from the mean in standard deviations | `z = 4.5` | 9, 22 |
+| `Φ(z)` | "capital phi of z" | the standard normal CDF | `Φ(1.96) ≈ 0.975` | 14 |
+| `N(μ, σ²)` | "normal with mean mu, variance sigma squared" | the bell curve | `N(0, 1)` | 14 |
+| `Bin(n,p)`, `Poisson(λ)`, `Beta(α,β)` | | named distributions | `Beta(14, 88)` | 14, 16 |
+| `C(n, k)` / `P(n, k)` | "n choose k" / "permutations" | number of combinations / ordered arrangements | `C(5,2) = 10` | 15 |
+| `λ` (probability) | "lambda" | an average rate of events | 100 req/s | 14, 25 |
+| `π`, `πᵢ` (Markov) | "pi" | stationary distribution: long-run share of time per state | `π_B = 0.032` | 11, 25 |
+| `π` (security) | "pi", base rate | fraction of events that are malicious | `10⁻⁴` | 26 |
+| `H(X)` | "entropy of X" | average surprise in bits | fair coin: 1 bit | 23 |
+| `H∞(X)` | "min-entropy" | `-log₂(max p)`, the guessing-attack measure | 1 bit | 23 |
+| `H(p, q)`, `D_KL(p‖q)` | "cross-entropy", "KL divergence" | cost of using `q` when the truth is `p` | | 22, 23 |
+| `I(X; Y)` | "mutual information" | bits about `X` revealed by `Y` | | 23 |
+| `ℒ(θ)`, `ℓ(θ)` | "likelihood", "log-likelihood" | probability of the data as a function of `θ` (`ℒ` is also the Lagrangian in Ch. 21) | `ℓ'(p) = 0` | 21, 22 |
+| `α`, `β` (testing) | "alpha", "beta" | false-positive rate; false-negative rate (power `= 1-β`) | `α = 0.05` | 22 |
+| `χ²` | "chi-squared" | a test statistic for counts; equals `z²` for 2×2 tables | | 22 |
+| `ε` (privacy) | "epsilon" | differential-privacy budget | `ε = 0.5` | 26 |
+| `δ` | "delta" | a small failure probability (Hoeffding), an effect size (A/B), or a perturbation (FGSM) | `δ = 0.05` | 14, 22, 28 |
+| TP, FP, TN, FN | "true/false positive/negative" | confusion-matrix counts | | 26 |
+| TPR, FPR | "true / false positive rate" | recall; false-alarm rate | | 26 |
+
+### Queueing, networking and control
+
+| Symbol | Read it as | Meaning | Example | Ch. |
+|---|---|---|---|---|
+| `λ`, `μ` | "lambda", "mu" | arrival rate, service rate | 90 and 100 req/s | 25 |
+| `ρ` | "rho" | utilization `λ/μ` | 0.9 | 25 |
+| `L`, `W`, `W_q` | | average number in system, time in system, time waiting | `L = λW` | 25 |
+| `c`, `a` | | number of servers; offered load in Erlangs | `a = 9` | 25 |
+| `c_a`, `c_s`, `τ` | "c a", "c s", "tau" | variability of arrivals / service; mean service time | | 25 |
+| `B`, `S/N`, `C` | | bandwidth (Hz), signal-to-noise ratio, capacity (bits/s) | `C = B·log₂(1 + S/N)` | 23, 27 |
+| `f`, `f_s`, `f_max` | | frequency, sampling rate, highest frequency present | `f_s > 2f_max` | 27 |
+| `d`, `M`, `N` (PageRank) | | damping factor, link matrix, number of pages | `d = 0.85` | 11 |
+| `e_t`, `K`, `D` | | control error at tick `t`, loop gain, disturbance | `0 < K < 2` | 29 |
+| `Kp`, `Ki`, `Kd` | | PID gains (proportional, integral, derivative) | | 29 |
+| `SRTT`, `RTTVAR`, `RTO` | | smoothed RTT, RTT variation, retransmission timeout | `RTO = SRTT + 4·RTTVAR` | 9 |
+
+### The Greek alphabet, as used here
+
+| Letter | Name | Meanings in this guide |
+|---|---|---|
+| `α` | alpha | significance level; EWMA smoothing factor; Beta prior count; LoRA scale; Pareto tail index |
+| `β` | beta | momentum/decay factor (`β₁`, `β₂` in Adam); Type II error; Beta prior count; RTTVAR gain |
+| `δ` `Δ` | delta | small change (`Δx`); failure probability; effect size; perturbation; error signal in backprop |
+| `ε` | epsilon | tiny tolerance or error; perturbation budget; privacy budget; Adam's divide-by-zero guard |
+| `η` | eta | learning rate |
+| `θ` | theta | model parameters; an angle; an unknown rate |
+| `κ` | kappa | condition number |
+| `λ` | lambda | eigenvalue; arrival/event rate; Lagrange multiplier (price); curvature; regularization strength |
+| `μ` | mu | mean; service rate |
+| `π` | pi | 3.14159…; stationary distribution; base rate; prime-counting function `π(N)` |
+| `ρ` | rho | utilization; correlation |
+| `σ` / `Σ` | sigma | standard deviation; sigmoid; singular value / summation; SVD's diagonal matrix |
+| `τ` | tau | mean service time |
+| `φ` / `Φ` | phi | Euler's totient `φ(n)` / the standard normal CDF `Φ(z)` |
+| `χ` | chi | `χ²`, the chi-squared statistic |
+| `ω` / `Ω` | omega | angular frequency / the sample space |
+| `∇` | nabla (not a letter) | the gradient operator |
+| `∂` | "partial" (not a letter) | partial derivative |
+
+### Constants and "magic numbers"
+
+| Constant | Value | Where it comes from | Ch. |
 |---|---|---|---|
-| `∑` | sum | `∏` | product |
-| `∈` | "is an element of" | `⊆` | "is a subset of" |
-| `∀` | "for all" | `∃` | "there exists" |
-| `log₂ x` | log base 2 (bits) | `ln x` | natural log (base *e*) |
-| `x mod n` | remainder of x ÷ n | `⌊x⌋` | floor (round down) |
-| `O(f(n))` | upper-bound growth rate | `≈` | approximately equal |
-| `P(A\|B)` | probability of A given B | `E[X]` | expected value of X |
-| `∇f` | gradient of f | `∂f/∂x` | partial derivative |
-| `⊕` | XOR | `≡` | congruent (modular equality) |
-| `ℝⁿ` | the space of lists of `n` real numbers | `x ∈ ℝⁿ` | "x is a vector with n real entries" |
-| `‖x‖` | length (norm) of vector `x` | `Aᵀ` | transpose of `A` (rows ↔ columns) |
-| `A⁻¹` | inverse of matrix `A` | `det(A)` | determinant of `A` |
-| `I` | identity matrix (1s on the diagonal) | `⊙` | element-wise product |
-| `∫ₐᵇ f(x) dx` | integral: area under `f` from `a` to `b` | `lim(h→0)` | the value approached as `h` shrinks to 0 |
-| `X ~ N(μ, σ²)` | "X is drawn from a normal distribution with mean μ, variance σ²" | `∝` | "proportional to" |
-| `argmax_θ f(θ)` | the `θ` that makes `f` largest (not the largest value itself) | `x̄` | sample mean of `x` |
-| `Var(X)` | variance of X | `Cov(X,Y)` | covariance of X and Y |
+| `e` | 2.71828… | the base whose exponential is its own derivative; `lim (1 + 1/n)ⁿ` | 5, 12 |
+| `π` | 3.14159… | circle circumference ÷ diameter; appears in the normal PDF via `√π` | 7, 12 |
+| `i` | `√-1` | imaginary unit; rotations in the Fourier transform | 27 |
+| `ln 2` | 0.693 | doubling time `≈ 0.693/r` (Rule of 72) | 6, 12 |
+| `√(2π)` | 2.5066 | the normal distribution's normalizing constant | 14 |
+| `1.96` | | z for a two-sided 95% interval | 14, 22 |
+| `0.84` | | z for 80% power | 22 |
+| `68 / 95 / 99.7 %` | | share of a normal within 1, 2, 3 σ | 9 |
+| `1.18` (`√(2 ln 2)`) | | birthday bound: 50% collision after `1.18·√N` | 24 |
+| `3` (rule of three) | `-ln 0.05 ≈ 3.0` | 0 failures in `n` trials ⇒ rate `< 3/n` at 95% | 22 |
+| `0.25` | | maximum slope of the sigmoid | 12 |
+| `0.85` | | PageRank damping factor | 11 |
+| `1.22` (`√(3/2)`) | | constant in the Mathis TCP throughput formula | 12 |
+| `1/8`, `1/4`, `4` | | TCP RTO gains `α`, `β` and the "4 × RTTVAR" margin (RFC 6298) | 9 |
+| `0.9`, `0.999`, `10⁻⁸` | | Adam's default `β₁`, `β₂`, `ε` | 21 |
+| `65537` | `2¹⁶ + 1` | the standard RSA public exponent | 24 |
+| `3329` | | ML-KEM's modulus `q` | 24 |
+| `-147.55` | `20·log₁₀(4π/c)` | free-space path loss constant (metres, Hz) | 27 |
+| `c` | `3 × 10⁸ m/s` | speed of light | 27 |
+| `2¹²⁸` | `3.4 × 10³⁸` | "128-bit security": infeasible work | 24 |
+| `16` | | RIP's "infinity" hop count | 17 |
 
-The Greek letters you will meet over and over, and what they usually stand for:
+### Units and abbreviations
 
-| Letter | Name | Usually means | Letter | Name | Usually means |
-|---|---|---|---|---|---|
-| `α` | alpha | significance level, smoothing factor | `β` | beta | momentum/decay factor, Type II error |
-| `δ` `Δ` | delta | a small change; `Δx` = "change in x" | `ε` | epsilon | a tiny tolerance or error |
-| `η` | eta | learning rate | `θ` | theta | model parameters, or an angle |
-| `λ` | lambda | eigenvalue, arrival rate, Lagrange multiplier | `μ` | mu | mean, or service rate in queueing |
-| `σ` | sigma | standard deviation, or the sigmoid function | `Σ` | capital sigma | sum, or a covariance matrix |
-| `ρ` | rho | utilization (queueing), correlation | `π` | pi | 3.14159…, or a stationary distribution |
-| `φ` | phi | Euler's totient, or the normal CDF | `ω` | omega | angular frequency |
+| Unit | Meaning | Conversion |
+|---|---|---|
+| bit / byte | binary digit / 8 bits | `1 B = 8 b` |
+| Mbit/s, Gbit/s | megabits / gigabits per second (network rates use powers of 10) | `1 Gbit/s = 10⁹ bit/s` |
+| ms, µs, ns | milli-, micro-, nanoseconds | `1 ms = 1000 µs` |
+| Hz, MHz, GHz | cycles per second | `2.4 GHz = 2.4 × 10⁹ Hz` |
+| dB | ten times the log₁₀ of a power ratio | `+3 dB ≈ ×2`, `+10 dB = ×10` |
+| dBm | power relative to 1 milliwatt | `20 dBm = 100 mW` |
+| Erlang | one server kept continuously busy | `a = λ/μ` |
+| RTT, MSS, BDP | round-trip time, max segment size, bandwidth-delay product | `BDP = bandwidth × RTT` |
+| SNR | signal-to-noise ratio (linear or dB) | `30 dB = 1000` |
+| MTBF | mean time between failures | `= 1/λ` |
+| p50, p95, p99 | 50th, 95th, 99th percentiles | `p99 = F⁻¹(0.99)` |
 
-Context decides which meaning applies. `λ` is an arrival rate in Ch. 25 and an
-eigenvalue in Ch. 11, and each chapter says which one it means.
+For every *formula* written out in full, see the **Formula cheat sheet** in
+Part 4. For every named *theorem, law and inequality*, see the **Theorem
+index** that follows it.
 
 ## How to read a formula (the skill nobody teaches)
 
@@ -7774,7 +8018,7 @@ well understood control theory, not guesswork.
 # Part 4 — Putting It Together
 
 Nothing new to learn from here on — this Part is the reference layer: a
-formula cheat sheet, hands-on practice labs ordered by difficulty, a
+formula cheat sheet, an index of every named theorem, hands-on practice labs ordered by difficulty, a
 role-based further-reading map back into the 29 chapters, and an honest
 table of what this guide deliberately left out and where it actually lives.
 
@@ -7904,6 +8148,120 @@ CONTROL THEORY
   P-only steady-state error         D / (1 + K)
   Kubernetes HPA                    ceil(replicas · current / target)
 ```
+
+## Theorem index
+
+Every named theorem, law, inequality and principle in the guide, with a
+one-line statement and the chapter that explains (and usually proves or
+derives) it.
+
+### Foundations, algebra and number theory
+
+| Result | One-line statement | Used for | Ch. |
+|---|---|---|---|
+| De Morgan's laws | `¬(A ∧ B) = ¬A ∨ ¬B` and `¬(A ∨ B) = ¬A ∧ ¬B` | simplifying firewall and access rules | 3 |
+| Pigeonhole principle | `n + 1` items in `n` boxes put two in one box | why hash collisions must exist | 15 |
+| Pythagorean theorem | `a² + b² = c²` | distances, the L2 norm | 7, 10 |
+| Fundamental Theorem of Arithmetic | every integer `> 1` factors uniquely into primes | the basis of RSA | 19 |
+| Bézout's identity | `a·x + b·y = gcd(a, b)` has integer solutions | modular inverses via extended Euclid | 19 |
+| Fermat's Little Theorem | `a^(p-1) ≡ 1 (mod p)` for prime `p ∤ a` | primality tests | 19 |
+| Euler's theorem | `a^φ(n) ≡ 1 (mod n)` when `gcd(a, n) = 1` | why RSA decryption works | 19, 24 |
+| Chinese Remainder Theorem | residues mod coprime `n₁…nₖ` determine `x` mod their product | 4× faster RSA, and the fault attack on it | 19 |
+| Prime Number Theorem | primes near `N` have density `≈ 1/ln N` | how long prime generation takes | 19 |
+| Miller–Rabin error bound | a composite survives `k` rounds with probability `≤ 4⁻ᵏ` | trusting generated primes | 19 |
+| Inclusion–exclusion | `\|A ∪ B\| = \|A\| + \|B\| - \|A ∩ B\|` | `P(A ∪ B)`, `φ(pq)` | 8, 19 |
+| Rule of 72 | doubling time `≈ 72 / (rate %)` | growth, compounding | 6, 12 |
+
+### Linear algebra
+
+| Result | One-line statement | Used for | Ch. |
+|---|---|---|---|
+| Characteristic equation | eigenvalues solve `det(A - λI) = 0` | finding eigenvalues by hand | 11 |
+| Trace / determinant identities | `trace = Σ λᵢ`, `det = ∏ λᵢ` | sanity-checking eigenvalues | 11 |
+| Diagonalization | `Aᵏ = P·Dᵏ·P⁻¹` | long-run behaviour of repeated processes | 11 |
+| Spectral theorem | symmetric matrices have real eigenvalues and orthogonal eigenvectors | PCA, Hessians, Laplacians | 11 |
+| Perron–Frobenius theorem | a positive stochastic matrix has a unique steady state for `λ = 1` | PageRank, Markov chains | 11 |
+| Normal equations | least squares solves `XᵀX·w = Xᵀy` | linear regression | 10 |
+| Eckart–Young theorem | truncated SVD is the best rank-`k` approximation, error `Σ_{i>k} σᵢ²` | compression, LoRA, PCA anomaly detection | 20 |
+| Kirchhoff's matrix-tree theorem | spanning trees = any cofactor of the Laplacian | network redundancy | 17 |
+
+### Calculus and optimization
+
+| Result | One-line statement | Used for | Ch. |
+|---|---|---|---|
+| Fundamental Theorem of Calculus | `∫ₐᵇ f dx = F(b) - F(a)` where `F' = f` | totals from rates, CDFs | 12 |
+| Taylor's theorem | `f(x) ≈ f(a) + f'(a)(x-a) + f''(a)(x-a)²/2 + …` | gradient descent, approximations | 12, 13 |
+| Gaussian integral | `∫ e^(-x²) dx = √π` | the normal distribution's constant | 12, 14 |
+| Chain rule | `(f∘g)' = f'(g(x))·g'(x)`; for vectors, `∂L/∂x = Jᵀ·∂L/∂y` | backpropagation | 13 |
+| Steepest ascent | `∇f` points uphill, and `‖∇f‖` is the steepest slope | why gradient descent follows `-∇f` | 13 |
+| Schwarz's theorem | mixed partials commute, so the Hessian is symmetric | second-order optimization | 13 |
+| Second-derivative test | `f' = 0` and `f'' > 0` (Hessian positive definite) means a minimum | optimum vs saddle | 12, 13 |
+| Newton's method convergence | correct digits roughly double each step | square roots, solvers | 12 |
+| Lagrange multipliers | at a constrained optimum, `∇f = λ·∇g` | SVMs, fair bandwidth sharing | 21 |
+| Learning-rate stability | gradient descent converges iff `η < 2/λ_max` | choosing learning rates | 21 |
+| Convexity | convex functions have a single global minimum | when optimization is easy | 21 |
+
+### Probability and statistics
+
+| Result | One-line statement | Used for | Ch. |
+|---|---|---|---|
+| Kolmogorov axioms | `P ≥ 0`, `P(Ω) = 1`, disjoint probabilities add | the base of all probability | 8 |
+| Law of total probability | `P(A) = Σ P(A\|Bᵢ)·P(Bᵢ)` | blending per-zone rates | 8 |
+| Linearity of expectation | `E[X + Y] = E[X] + E[Y]`, even if dependent | expected collisions, dropout | 8 |
+| Bayes' theorem | `P(A\|B) = P(B\|A)·P(A) / P(B)` | detection, spam filters, base-rate fallacy | 16, 26 |
+| Beta–Binomial conjugacy | `Beta(α, β)` + `k` of `n` → `Beta(α+k, β+n-k)` | Bayesian A/B tests, Thompson sampling | 16 |
+| 68–95–99.7 rule | normal data lies within 1/2/3 σ with these shares | 3-sigma alerts | 9 |
+| Bessel's correction | sample variance divides by `n - 1` | unbiased spread estimates | 9 |
+| Poisson limit theorem | `Binomial(n, p) → Poisson(np)` as `n → ∞`, `p → 0` | why arrivals are Poisson | 14 |
+| Memorylessness | `P(T > s+t \| T > s) = P(T > t)` for exponentials | reliability, timeouts | 14 |
+| Law of Large Numbers | sample averages converge to the true mean | why measurement works | 14 |
+| Central Limit Theorem | averages are approximately `N(μ, σ²/n)` | A/B tests, mini-batch noise | 14, 22 |
+| Markov's inequality | `P(X ≥ a) ≤ E[X]/a` | crude tail bounds | 14 |
+| Chebyshev's inequality | `P(\|X - μ\| ≥ kσ) ≤ 1/k²` | bounds without normality | 14 |
+| Hoeffding's inequality | `P(\|X̄ - μ\| ≥ ε) ≤ 2e^(-2nε²)` | sizing eval sets | 14 |
+| Maximum likelihood ⇒ least squares | Gaussian noise MLE = minimizing squared error | why MSE is the default loss | 22 |
+| Rule of three | 0 failures in `n` trials ⇒ rate `< 3/n` at 95% | probes, red-team results | 22 |
+| Simpson's paradox | a trend can reverse when data is aggregated | reading segmented metrics | 22 |
+| Mann–Whitney / AUC | AUC = `P(score(positive) > score(negative))` | comparing detectors | 26 |
+
+### Information theory and cryptography
+
+| Result | One-line statement | Used for | Ch. |
+|---|---|---|---|
+| Shannon's source coding theorem | lossless codes need `≥ H(X)` bits per symbol, and `< H(X) + 1` is achievable | compression limits | 23 |
+| Kraft inequality | a prefix code with lengths `ℓᵢ` exists iff `Σ 2^(-ℓᵢ) ≤ 1` | Huffman coding | 23 |
+| Shannon–Hartley theorem | `C = B·log₂(1 + S/N)` | channel capacity, QAM limits | 23, 27 |
+| Birthday bound | collisions appear after `≈ 1.18·√N` draws | hash sizes, nonce limits | 15, 24 |
+| RSA correctness | `m^(ed) ≡ m (mod n)` | RSA | 24 |
+| Discrete-log / factoring hardness | believed hard classically, *not proven* | DH, ECC, RSA security | 19, 24 |
+| Shor's / Grover's algorithms | quantum: break factoring and discrete log / square-root brute force | post-quantum planning | 24 |
+| Learning With Errors | recovering `s` from `A·s + e (mod q)` is hard | ML-KEM | 24 |
+| Differential privacy composition | `k` queries at `ε` each cost `k·ε` | privacy budgets | 26 |
+
+### Networks, systems, signals and games
+
+| Result | One-line statement | Used for | Ch. |
+|---|---|---|---|
+| Little's Law | `L = λ·W` for any stable system | capacity, concurrency limits | 25 |
+| M/M/1 results | `P(n) = (1-ρ)ρⁿ`, `W = 1/(μ - λ)` | queue latency, buffer overflow | 25 |
+| Erlang C formula | probability of waiting with `c` servers | sizing worker pools | 25 |
+| Kingman's formula | `W_q ≈ (ρ/(1-ρ))·((c_a² + c_s²)/2)·τ` | why variability hurts | 25 |
+| Chiu–Jain (AIMD) | AIMD converges to an efficient and fair share | TCP congestion control | 25 |
+| `BDP/√n` buffer rule | many desynchronized flows need much smaller buffers | router design, bufferbloat | 25 |
+| Kelly's proportional fairness | TCP-like control maximizes `Σ log xᵢ` | bandwidth sharing | 21 |
+| Minimum-delay routing (Gallager) | at the optimum, used paths have equal marginal delay | load balancing | 13 |
+| Mathis formula | throughput `≈ (MSS/RTT)·1.22/√p` | loss sensitivity of TCP | 12 |
+| Dijkstra's correctness | popped distances are final if weights `≥ 0` | OSPF, IS-IS | 17 |
+| Bellman–Ford | converges in `V - 1` rounds; counts to infinity on failure | RIP, distance vector | 17 |
+| Max-flow min-cut theorem | maximum flow = minimum cut capacity | bottlenecks, DDoS capacity | 17 |
+| Menger's theorem | disjoint paths = links needed to disconnect | redundancy planning | 17 |
+| Cayley's formula | the complete graph `Kₙ` has `n^(n-2)` spanning trees | topology counting | 17 |
+| Euler's formula | `e^(iθ) = cos θ + i·sin θ` | Fourier analysis | 27 |
+| Convolution theorem | convolution in time = multiplication in frequency | fast filtering, CNNs | 27 |
+| Nyquist–Shannon sampling theorem | sample above `2·f_max` or alias | ADCs, monitoring intervals | 27 |
+| Feedback stability | a loop is stable iff every pole has `\|z\| < 1`; delay shrinks the stable gain | autoscalers, PID | 11, 29 |
+| Nash equilibrium | no player gains by deviating alone | security incentives | 28 |
+| Minimax / Stackelberg equilibrium | randomize so the attacker is indifferent | patrols, adversarial training | 28 |
 
 ## Practice labs (hands-on, in order of difficulty)
 

@@ -204,6 +204,7 @@ td code,th code{font-size:12.5px}
 </ul></li>
 <li class="toc-part"><a href="#part-4-putting-it-together">Part 4 — Putting It Together</a><ul>
 <li class="toc-ch"><a href="#formula-cheat-sheet">Formula cheat sheet</a></li>
+<li class="toc-ch"><a href="#theorem-index">Theorem index</a></li>
 <li class="toc-ch"><a href="#practice-labs-hands-on-in-order-of-difficulty">Practice labs (hands-on, in order of difficulty)</a></li>
 <li class="toc-ch"><a href="#further-reading">Further Reading</a></li>
 <li class="toc-ch"><a href="#topics-not-covered-and-where-they-d-fit">Topics Not Covered (and where they'd fit)</a></li>
@@ -257,7 +258,7 @@ python3</code></pre>
 <h2 id="contents">Contents<a class="anchor" href="#contents" aria-hidden="true">#</a></h2>
 <p><strong>Part 0 — Start here</strong></p>
 <ul>
-<li>How to use this guide · Role-based learning paths · Notation cheat sheet · How to read a formula</li>
+<li>How to use this guide · Role-based learning paths · Notation cheat sheet (every symbol, constant and unit) · How to read a formula</li>
 </ul>
 <p><strong>Part 1 — Beginner: the foundations everyone needs</strong></p>
 <ol>
@@ -299,7 +300,7 @@ python3</code></pre>
 </ol>
 <p><strong>Part 4 — Putting it together</strong></p>
 <ul>
-<li>Role-based priority map · Formula cheat sheet · Practice labs</li>
+<li>Role-based priority map · Formula cheat sheet · Theorem index · Practice labs</li>
 </ul>
 <hr>
 <h2 id="role-based-learning-paths">Role-based learning paths<a class="anchor" href="#role-based-learning-paths" aria-hidden="true">#</a></h2>
@@ -335,40 +336,277 @@ python3</code></pre>
 <tr><td>29. Control theory</td><td>P2</td><td>P2</td><td>P1</td><td>P3</td></tr>
 </tbody></table></div>
 <h2 id="notation-cheat-sheet">Notation cheat sheet<a class="anchor" href="#notation-cheat-sheet" aria-hidden="true">#</a></h2>
+<p>Every symbol, operator, decoration and constant used in this guide, grouped by topic. Each entry says how to read it aloud, what it means, gives a small example, and names the chapter where it does the most work. When a symbol has several meanings (<code>λ</code>, <code>σ</code>, <code>π</code>, <code>e</code>), all of them are listed. The chapter you're reading always says which one applies.</p>
+<h3 id="arithmetic-comparison-and-rounding">Arithmetic, comparison and rounding<a class="anchor" href="#arithmetic-comparison-and-rounding" aria-hidden="true">#</a></h3>
 <div class="tbl"><table>
-<thead><tr><th>Symbol</th><th>Meaning</th><th>Symbol</th><th>Meaning</th></tr></thead>
+<thead><tr><th>Symbol</th><th>Read it as</th><th>Meaning</th><th>Example</th><th>Ch.</th></tr></thead>
 <tbody>
-<tr><td><code>∑</code></td><td>sum</td><td><code>∏</code></td><td>product</td></tr>
-<tr><td><code>∈</code></td><td>"is an element of"</td><td><code>⊆</code></td><td>"is a subset of"</td></tr>
-<tr><td><code>∀</code></td><td>"for all"</td><td><code>∃</code></td><td>"there exists"</td></tr>
-<tr><td><code>log₂ x</code></td><td>log base 2 (bits)</td><td><code>ln x</code></td><td>natural log (base <em>e</em>)</td></tr>
-<tr><td><code>x mod n</code></td><td>remainder of x ÷ n</td><td><code>⌊x⌋</code></td><td>floor (round down)</td></tr>
-<tr><td><code>O(f(n))</code></td><td>upper-bound growth rate</td><td><code>≈</code></td><td>approximately equal</td></tr>
-<tr><td><code>P(A|B)</code></td><td>probability of A given B</td><td><code>E[X]</code></td><td>expected value of X</td></tr>
-<tr><td><code>∇f</code></td><td>gradient of f</td><td><code>∂f/∂x</code></td><td>partial derivative</td></tr>
-<tr><td><code>⊕</code></td><td>XOR</td><td><code>≡</code></td><td>congruent (modular equality)</td></tr>
-<tr><td><code>ℝⁿ</code></td><td>the space of lists of <code>n</code> real numbers</td><td><code>x ∈ ℝⁿ</code></td><td>"x is a vector with n real entries"</td></tr>
-<tr><td><code>‖x‖</code></td><td>length (norm) of vector <code>x</code></td><td><code>Aᵀ</code></td><td>transpose of <code>A</code> (rows ↔ columns)</td></tr>
-<tr><td><code>A⁻¹</code></td><td>inverse of matrix <code>A</code></td><td><code>det(A)</code></td><td>determinant of <code>A</code></td></tr>
-<tr><td><code>I</code></td><td>identity matrix (1s on the diagonal)</td><td><code>⊙</code></td><td>element-wise product</td></tr>
-<tr><td><code>∫ₐᵇ f(x) dx</code></td><td>integral: area under <code>f</code> from <code>a</code> to <code>b</code></td><td><code>lim(h→0)</code></td><td>the value approached as <code>h</code> shrinks to 0</td></tr>
-<tr><td><code>X ~ N(μ, σ²)</code></td><td>"X is drawn from a normal distribution with mean μ, variance σ²"</td><td><code>∝</code></td><td>"proportional to"</td></tr>
-<tr><td><code>argmax_θ f(θ)</code></td><td>the <code>θ</code> that makes <code>f</code> largest (not the largest value itself)</td><td><code>x̄</code></td><td>sample mean of <code>x</code></td></tr>
-<tr><td><code>Var(X)</code></td><td>variance of X</td><td><code>Cov(X,Y)</code></td><td>covariance of X and Y</td></tr>
+<tr><td><code>+</code>, <code>-</code> / <code>−</code></td><td>"plus", "minus"</td><td>addition, subtraction (or a negative sign)</td><td><code>5 − 3 = 2</code></td><td>all</td></tr>
+<tr><td><code>·</code> or <code>×</code></td><td>"times"</td><td>multiplication (<code>·</code> is used inside formulas, <code>×</code> in prose)</td><td><code>3·4 = 12</code></td><td>all</td></tr>
+<tr><td><code>/</code> or <code>÷</code></td><td>"divided by"</td><td>division</td><td><code>12/4 = 3</code></td><td>all</td></tr>
+<tr><td><code>±</code></td><td>"plus or minus"</td><td>a range, or both signs</td><td><code>50 ± 9.8 ms</code> = 40.2 to 59.8</td><td>14, 22</td></tr>
+<tr><td><code>=</code></td><td>"equals"</td><td>exactly equal</td><td><code>2 + 2 = 4</code></td><td>all</td></tr>
+<tr><td><code>≠</code></td><td>"is not equal to"</td><td>different</td><td><code>AB ≠ BA</code></td><td>10</td></tr>
+<tr><td><code>≈</code></td><td>"approximately"</td><td>close enough for the purpose</td><td><code>π ≈ 3.14</code></td><td>all</td></tr>
+<tr><td><code>≡</code></td><td>"is congruent to" (or "is defined as")</td><td>equal after reducing mod <code>n</code></td><td><code>17 ≡ 2 (mod 5)</code></td><td>2, 19</td></tr>
+<tr><td><code>∝</code></td><td>"is proportional to"</td><td>equal up to a constant factor</td><td><code>P(spam|words) ∝ …</code></td><td>16</td></tr>
+<tr><td><code>&lt;</code> <code>&gt;</code> <code>≤</code> <code>≥</code></td><td>"less than", "greater than or equal" …</td><td>ordering</td><td><code>ρ &lt; 1</code></td><td>all</td></tr>
+<tr><td><code>≪</code> / <code>&lt;&lt;</code></td><td>"much less than"</td><td>orders of magnitude smaller</td><td><code>r ≪ n</code> in LoRA</td><td>20</td></tr>
+<tr><td><code>|x|</code></td><td>"absolute value of x"</td><td>drop the sign</td><td><code>|-3| = 3</code></td><td>9, 10</td></tr>
+<tr><td><code>⌊x⌋</code></td><td>"floor of x"</td><td>round down</td><td><code>⌊2.7⌋ = 2</code></td><td>2</td></tr>
+<tr><td><code>ceil(x)</code> / <code>⌈x⌉</code></td><td>"ceiling of x"</td><td>round up</td><td><code>ceil(6.1) = 7</code></td><td>1, 29</td></tr>
+<tr><td><code>√x</code></td><td>"square root of x"</td><td>the number that squared gives <code>x</code></td><td><code>√144 = 12</code></td><td>9, 14</td></tr>
+<tr><td><code>xⁿ</code>, <code>x^n</code></td><td>"x to the n"</td><td><code>x</code> multiplied by itself <code>n</code> times</td><td><code>2¹⁰ = 1024</code></td><td>5</td></tr>
+<tr><td><code>x⁻¹</code></td><td>"x inverse"</td><td><code>1/x</code>, or the modular / matrix inverse</td><td><code>3⁻¹ ≡ 4 (mod 11)</code></td><td>10, 19</td></tr>
+<tr><td><code>n!</code></td><td>"n factorial"</td><td><code>n·(n-1)·…·1</code></td><td><code>4! = 24</code></td><td>14, 15</td></tr>
+<tr><td><code>%</code></td><td>"percent" or, in code, "mod"</td><td>per hundred; in Python <code>a % n</code> is the remainder</td><td><code>17 % 5 = 2</code></td><td>2</td></tr>
+<tr><td><code>∞</code></td><td>"infinity"</td><td>grows without bound</td><td><code>W → ∞</code> as <code>ρ → 1</code></td><td>12, 25</td></tr>
+<tr><td><code>½</code>, <code>¼</code></td><td>"a half", "a quarter"</td><td>fractions</td><td><code>½λw²</code></td><td>13, 21</td></tr>
+<tr><td><code>→</code></td><td>"goes to" / "maps to"</td><td>a limit, or a function's input → output</td><td><code>h → 0</code></td><td>4, 12</td></tr>
+<tr><td><code>°</code></td><td>"degrees"</td><td>angle; <code>360° = 2π</code> radians</td><td><code>90°</code> rotation</td><td>7, 10</td></tr>
+<tr><td><code>↔</code></td><td>"swaps with" / "if and only if"</td><td>two-way correspondence</td><td>rows <code>↔</code> columns</td><td>10</td></tr>
+<tr><td><code>∎</code></td><td>"end of proof"</td><td>the argument is complete</td><td></td><td>17</td></tr>
 </tbody></table></div>
-<p>The Greek letters you will meet over and over, and what they usually stand for:</p>
+<h3 id="decorations-on-letters-subscripts-superscripts-hats-bars">Decorations on letters: subscripts, superscripts, hats, bars<a class="anchor" href="#decorations-on-letters-subscripts-superscripts-hats-bars" aria-hidden="true">#</a></h3>
 <div class="tbl"><table>
-<thead><tr><th>Letter</th><th>Name</th><th>Usually means</th><th>Letter</th><th>Name</th><th>Usually means</th></tr></thead>
+<thead><tr><th>Notation</th><th>Read it as</th><th>Meaning</th><th>Example</th><th>Ch.</th></tr></thead>
 <tbody>
-<tr><td><code>α</code></td><td>alpha</td><td>significance level, smoothing factor</td><td><code>β</code></td><td>beta</td><td>momentum/decay factor, Type II error</td></tr>
-<tr><td><code>δ</code> <code>Δ</code></td><td>delta</td><td>a small change; <code>Δx</code> = "change in x"</td><td><code>ε</code></td><td>epsilon</td><td>a tiny tolerance or error</td></tr>
-<tr><td><code>η</code></td><td>eta</td><td>learning rate</td><td><code>θ</code></td><td>theta</td><td>model parameters, or an angle</td></tr>
-<tr><td><code>λ</code></td><td>lambda</td><td>eigenvalue, arrival rate, Lagrange multiplier</td><td><code>μ</code></td><td>mu</td><td>mean, or service rate in queueing</td></tr>
-<tr><td><code>σ</code></td><td>sigma</td><td>standard deviation, or the sigmoid function</td><td><code>Σ</code></td><td>capital sigma</td><td>sum, or a covariance matrix</td></tr>
-<tr><td><code>ρ</code></td><td>rho</td><td>utilization (queueing), correlation</td><td><code>π</code></td><td>pi</td><td>3.14159…, or a stationary distribution</td></tr>
-<tr><td><code>φ</code></td><td>phi</td><td>Euler's totient, or the normal CDF</td><td><code>ω</code></td><td>omega</td><td>angular frequency</td></tr>
+<tr><td><code>xᵢ</code>, <code>x_i</code>, <code>xₖ</code>, <code>x₁</code></td><td>"x sub i"</td><td>a subscript is an <em>index or label</em>: the <code>i</code>-th item, or a named variant (<code>β₁</code>, <code>f_max</code>, <code>d_k</code>)</td><td><code>x₃</code> = third value</td><td>all</td></tr>
+<tr><td><code>x_{n+1}</code></td><td>"x sub n plus one"</td><td>the next value in a sequence or iteration</td><td>Newton's <code>x_{n+1}</code></td><td>12</td></tr>
+<tr><td><code>A[i][j]</code>, <code>Aᵢⱼ</code></td><td>"A i j"</td><td>the entry in row <code>i</code>, column <code>j</code></td><td><code>A²[R1][R4] = 1</code></td><td>10</td></tr>
+<tr><td><code>x²</code>, <code>xᵏ</code>, <code>xᵗ</code>, <code>gᵉ</code></td><td>"x squared", "x to the k"</td><td>a superscript is a <em>power</em> (not an index), except <code>ᵀ</code> (transpose) and <code>⁻¹</code> (inverse)</td><td><code>σ²</code> = variance</td><td>all</td></tr>
+<tr><td><code>x̄</code>, <code>ȳ</code></td><td>"x bar", "y bar"</td><td>the average of the <code>x</code> (or <code>y</code>) values</td><td><code>x̄ = 3</code></td><td>9, 14</td></tr>
+<tr><td><code>p̂</code>, <code>θ̂</code></td><td>"p hat"</td><td>an <em>estimate</em> computed from data</td><td><code>p̂ = k/n</code></td><td>21, 22</td></tr>
+<tr><td><code>x*</code>, <code>θ*</code></td><td>"x star"</td><td>the optimal value</td><td><code>n* = 20</code> servers</td><td>12, 13</td></tr>
+<tr><td><code>f'(x)</code>, <code>f''(x)</code></td><td>"f prime", "f double prime"</td><td>first and second derivatives</td><td><code>(x²)' = 2x</code></td><td>12</td></tr>
+<tr><td><code>Δx</code></td><td>"delta x"</td><td>a (finite) change in <code>x</code></td><td>slice width in a Riemann sum</td><td>12</td></tr>
+<tr><td><code>x_new ← …</code></td><td>"x becomes …"</td><td>assignment / an update step</td><td><code>w ← w - η·g</code></td><td>9, 21</td></tr>
+<tr><td><code>[i = c]</code></td><td>"one if i equals c, else zero"</td><td>indicator (Iverson bracket)</td><td>used in the softmax gradient</td><td>13</td></tr>
 </tbody></table></div>
-<p>Context decides which meaning applies. <code>λ</code> is an arrival rate in Ch. 25 and an eigenvalue in Ch. 11, and each chapter says which one it means.</p>
+<h3 id="sets-and-logic">Sets and logic<a class="anchor" href="#sets-and-logic" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Read it as</th><th>Meaning</th><th>Example</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td><code>{…}</code></td><td>"the set of …"</td><td>a collection with no duplicates</td><td><code>{2, 3, 5, 7}</code></td><td>4</td></tr>
+<tr><td><code>∈</code> / <code>∉</code></td><td>"is in" / "is not in"</td><td>membership</td><td><code>3 ∈ {1,2,3}</code></td><td>4</td></tr>
+<tr><td><code>⊆</code></td><td>"is a subset of"</td><td>every element is also in the other set</td><td><code>{1} ⊆ {1,2}</code></td><td>4</td></tr>
+<tr><td><code>∪</code></td><td>"union"</td><td>in either set</td><td><code>A ∪ B</code></td><td>4, 8</td></tr>
+<tr><td><code>∩</code></td><td>"intersection"</td><td>in both sets</td><td><code>A ∩ B</code></td><td>4, 8</td></tr>
+<tr><td><code>∅</code></td><td>"the empty set"</td><td>no elements, an impossible event</td><td><code>A ∩ B = ∅</code></td><td>8</td></tr>
+<tr><td><code>Ω</code></td><td>"omega"</td><td>sample space: every possible outcome</td><td>coin: <code>{H, T}</code></td><td>8</td></tr>
+<tr><td><code>ℝ</code></td><td>"the reals"</td><td>all real numbers</td><td><code>x ∈ ℝ</code></td><td>10</td></tr>
+<tr><td><code>ℝⁿ</code></td><td>"R n"</td><td>lists (vectors) of <code>n</code> real numbers</td><td>an embedding <code>∈ ℝ⁷⁶⁸</code></td><td>10, 20</td></tr>
+<tr><td><code>ℤ</code>, <code>ℤₙ</code></td><td>"the integers", "Z mod n"</td><td>whole numbers; <code>{0, …, n-1}</code> with wrap-around</td><td><code>ℤ₁₇</code></td><td>19, 24</td></tr>
+<tr><td><code>ℤₙ*</code></td><td>"the units mod n"</td><td>elements of <code>ℤₙ</code> that have an inverse; there are <code>φ(n)</code></td><td><code>ℤ₁₀* = {1,3,7,9}</code></td><td>19</td></tr>
+<tr><td><code>∀</code> / <code>∃</code></td><td>"for all" / "there exists"</td><td>quantifiers</td><td><code>∀x: x² ≥ 0</code></td><td>4</td></tr>
+<tr><td><code>¬</code>, <code>NOT</code></td><td>"not"</td><td>negation</td><td><code>¬true = false</code></td><td>3</td></tr>
+<tr><td><code>∧</code>, <code>AND</code>, <code>&amp;</code></td><td>"and"</td><td>both</td><td><code>1 ∧ 0 = 0</code></td><td>3</td></tr>
+<tr><td><code>∨</code>, <code>OR</code>, <code>|</code></td><td>"or"</td><td>either (or both)</td><td><code>1 ∨ 0 = 1</code></td><td>3</td></tr>
+<tr><td><code>⊕</code>, <code>XOR</code>, <code>^</code></td><td>"x-or"</td><td>exactly one of the two</td><td><code>1 ⊕ 1 = 0</code></td><td>3</td></tr>
+<tr><td><code>&lt;&lt;</code>, <code>&gt;&gt;</code></td><td>"shift left / right"</td><td>multiply / divide by powers of 2 (in code)</td><td><code>1 &lt;&lt; 4 = 16</code></td><td>1</td></tr>
+<tr><td><code>f: A → B</code></td><td>"f maps A to B"</td><td>a function from inputs <code>A</code> to outputs <code>B</code></td><td><code>hash: str → int</code></td><td>4</td></tr>
+</tbody></table></div>
+<h3 id="number-theory-and-cryptography">Number theory and cryptography<a class="anchor" href="#number-theory-and-cryptography" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Read it as</th><th>Meaning</th><th>Example</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td><code>a mod n</code></td><td>"a mod n"</td><td>remainder of <code>a ÷ n</code></td><td><code>17 mod 5 = 2</code></td><td>2</td></tr>
+<tr><td><code>a ≡ b (mod n)</code></td><td>"a is congruent to b mod n"</td><td><code>n</code> divides <code>a - b</code></td><td><code>38 ≡ 2 (mod 12)</code></td><td>2, 19</td></tr>
+<tr><td><code>a | b</code> / <code>a ∤ b</code></td><td>"a divides b" / "does not divide"</td><td><code>b</code> is (not) a multiple of <code>a</code></td><td><code>5 | 15</code>, <code>p ∤ a</code></td><td>19</td></tr>
+<tr><td><code>gcd(a, b)</code></td><td>"greatest common divisor"</td><td>largest number dividing both</td><td><code>gcd(48, 18) = 6</code></td><td>19</td></tr>
+<tr><td><code>a⁻¹ (mod n)</code></td><td>"inverse of a mod n"</td><td>the <code>x</code> with <code>a·x ≡ 1</code>; exists iff <code>gcd(a,n)=1</code></td><td><code>17⁻¹ ≡ 2753 (mod 3120)</code></td><td>19, 24</td></tr>
+<tr><td><code>φ(n)</code></td><td>"phi of n", Euler's totient</td><td>count of <code>1…n</code> coprime to <code>n</code></td><td><code>φ(61·53) = 3120</code></td><td>19, 24</td></tr>
+<tr><td><code>π(N)</code></td><td>"pi of N", prime-counting function</td><td>number of primes <code>≤ N</code> (not 3.14…)</td><td><code>π(100) = 25</code></td><td>19</td></tr>
+<tr><td><code>p</code>, <code>q</code></td><td></td><td>large secret primes (RSA) / a public prime (DH)</td><td>61, 53</td><td>24</td></tr>
+<tr><td><code>n = p·q</code></td><td>"the modulus"</td><td>RSA public modulus; also a curve's group order in ECDSA</td><td>3233</td><td>24</td></tr>
+<tr><td><code>e</code>, <code>d</code></td><td>"public / private exponent"</td><td>RSA keys, <code>e·d ≡ 1 (mod φ(n))</code> (this <code>e</code> is not 2.718…)</td><td>17, 2753</td><td>24</td></tr>
+<tr><td><code>g</code>, <code>a</code>, <code>b</code>, <code>A</code>, <code>B</code></td><td></td><td>DH generator, private exponents, public values</td><td><code>A = gᵃ mod p</code></td><td>24</td></tr>
+<tr><td><code>G</code>, <code>k·G</code></td><td>"G", "k times G"</td><td>elliptic-curve base point; adding <code>G</code> to itself <code>k</code> times</td><td><code>3G = (10, 6)</code></td><td>24</td></tr>
+<tr><td><code>O</code></td><td>"the point at infinity"</td><td>the identity ("zero") of an elliptic-curve group</td><td><code>19G = O</code></td><td>24</td></tr>
+<tr><td><code>(r, s)</code>, <code>k</code>, <code>z</code></td><td></td><td>ECDSA signature, per-signature nonce, message hash</td><td></td><td>24</td></tr>
+<tr><td><code>H(·)</code></td><td>"hash of"</td><td>a cryptographic hash function</td><td><code>SHA-256(m)</code></td><td>24</td></tr>
+<tr><td><code>2ᵇ</code> "bits of security"</td><td></td><td>an attack needs about <code>2ᵇ</code> operations</td><td>AES-128: <code>2¹²⁸</code></td><td>24</td></tr>
+</tbody></table></div>
+<h3 id="functions-sums-and-calculus">Functions, sums and calculus<a class="anchor" href="#functions-sums-and-calculus" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Read it as</th><th>Meaning</th><th>Example</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td><code>f(x)</code></td><td>"f of x"</td><td>function <code>f</code> applied to input <code>x</code></td><td><code>f(3) = 9</code> for <code>x²</code></td><td>4</td></tr>
+<tr><td><code>f(g(x))</code>, <code>f∘g</code></td><td>"f of g of x", "f composed with g"</td><td>composition: apply <code>g</code>, then <code>f</code></td><td>layers of a network</td><td>13</td></tr>
+<tr><td><code>Σᵢ₌₁ⁿ xᵢ</code></td><td>"sum from i equals 1 to n of x i"</td><td>add up a sequence (a <code>for</code> loop with <code>+=</code>)</td><td><code>Σ₁³ i = 6</code></td><td>6, all</td></tr>
+<tr><td><code>∏ᵢ xᵢ</code></td><td>"product over i"</td><td>multiply a sequence</td><td><code>∏(1 - i/N)</code></td><td>24</td></tr>
+<tr><td><code>lim(h→0)</code></td><td>"the limit as h goes to 0"</td><td>the value approached as <code>h</code> shrinks</td><td>slope of a tangent</td><td>12</td></tr>
+<tr><td><code>d/dx</code>, <code>dy/dx</code></td><td>"d by d x", "d y d x"</td><td>derivative: rate of change of <code>y</code> per unit <code>x</code></td><td><code>d/dx x² = 2x</code></td><td>12</td></tr>
+<tr><td><code>∂f/∂x</code></td><td>"partial f partial x"</td><td>derivative w.r.t. <code>x</code>, others held fixed</td><td><code>∂(x²y)/∂x = 2xy</code></td><td>13</td></tr>
+<tr><td><code>∂²f/∂xᵢ∂xⱼ</code></td><td>"second partial"</td><td>curvature; an entry of the Hessian</td><td></td><td>13</td></tr>
+<tr><td><code>∇f</code></td><td>"grad f" / "nabla f"</td><td>vector of all partial derivatives</td><td><code>∇f = (4, 13)</code></td><td>13, 21</td></tr>
+<tr><td><code>∇ₓL</code></td><td>"gradient of L with respect to x"</td><td>gradient taken w.r.t. one specific variable</td><td>input gradient in FGSM</td><td>28</td></tr>
+<tr><td><code>D_u f</code></td><td>"directional derivative along u"</td><td>slope in direction <code>u</code>, <code>= ∇f·u</code></td><td><code>12.8</code></td><td>13</td></tr>
+<tr><td><code>J</code></td><td>"the Jacobian"</td><td>matrix of derivatives of a vector function</td><td></td><td>13</td></tr>
+<tr><td><code>H</code> (calculus)</td><td>"the Hessian"</td><td>matrix of second derivatives</td><td><code>[[2,1],[1,2]]</code></td><td>13, 21</td></tr>
+<tr><td><code>∫ₐᵇ f(x) dx</code></td><td>"integral from a to b of f of x d x"</td><td>area under <code>f</code>; the total accumulated</td><td><code>∫₀³ x² dx = 9</code></td><td>12</td></tr>
+<tr><td><code>dx</code></td><td>"d x"</td><td>an infinitely thin slice of <code>x</code></td><td></td><td>12</td></tr>
+<tr><td><code>F(x)</code></td><td>"big F"</td><td>an antiderivative (<code>F' = f</code>), or a CDF</td><td><code>F(x) = x³/3</code></td><td>12, 14</td></tr>
+<tr><td><code>C</code> (integration)</td><td>"plus C"</td><td>the constant of integration</td><td><code>∫2x dx = x² + C</code></td><td>12</td></tr>
+<tr><td><code>e^x</code>, <code>exp(x)</code></td><td>"e to the x"</td><td>the exponential function</td><td><code>e⁰ = 1</code></td><td>5, 12</td></tr>
+<tr><td><code>ln x</code></td><td>"natural log"</td><td>log base <code>e</code></td><td><code>ln e = 1</code></td><td>5</td></tr>
+<tr><td><code>log₂ x</code>, <code>log₁₀ x</code></td><td>"log base 2 / base 10"</td><td>bits; decibels and orders of magnitude</td><td><code>log₂ 1024 = 10</code></td><td>5, 23, 27</td></tr>
+<tr><td><code>sin θ</code>, <code>cos θ</code>, <code>tanh x</code></td><td>"sine", "cosine", "tanch"</td><td>trigonometric / hyperbolic functions</td><td><code>cos 0 = 1</code></td><td>7, 12</td></tr>
+<tr><td><code>σ(x)</code></td><td>"sigmoid of x"</td><td><code>1/(1 + e⁻ˣ)</code>, squashes to <code>(0, 1)</code></td><td><code>σ(0) = 0.5</code></td><td>12</td></tr>
+<tr><td><code>ReLU(z)</code></td><td>"rel-u"</td><td><code>max(0, z)</code></td><td><code>ReLU(-1.4) = 0</code></td><td>10, 21</td></tr>
+<tr><td><code>softmax(z)</code></td><td>"softmax"</td><td><code>eᶻⁱ / Σ eᶻʲ</code>, turns scores into probabilities</td><td><code>(0.66, 0.24, 0.10)</code></td><td>13, 20</td></tr>
+<tr><td><code>sign(x)</code></td><td>"sign of x"</td><td><code>+1</code>, <code>0</code> or <code>-1</code></td><td><code>sign(-0.3) = -1</code></td><td>28</td></tr>
+<tr><td><code>max</code>, <code>min</code></td><td>"max", "min"</td><td>largest / smallest value</td><td><code>max(0, -2) = 0</code></td><td>all</td></tr>
+<tr><td><code>argmax_θ f(θ)</code></td><td>"arg max over theta"</td><td>the <code>θ</code> that makes <code>f</code> largest (not the max value)</td><td>MLE, greedy decoding</td><td>14, 22</td></tr>
+<tr><td><code>O(f(n))</code></td><td>"big O of f of n"</td><td>grows no faster than <code>f(n)</code></td><td>binary search <code>O(log n)</code></td><td>18</td></tr>
+<tr><td><code>i</code> (complex)</td><td>"i"</td><td>the imaginary unit, <code>i² = -1</code></td><td><code>e^(iπ) = -1</code></td><td>27</td></tr>
+<tr><td><code>X_k</code>, <code>x_n</code></td><td>"big X sub k", "little x sub n"</td><td>DFT output (frequency) and input (time samples)</td><td></td><td>27</td></tr>
+<tr><td><code>f * g</code></td><td>"f convolved with g"</td><td>slide, multiply, sum</td><td>a blur filter</td><td>27</td></tr>
+<tr><td><code>z</code> (control)</td><td>"z"</td><td>the root of a characteristic equation; stable iff <code>|z| &lt; 1</code></td><td><code>z² - z + K = 0</code></td><td>29</td></tr>
+</tbody></table></div>
+<h3 id="linear-algebra">Linear algebra<a class="anchor" href="#linear-algebra" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Read it as</th><th>Meaning</th><th>Example</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td><code>x</code>, <code>v</code>, <code>w</code> (lower-case)</td><td>"vector x"</td><td>an ordered list of numbers</td><td><code>x = (1, 2)</code></td><td>10</td></tr>
+<tr><td><code>A</code>, <code>W</code>, <code>M</code> (upper-case)</td><td>"matrix A"</td><td>a grid of numbers / a linear transformation</td><td><code>[[0.5,-1],[2,0.25]]</code></td><td>10</td></tr>
+<tr><td><code>m × n</code></td><td>"m by n"</td><td>shape: <code>m</code> rows, <code>n</code> columns</td><td><code>(2×3)·(3×4) = 2×4</code></td><td>10</td></tr>
+<tr><td><code>A·B</code>, <code>A @ B</code></td><td>"A times B"</td><td>matrix product (row · column)</td><td><code>A@B</code> in NumPy</td><td>10</td></tr>
+<tr><td><code>a · b</code> (vectors)</td><td>"a dot b"</td><td>dot product, <code>Σ aᵢbᵢ</code></td><td><code>(3,4)·(4,3) = 24</code></td><td>10</td></tr>
+<tr><td><code>⊙</code>, <code>*</code> (NumPy)</td><td>"element-wise product"</td><td>multiply matching entries</td><td><code>[1,2]⊙[3,4] = [3,8]</code></td><td>10</td></tr>
+<tr><td><code>Aᵀ</code>, <code>xᵀ</code></td><td>"A transpose"</td><td>swap rows and columns</td><td><code>[1 2]ᵀ</code> = a column</td><td>10, 13</td></tr>
+<tr><td><code>A⁻¹</code></td><td>"A inverse"</td><td>undoes <code>A</code>: <code>A⁻¹A = I</code></td><td></td><td>10</td></tr>
+<tr><td><code>I</code></td><td>"the identity"</td><td>1s on the diagonal, "do nothing"</td><td><code>I·x = x</code></td><td>10, 11</td></tr>
+<tr><td><code>det(A)</code></td><td>"determinant of A"</td><td>volume scaling; <code>0</code> means not invertible</td><td><code>det([[1,2],[3,4]]) = -2</code></td><td>11</td></tr>
+<tr><td><code>trace(A)</code></td><td>"trace of A"</td><td>sum of the diagonal = sum of eigenvalues</td><td><code>trace = 4</code></td><td>11</td></tr>
+<tr><td><code>rank(A)</code></td><td>"rank of A"</td><td>number of independent rows/columns</td><td>low-rank LoRA update</td><td>20</td></tr>
+<tr><td><code>‖x‖₁</code>, <code>‖x‖₂</code>, <code>‖x‖∞</code></td><td>"L1 / L2 / L-infinity norm"</td><td>sum of abs values / length / largest abs value</td><td><code>(3,4)</code>: 7, 5, 4</td><td>10, 28</td></tr>
+<tr><td><code>‖A‖_F</code></td><td>"Frobenius norm"</td><td><code>√(Σ all entries²)</code></td><td><code>√50</code></td><td>20</td></tr>
+<tr><td><code>λ</code>, <code>v</code> (eigen)</td><td>"eigenvalue", "eigenvector"</td><td><code>A·v = λ·v</code></td><td><code>λ = 1, 3</code></td><td>11</td></tr>
+<tr><td><code>P</code>, <code>D</code></td><td></td><td>eigenvector matrix and diagonal eigenvalue matrix, <code>A = PDP⁻¹</code></td><td></td><td>11</td></tr>
+<tr><td><code>U</code>, <code>Σ</code>, <code>V</code></td><td>"U, sigma, V"</td><td>SVD factors, <code>A = UΣVᵀ</code>; <code>σᵢ</code> = singular values</td><td><code>σ = 6.71, 2.24</code></td><td>20</td></tr>
+<tr><td><code>L = D - A</code> (graphs)</td><td>"the Laplacian"</td><td>degree matrix minus adjacency matrix</td><td></td><td>11, 17</td></tr>
+<tr><td><code>λ₂</code></td><td>"lambda two", Fiedler value</td><td>algebraic connectivity of a graph</td><td>ring of 4: <code>λ₂ = 2</code></td><td>11</td></tr>
+<tr><td><code>κ</code></td><td>"kappa", condition number</td><td><code>λ_max / λ_min</code>: how ill-conditioned a problem is</td><td></td><td>21</td></tr>
+<tr><td><code>Q</code>, <code>K</code>, <code>V</code>, <code>d_k</code></td><td>"queries, keys, values, key dimension"</td><td>attention inputs</td><td><code>d_k = 64</code></td><td>20</td></tr>
+</tbody></table></div>
+<h3 id="probability-and-statistics">Probability and statistics<a class="anchor" href="#probability-and-statistics" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Read it as</th><th>Meaning</th><th>Example</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td><code>P(A)</code></td><td>"probability of A"</td><td>a number in <code>[0, 1]</code></td><td><code>P(heads) = 0.5</code></td><td>8</td></tr>
+<tr><td><code>P(A | B)</code></td><td>"probability of A given B"</td><td>probability once <code>B</code> is known</td><td><code>P(fail | checkout) = 0.25</code></td><td>8, 16</td></tr>
+<tr><td><code>P(A ∩ B)</code>, <code>P(A ∪ B)</code></td><td>"A and B", "A or B"</td><td>joint / either</td><td></td><td>8</td></tr>
+<tr><td><code>X</code>, <code>Y</code> (capitals)</td><td>"random variable X"</td><td>a number decided by chance</td><td>latency of a request</td><td>8, 14</td></tr>
+<tr><td><code>X ~ D</code></td><td>"X is distributed as D"</td><td><code>X</code> is drawn from distribution <code>D</code></td><td><code>X ~ N(100, 20²)</code></td><td>14</td></tr>
+<tr><td><code>p(x)</code>, <code>f(x)</code>, <code>F(x)</code></td><td>"PMF / PDF / CDF"</td><td>mass, density, cumulative probability</td><td><code>F(250 ms) = 0.99</code></td><td>14</td></tr>
+<tr><td><code>E[X]</code></td><td>"expected value of X"</td><td>the probability-weighted average</td><td><code>E[attempts] = 1/p</code></td><td>8</td></tr>
+<tr><td><code>Var(X)</code>, <code>σ²</code></td><td>"variance"</td><td>average squared distance from the mean</td><td><code>p(1-p)</code></td><td>8, 9</td></tr>
+<tr><td><code>σ</code>, <code>s</code></td><td>"sigma", "s"</td><td>standard deviation (population / sample)</td><td><code>s ≈ 22.17</code></td><td>9</td></tr>
+<tr><td><code>μ</code>, <code>x̄</code></td><td>"mu", "x bar"</td><td>mean (population / sample)</td><td></td><td>9</td></tr>
+<tr><td><code>Cov(X,Y)</code>, <code>r</code></td><td>"covariance", "correlation"</td><td>how two variables move together; <code>r ∈ [-1, 1]</code></td><td><code>r ≈ 0.77</code></td><td>9</td></tr>
+<tr><td><code>z</code></td><td>"z-score"</td><td>distance from the mean in standard deviations</td><td><code>z = 4.5</code></td><td>9, 22</td></tr>
+<tr><td><code>Φ(z)</code></td><td>"capital phi of z"</td><td>the standard normal CDF</td><td><code>Φ(1.96) ≈ 0.975</code></td><td>14</td></tr>
+<tr><td><code>N(μ, σ²)</code></td><td>"normal with mean mu, variance sigma squared"</td><td>the bell curve</td><td><code>N(0, 1)</code></td><td>14</td></tr>
+<tr><td><code>Bin(n,p)</code>, <code>Poisson(λ)</code>, <code>Beta(α,β)</code></td><td></td><td>named distributions</td><td><code>Beta(14, 88)</code></td><td>14, 16</td></tr>
+<tr><td><code>C(n, k)</code> / <code>P(n, k)</code></td><td>"n choose k" / "permutations"</td><td>number of combinations / ordered arrangements</td><td><code>C(5,2) = 10</code></td><td>15</td></tr>
+<tr><td><code>λ</code> (probability)</td><td>"lambda"</td><td>an average rate of events</td><td>100 req/s</td><td>14, 25</td></tr>
+<tr><td><code>π</code>, <code>πᵢ</code> (Markov)</td><td>"pi"</td><td>stationary distribution: long-run share of time per state</td><td><code>π_B = 0.032</code></td><td>11, 25</td></tr>
+<tr><td><code>π</code> (security)</td><td>"pi", base rate</td><td>fraction of events that are malicious</td><td><code>10⁻⁴</code></td><td>26</td></tr>
+<tr><td><code>H(X)</code></td><td>"entropy of X"</td><td>average surprise in bits</td><td>fair coin: 1 bit</td><td>23</td></tr>
+<tr><td><code>H∞(X)</code></td><td>"min-entropy"</td><td><code>-log₂(max p)</code>, the guessing-attack measure</td><td>1 bit</td><td>23</td></tr>
+<tr><td><code>H(p, q)</code>, <code>D_KL(p‖q)</code></td><td>"cross-entropy", "KL divergence"</td><td>cost of using <code>q</code> when the truth is <code>p</code></td><td></td><td>22, 23</td></tr>
+<tr><td><code>I(X; Y)</code></td><td>"mutual information"</td><td>bits about <code>X</code> revealed by <code>Y</code></td><td></td><td>23</td></tr>
+<tr><td><code>ℒ(θ)</code>, <code>ℓ(θ)</code></td><td>"likelihood", "log-likelihood"</td><td>probability of the data as a function of <code>θ</code> (<code>ℒ</code> is also the Lagrangian in Ch. 21)</td><td><code>ℓ'(p) = 0</code></td><td>21, 22</td></tr>
+<tr><td><code>α</code>, <code>β</code> (testing)</td><td>"alpha", "beta"</td><td>false-positive rate; false-negative rate (power <code>= 1-β</code>)</td><td><code>α = 0.05</code></td><td>22</td></tr>
+<tr><td><code>χ²</code></td><td>"chi-squared"</td><td>a test statistic for counts; equals <code>z²</code> for 2×2 tables</td><td></td><td>22</td></tr>
+<tr><td><code>ε</code> (privacy)</td><td>"epsilon"</td><td>differential-privacy budget</td><td><code>ε = 0.5</code></td><td>26</td></tr>
+<tr><td><code>δ</code></td><td>"delta"</td><td>a small failure probability (Hoeffding), an effect size (A/B), or a perturbation (FGSM)</td><td><code>δ = 0.05</code></td><td>14, 22, 28</td></tr>
+<tr><td>TP, FP, TN, FN</td><td>"true/false positive/negative"</td><td>confusion-matrix counts</td><td></td><td>26</td></tr>
+<tr><td>TPR, FPR</td><td>"true / false positive rate"</td><td>recall; false-alarm rate</td><td></td><td>26</td></tr>
+</tbody></table></div>
+<h3 id="queueing-networking-and-control">Queueing, networking and control<a class="anchor" href="#queueing-networking-and-control" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Read it as</th><th>Meaning</th><th>Example</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td><code>λ</code>, <code>μ</code></td><td>"lambda", "mu"</td><td>arrival rate, service rate</td><td>90 and 100 req/s</td><td>25</td></tr>
+<tr><td><code>ρ</code></td><td>"rho"</td><td>utilization <code>λ/μ</code></td><td>0.9</td><td>25</td></tr>
+<tr><td><code>L</code>, <code>W</code>, <code>W_q</code></td><td></td><td>average number in system, time in system, time waiting</td><td><code>L = λW</code></td><td>25</td></tr>
+<tr><td><code>c</code>, <code>a</code></td><td></td><td>number of servers; offered load in Erlangs</td><td><code>a = 9</code></td><td>25</td></tr>
+<tr><td><code>c_a</code>, <code>c_s</code>, <code>τ</code></td><td>"c a", "c s", "tau"</td><td>variability of arrivals / service; mean service time</td><td></td><td>25</td></tr>
+<tr><td><code>B</code>, <code>S/N</code>, <code>C</code></td><td></td><td>bandwidth (Hz), signal-to-noise ratio, capacity (bits/s)</td><td><code>C = B·log₂(1 + S/N)</code></td><td>23, 27</td></tr>
+<tr><td><code>f</code>, <code>f_s</code>, <code>f_max</code></td><td></td><td>frequency, sampling rate, highest frequency present</td><td><code>f_s &gt; 2f_max</code></td><td>27</td></tr>
+<tr><td><code>d</code>, <code>M</code>, <code>N</code> (PageRank)</td><td></td><td>damping factor, link matrix, number of pages</td><td><code>d = 0.85</code></td><td>11</td></tr>
+<tr><td><code>e_t</code>, <code>K</code>, <code>D</code></td><td></td><td>control error at tick <code>t</code>, loop gain, disturbance</td><td><code>0 &lt; K &lt; 2</code></td><td>29</td></tr>
+<tr><td><code>Kp</code>, <code>Ki</code>, <code>Kd</code></td><td></td><td>PID gains (proportional, integral, derivative)</td><td></td><td>29</td></tr>
+<tr><td><code>SRTT</code>, <code>RTTVAR</code>, <code>RTO</code></td><td></td><td>smoothed RTT, RTT variation, retransmission timeout</td><td><code>RTO = SRTT + 4·RTTVAR</code></td><td>9</td></tr>
+</tbody></table></div>
+<h3 id="the-greek-alphabet-as-used-here">The Greek alphabet, as used here<a class="anchor" href="#the-greek-alphabet-as-used-here" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Letter</th><th>Name</th><th>Meanings in this guide</th></tr></thead>
+<tbody>
+<tr><td><code>α</code></td><td>alpha</td><td>significance level; EWMA smoothing factor; Beta prior count; LoRA scale; Pareto tail index</td></tr>
+<tr><td><code>β</code></td><td>beta</td><td>momentum/decay factor (<code>β₁</code>, <code>β₂</code> in Adam); Type II error; Beta prior count; RTTVAR gain</td></tr>
+<tr><td><code>δ</code> <code>Δ</code></td><td>delta</td><td>small change (<code>Δx</code>); failure probability; effect size; perturbation; error signal in backprop</td></tr>
+<tr><td><code>ε</code></td><td>epsilon</td><td>tiny tolerance or error; perturbation budget; privacy budget; Adam's divide-by-zero guard</td></tr>
+<tr><td><code>η</code></td><td>eta</td><td>learning rate</td></tr>
+<tr><td><code>θ</code></td><td>theta</td><td>model parameters; an angle; an unknown rate</td></tr>
+<tr><td><code>κ</code></td><td>kappa</td><td>condition number</td></tr>
+<tr><td><code>λ</code></td><td>lambda</td><td>eigenvalue; arrival/event rate; Lagrange multiplier (price); curvature; regularization strength</td></tr>
+<tr><td><code>μ</code></td><td>mu</td><td>mean; service rate</td></tr>
+<tr><td><code>π</code></td><td>pi</td><td>3.14159…; stationary distribution; base rate; prime-counting function <code>π(N)</code></td></tr>
+<tr><td><code>ρ</code></td><td>rho</td><td>utilization; correlation</td></tr>
+<tr><td><code>σ</code> / <code>Σ</code></td><td>sigma</td><td>standard deviation; sigmoid; singular value / summation; SVD's diagonal matrix</td></tr>
+<tr><td><code>τ</code></td><td>tau</td><td>mean service time</td></tr>
+<tr><td><code>φ</code> / <code>Φ</code></td><td>phi</td><td>Euler's totient <code>φ(n)</code> / the standard normal CDF <code>Φ(z)</code></td></tr>
+<tr><td><code>χ</code></td><td>chi</td><td><code>χ²</code>, the chi-squared statistic</td></tr>
+<tr><td><code>ω</code> / <code>Ω</code></td><td>omega</td><td>angular frequency / the sample space</td></tr>
+<tr><td><code>∇</code></td><td>nabla (not a letter)</td><td>the gradient operator</td></tr>
+<tr><td><code>∂</code></td><td>"partial" (not a letter)</td><td>partial derivative</td></tr>
+</tbody></table></div>
+<h3 id="constants-and-magic-numbers">Constants and "magic numbers"<a class="anchor" href="#constants-and-magic-numbers" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Constant</th><th>Value</th><th>Where it comes from</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td><code>e</code></td><td>2.71828…</td><td>the base whose exponential is its own derivative; <code>lim (1 + 1/n)ⁿ</code></td><td>5, 12</td></tr>
+<tr><td><code>π</code></td><td>3.14159…</td><td>circle circumference ÷ diameter; appears in the normal PDF via <code>√π</code></td><td>7, 12</td></tr>
+<tr><td><code>i</code></td><td><code>√-1</code></td><td>imaginary unit; rotations in the Fourier transform</td><td>27</td></tr>
+<tr><td><code>ln 2</code></td><td>0.693</td><td>doubling time <code>≈ 0.693/r</code> (Rule of 72)</td><td>6, 12</td></tr>
+<tr><td><code>√(2π)</code></td><td>2.5066</td><td>the normal distribution's normalizing constant</td><td>14</td></tr>
+<tr><td><code>1.96</code></td><td></td><td>z for a two-sided 95% interval</td><td>14, 22</td></tr>
+<tr><td><code>0.84</code></td><td></td><td>z for 80% power</td><td>22</td></tr>
+<tr><td><code>68 / 95 / 99.7 %</code></td><td></td><td>share of a normal within 1, 2, 3 σ</td><td>9</td></tr>
+<tr><td><code>1.18</code> (<code>√(2 ln 2)</code>)</td><td></td><td>birthday bound: 50% collision after <code>1.18·√N</code></td><td>24</td></tr>
+<tr><td><code>3</code> (rule of three)</td><td><code>-ln 0.05 ≈ 3.0</code></td><td>0 failures in <code>n</code> trials ⇒ rate <code>&lt; 3/n</code> at 95%</td><td>22</td></tr>
+<tr><td><code>0.25</code></td><td></td><td>maximum slope of the sigmoid</td><td>12</td></tr>
+<tr><td><code>0.85</code></td><td></td><td>PageRank damping factor</td><td>11</td></tr>
+<tr><td><code>1.22</code> (<code>√(3/2)</code>)</td><td></td><td>constant in the Mathis TCP throughput formula</td><td>12</td></tr>
+<tr><td><code>1/8</code>, <code>1/4</code>, <code>4</code></td><td></td><td>TCP RTO gains <code>α</code>, <code>β</code> and the "4 × RTTVAR" margin (RFC 6298)</td><td>9</td></tr>
+<tr><td><code>0.9</code>, <code>0.999</code>, <code>10⁻⁸</code></td><td></td><td>Adam's default <code>β₁</code>, <code>β₂</code>, <code>ε</code></td><td>21</td></tr>
+<tr><td><code>65537</code></td><td><code>2¹⁶ + 1</code></td><td>the standard RSA public exponent</td><td>24</td></tr>
+<tr><td><code>3329</code></td><td></td><td>ML-KEM's modulus <code>q</code></td><td>24</td></tr>
+<tr><td><code>-147.55</code></td><td><code>20·log₁₀(4π/c)</code></td><td>free-space path loss constant (metres, Hz)</td><td>27</td></tr>
+<tr><td><code>c</code></td><td><code>3 × 10⁸ m/s</code></td><td>speed of light</td><td>27</td></tr>
+<tr><td><code>2¹²⁸</code></td><td><code>3.4 × 10³⁸</code></td><td>"128-bit security": infeasible work</td><td>24</td></tr>
+<tr><td><code>16</code></td><td></td><td>RIP's "infinity" hop count</td><td>17</td></tr>
+</tbody></table></div>
+<h3 id="units-and-abbreviations">Units and abbreviations<a class="anchor" href="#units-and-abbreviations" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Unit</th><th>Meaning</th><th>Conversion</th></tr></thead>
+<tbody>
+<tr><td>bit / byte</td><td>binary digit / 8 bits</td><td><code>1 B = 8 b</code></td></tr>
+<tr><td>Mbit/s, Gbit/s</td><td>megabits / gigabits per second (network rates use powers of 10)</td><td><code>1 Gbit/s = 10⁹ bit/s</code></td></tr>
+<tr><td>ms, µs, ns</td><td>milli-, micro-, nanoseconds</td><td><code>1 ms = 1000 µs</code></td></tr>
+<tr><td>Hz, MHz, GHz</td><td>cycles per second</td><td><code>2.4 GHz = 2.4 × 10⁹ Hz</code></td></tr>
+<tr><td>dB</td><td>ten times the log₁₀ of a power ratio</td><td><code>+3 dB ≈ ×2</code>, <code>+10 dB = ×10</code></td></tr>
+<tr><td>dBm</td><td>power relative to 1 milliwatt</td><td><code>20 dBm = 100 mW</code></td></tr>
+<tr><td>Erlang</td><td>one server kept continuously busy</td><td><code>a = λ/μ</code></td></tr>
+<tr><td>RTT, MSS, BDP</td><td>round-trip time, max segment size, bandwidth-delay product</td><td><code>BDP = bandwidth × RTT</code></td></tr>
+<tr><td>SNR</td><td>signal-to-noise ratio (linear or dB)</td><td><code>30 dB = 1000</code></td></tr>
+<tr><td>MTBF</td><td>mean time between failures</td><td><code>= 1/λ</code></td></tr>
+<tr><td>p50, p95, p99</td><td>50th, 95th, 99th percentiles</td><td><code>p99 = F⁻¹(0.99)</code></td></tr>
+</tbody></table></div>
+<p>For every <em>formula</em> written out in full, see the <strong>Formula cheat sheet</strong> in Part 4. For every named <em>theorem, law and inequality</em>, see the <strong>Theorem index</strong> that follows it.</p>
 <h2 id="how-to-read-a-formula-the-skill-nobody-teaches">How to read a formula (the skill nobody teaches)<a class="anchor" href="#how-to-read-a-formula-the-skill-nobody-teaches" aria-hidden="true">#</a></h2>
 <p>Most people bounce off mathematics because they try to read a formula the way they read prose, left to right, all at once. Read it the way you read an unfamiliar function signature instead:</p>
 <ol>
@@ -3974,7 +4212,7 @@ Step 2 — CPU eased to 70 (prev_error is now -25):
 <p>Tuning a feedback system (autoscaler, rate limiter) by trial and error in production without understanding <em>why</em> it oscillates — the oscillation is a textbook symptom of gains that are too aggressive relative to the system's response lag, and the fix (add damping via a derivative term, or simply reduce the proportional gain and increase the reaction window) is well understood control theory, not guesswork.</p>
 <hr>
 <h1 id="part-4-putting-it-together">Part 4 — Putting It Together<a class="anchor" href="#part-4-putting-it-together" aria-hidden="true">#</a></h1>
-<p>Nothing new to learn from here on — this Part is the reference layer: a formula cheat sheet, hands-on practice labs ordered by difficulty, a role-based further-reading map back into the 29 chapters, and an honest table of what this guide deliberately left out and where it actually lives.</p>
+<p>Nothing new to learn from here on — this Part is the reference layer: a formula cheat sheet, an index of every named theorem, hands-on practice labs ordered by difficulty, a role-based further-reading map back into the 29 chapters, and an honest table of what this guide deliberately left out and where it actually lives.</p>
 <h2 id="formula-cheat-sheet">Formula cheat sheet<a class="anchor" href="#formula-cheat-sheet" aria-hidden="true">#</a></h2>
 <pre><code>NUMBER SYSTEMS
   bits needed for n values         = ceil(log2(n))
@@ -4098,6 +4336,116 @@ CONTROL THEORY
   P-loop stability                  0 &lt; K &lt; 2   (one tick of delay: K &lt; 1)
   P-only steady-state error         D / (1 + K)
   Kubernetes HPA                    ceil(replicas · current / target)</code></pre>
+<h2 id="theorem-index">Theorem index<a class="anchor" href="#theorem-index" aria-hidden="true">#</a></h2>
+<p>Every named theorem, law, inequality and principle in the guide, with a one-line statement and the chapter that explains (and usually proves or derives) it.</p>
+<h3 id="foundations-algebra-and-number-theory">Foundations, algebra and number theory<a class="anchor" href="#foundations-algebra-and-number-theory" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Result</th><th>One-line statement</th><th>Used for</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td>De Morgan's laws</td><td><code>¬(A ∧ B) = ¬A ∨ ¬B</code> and <code>¬(A ∨ B) = ¬A ∧ ¬B</code></td><td>simplifying firewall and access rules</td><td>3</td></tr>
+<tr><td>Pigeonhole principle</td><td><code>n + 1</code> items in <code>n</code> boxes put two in one box</td><td>why hash collisions must exist</td><td>15</td></tr>
+<tr><td>Pythagorean theorem</td><td><code>a² + b² = c²</code></td><td>distances, the L2 norm</td><td>7, 10</td></tr>
+<tr><td>Fundamental Theorem of Arithmetic</td><td>every integer <code>&gt; 1</code> factors uniquely into primes</td><td>the basis of RSA</td><td>19</td></tr>
+<tr><td>Bézout's identity</td><td><code>a·x + b·y = gcd(a, b)</code> has integer solutions</td><td>modular inverses via extended Euclid</td><td>19</td></tr>
+<tr><td>Fermat's Little Theorem</td><td><code>a^(p-1) ≡ 1 (mod p)</code> for prime <code>p ∤ a</code></td><td>primality tests</td><td>19</td></tr>
+<tr><td>Euler's theorem</td><td><code>a^φ(n) ≡ 1 (mod n)</code> when <code>gcd(a, n) = 1</code></td><td>why RSA decryption works</td><td>19, 24</td></tr>
+<tr><td>Chinese Remainder Theorem</td><td>residues mod coprime <code>n₁…nₖ</code> determine <code>x</code> mod their product</td><td>4× faster RSA, and the fault attack on it</td><td>19</td></tr>
+<tr><td>Prime Number Theorem</td><td>primes near <code>N</code> have density <code>≈ 1/ln N</code></td><td>how long prime generation takes</td><td>19</td></tr>
+<tr><td>Miller–Rabin error bound</td><td>a composite survives <code>k</code> rounds with probability <code>≤ 4⁻ᵏ</code></td><td>trusting generated primes</td><td>19</td></tr>
+<tr><td>Inclusion–exclusion</td><td><code>|A ∪ B| = |A| + |B| - |A ∩ B|</code></td><td><code>P(A ∪ B)</code>, <code>φ(pq)</code></td><td>8, 19</td></tr>
+<tr><td>Rule of 72</td><td>doubling time <code>≈ 72 / (rate %)</code></td><td>growth, compounding</td><td>6, 12</td></tr>
+</tbody></table></div>
+<h3 id="linear-algebra-1">Linear algebra<a class="anchor" href="#linear-algebra-1" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Result</th><th>One-line statement</th><th>Used for</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td>Characteristic equation</td><td>eigenvalues solve <code>det(A - λI) = 0</code></td><td>finding eigenvalues by hand</td><td>11</td></tr>
+<tr><td>Trace / determinant identities</td><td><code>trace = Σ λᵢ</code>, <code>det = ∏ λᵢ</code></td><td>sanity-checking eigenvalues</td><td>11</td></tr>
+<tr><td>Diagonalization</td><td><code>Aᵏ = P·Dᵏ·P⁻¹</code></td><td>long-run behaviour of repeated processes</td><td>11</td></tr>
+<tr><td>Spectral theorem</td><td>symmetric matrices have real eigenvalues and orthogonal eigenvectors</td><td>PCA, Hessians, Laplacians</td><td>11</td></tr>
+<tr><td>Perron–Frobenius theorem</td><td>a positive stochastic matrix has a unique steady state for <code>λ = 1</code></td><td>PageRank, Markov chains</td><td>11</td></tr>
+<tr><td>Normal equations</td><td>least squares solves <code>XᵀX·w = Xᵀy</code></td><td>linear regression</td><td>10</td></tr>
+<tr><td>Eckart–Young theorem</td><td>truncated SVD is the best rank-<code>k</code> approximation, error <code>Σ_{i&gt;k} σᵢ²</code></td><td>compression, LoRA, PCA anomaly detection</td><td>20</td></tr>
+<tr><td>Kirchhoff's matrix-tree theorem</td><td>spanning trees = any cofactor of the Laplacian</td><td>network redundancy</td><td>17</td></tr>
+</tbody></table></div>
+<h3 id="calculus-and-optimization">Calculus and optimization<a class="anchor" href="#calculus-and-optimization" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Result</th><th>One-line statement</th><th>Used for</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td>Fundamental Theorem of Calculus</td><td><code>∫ₐᵇ f dx = F(b) - F(a)</code> where <code>F' = f</code></td><td>totals from rates, CDFs</td><td>12</td></tr>
+<tr><td>Taylor's theorem</td><td><code>f(x) ≈ f(a) + f'(a)(x-a) + f''(a)(x-a)²/2 + …</code></td><td>gradient descent, approximations</td><td>12, 13</td></tr>
+<tr><td>Gaussian integral</td><td><code>∫ e^(-x²) dx = √π</code></td><td>the normal distribution's constant</td><td>12, 14</td></tr>
+<tr><td>Chain rule</td><td><code>(f∘g)' = f'(g(x))·g'(x)</code>; for vectors, <code>∂L/∂x = Jᵀ·∂L/∂y</code></td><td>backpropagation</td><td>13</td></tr>
+<tr><td>Steepest ascent</td><td><code>∇f</code> points uphill, and <code>‖∇f‖</code> is the steepest slope</td><td>why gradient descent follows <code>-∇f</code></td><td>13</td></tr>
+<tr><td>Schwarz's theorem</td><td>mixed partials commute, so the Hessian is symmetric</td><td>second-order optimization</td><td>13</td></tr>
+<tr><td>Second-derivative test</td><td><code>f' = 0</code> and <code>f'' &gt; 0</code> (Hessian positive definite) means a minimum</td><td>optimum vs saddle</td><td>12, 13</td></tr>
+<tr><td>Newton's method convergence</td><td>correct digits roughly double each step</td><td>square roots, solvers</td><td>12</td></tr>
+<tr><td>Lagrange multipliers</td><td>at a constrained optimum, <code>∇f = λ·∇g</code></td><td>SVMs, fair bandwidth sharing</td><td>21</td></tr>
+<tr><td>Learning-rate stability</td><td>gradient descent converges iff <code>η &lt; 2/λ_max</code></td><td>choosing learning rates</td><td>21</td></tr>
+<tr><td>Convexity</td><td>convex functions have a single global minimum</td><td>when optimization is easy</td><td>21</td></tr>
+</tbody></table></div>
+<h3 id="probability-and-statistics-1">Probability and statistics<a class="anchor" href="#probability-and-statistics-1" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Result</th><th>One-line statement</th><th>Used for</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td>Kolmogorov axioms</td><td><code>P ≥ 0</code>, <code>P(Ω) = 1</code>, disjoint probabilities add</td><td>the base of all probability</td><td>8</td></tr>
+<tr><td>Law of total probability</td><td><code>P(A) = Σ P(A|Bᵢ)·P(Bᵢ)</code></td><td>blending per-zone rates</td><td>8</td></tr>
+<tr><td>Linearity of expectation</td><td><code>E[X + Y] = E[X] + E[Y]</code>, even if dependent</td><td>expected collisions, dropout</td><td>8</td></tr>
+<tr><td>Bayes' theorem</td><td><code>P(A|B) = P(B|A)·P(A) / P(B)</code></td><td>detection, spam filters, base-rate fallacy</td><td>16, 26</td></tr>
+<tr><td>Beta–Binomial conjugacy</td><td><code>Beta(α, β)</code> + <code>k</code> of <code>n</code> → <code>Beta(α+k, β+n-k)</code></td><td>Bayesian A/B tests, Thompson sampling</td><td>16</td></tr>
+<tr><td>68–95–99.7 rule</td><td>normal data lies within 1/2/3 σ with these shares</td><td>3-sigma alerts</td><td>9</td></tr>
+<tr><td>Bessel's correction</td><td>sample variance divides by <code>n - 1</code></td><td>unbiased spread estimates</td><td>9</td></tr>
+<tr><td>Poisson limit theorem</td><td><code>Binomial(n, p) → Poisson(np)</code> as <code>n → ∞</code>, <code>p → 0</code></td><td>why arrivals are Poisson</td><td>14</td></tr>
+<tr><td>Memorylessness</td><td><code>P(T &gt; s+t | T &gt; s) = P(T &gt; t)</code> for exponentials</td><td>reliability, timeouts</td><td>14</td></tr>
+<tr><td>Law of Large Numbers</td><td>sample averages converge to the true mean</td><td>why measurement works</td><td>14</td></tr>
+<tr><td>Central Limit Theorem</td><td>averages are approximately <code>N(μ, σ²/n)</code></td><td>A/B tests, mini-batch noise</td><td>14, 22</td></tr>
+<tr><td>Markov's inequality</td><td><code>P(X ≥ a) ≤ E[X]/a</code></td><td>crude tail bounds</td><td>14</td></tr>
+<tr><td>Chebyshev's inequality</td><td><code>P(|X - μ| ≥ kσ) ≤ 1/k²</code></td><td>bounds without normality</td><td>14</td></tr>
+<tr><td>Hoeffding's inequality</td><td><code>P(|X̄ - μ| ≥ ε) ≤ 2e^(-2nε²)</code></td><td>sizing eval sets</td><td>14</td></tr>
+<tr><td>Maximum likelihood ⇒ least squares</td><td>Gaussian noise MLE = minimizing squared error</td><td>why MSE is the default loss</td><td>22</td></tr>
+<tr><td>Rule of three</td><td>0 failures in <code>n</code> trials ⇒ rate <code>&lt; 3/n</code> at 95%</td><td>probes, red-team results</td><td>22</td></tr>
+<tr><td>Simpson's paradox</td><td>a trend can reverse when data is aggregated</td><td>reading segmented metrics</td><td>22</td></tr>
+<tr><td>Mann–Whitney / AUC</td><td>AUC = <code>P(score(positive) &gt; score(negative))</code></td><td>comparing detectors</td><td>26</td></tr>
+</tbody></table></div>
+<h3 id="information-theory-and-cryptography">Information theory and cryptography<a class="anchor" href="#information-theory-and-cryptography" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Result</th><th>One-line statement</th><th>Used for</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td>Shannon's source coding theorem</td><td>lossless codes need <code>≥ H(X)</code> bits per symbol, and <code>&lt; H(X) + 1</code> is achievable</td><td>compression limits</td><td>23</td></tr>
+<tr><td>Kraft inequality</td><td>a prefix code with lengths <code>ℓᵢ</code> exists iff <code>Σ 2^(-ℓᵢ) ≤ 1</code></td><td>Huffman coding</td><td>23</td></tr>
+<tr><td>Shannon–Hartley theorem</td><td><code>C = B·log₂(1 + S/N)</code></td><td>channel capacity, QAM limits</td><td>23, 27</td></tr>
+<tr><td>Birthday bound</td><td>collisions appear after <code>≈ 1.18·√N</code> draws</td><td>hash sizes, nonce limits</td><td>15, 24</td></tr>
+<tr><td>RSA correctness</td><td><code>m^(ed) ≡ m (mod n)</code></td><td>RSA</td><td>24</td></tr>
+<tr><td>Discrete-log / factoring hardness</td><td>believed hard classically, <em>not proven</em></td><td>DH, ECC, RSA security</td><td>19, 24</td></tr>
+<tr><td>Shor's / Grover's algorithms</td><td>quantum: break factoring and discrete log / square-root brute force</td><td>post-quantum planning</td><td>24</td></tr>
+<tr><td>Learning With Errors</td><td>recovering <code>s</code> from <code>A·s + e (mod q)</code> is hard</td><td>ML-KEM</td><td>24</td></tr>
+<tr><td>Differential privacy composition</td><td><code>k</code> queries at <code>ε</code> each cost <code>k·ε</code></td><td>privacy budgets</td><td>26</td></tr>
+</tbody></table></div>
+<h3 id="networks-systems-signals-and-games">Networks, systems, signals and games<a class="anchor" href="#networks-systems-signals-and-games" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Result</th><th>One-line statement</th><th>Used for</th><th>Ch.</th></tr></thead>
+<tbody>
+<tr><td>Little's Law</td><td><code>L = λ·W</code> for any stable system</td><td>capacity, concurrency limits</td><td>25</td></tr>
+<tr><td>M/M/1 results</td><td><code>P(n) = (1-ρ)ρⁿ</code>, <code>W = 1/(μ - λ)</code></td><td>queue latency, buffer overflow</td><td>25</td></tr>
+<tr><td>Erlang C formula</td><td>probability of waiting with <code>c</code> servers</td><td>sizing worker pools</td><td>25</td></tr>
+<tr><td>Kingman's formula</td><td><code>W_q ≈ (ρ/(1-ρ))·((c_a² + c_s²)/2)·τ</code></td><td>why variability hurts</td><td>25</td></tr>
+<tr><td>Chiu–Jain (AIMD)</td><td>AIMD converges to an efficient and fair share</td><td>TCP congestion control</td><td>25</td></tr>
+<tr><td><code>BDP/√n</code> buffer rule</td><td>many desynchronized flows need much smaller buffers</td><td>router design, bufferbloat</td><td>25</td></tr>
+<tr><td>Kelly's proportional fairness</td><td>TCP-like control maximizes <code>Σ log xᵢ</code></td><td>bandwidth sharing</td><td>21</td></tr>
+<tr><td>Minimum-delay routing (Gallager)</td><td>at the optimum, used paths have equal marginal delay</td><td>load balancing</td><td>13</td></tr>
+<tr><td>Mathis formula</td><td>throughput <code>≈ (MSS/RTT)·1.22/√p</code></td><td>loss sensitivity of TCP</td><td>12</td></tr>
+<tr><td>Dijkstra's correctness</td><td>popped distances are final if weights <code>≥ 0</code></td><td>OSPF, IS-IS</td><td>17</td></tr>
+<tr><td>Bellman–Ford</td><td>converges in <code>V - 1</code> rounds; counts to infinity on failure</td><td>RIP, distance vector</td><td>17</td></tr>
+<tr><td>Max-flow min-cut theorem</td><td>maximum flow = minimum cut capacity</td><td>bottlenecks, DDoS capacity</td><td>17</td></tr>
+<tr><td>Menger's theorem</td><td>disjoint paths = links needed to disconnect</td><td>redundancy planning</td><td>17</td></tr>
+<tr><td>Cayley's formula</td><td>the complete graph <code>Kₙ</code> has <code>n^(n-2)</code> spanning trees</td><td>topology counting</td><td>17</td></tr>
+<tr><td>Euler's formula</td><td><code>e^(iθ) = cos θ + i·sin θ</code></td><td>Fourier analysis</td><td>27</td></tr>
+<tr><td>Convolution theorem</td><td>convolution in time = multiplication in frequency</td><td>fast filtering, CNNs</td><td>27</td></tr>
+<tr><td>Nyquist–Shannon sampling theorem</td><td>sample above <code>2·f_max</code> or alias</td><td>ADCs, monitoring intervals</td><td>27</td></tr>
+<tr><td>Feedback stability</td><td>a loop is stable iff every pole has <code>|z| &lt; 1</code>; delay shrinks the stable gain</td><td>autoscalers, PID</td><td>11, 29</td></tr>
+<tr><td>Nash equilibrium</td><td>no player gains by deviating alone</td><td>security incentives</td><td>28</td></tr>
+<tr><td>Minimax / Stackelberg equilibrium</td><td>randomize so the attacker is indifferent</td><td>patrols, adversarial training</td><td>28</td></tr>
+</tbody></table></div>
 <h2 id="practice-labs-hands-on-in-order-of-difficulty">Practice labs (hands-on, in order of difficulty)<a class="anchor" href="#practice-labs-hands-on-in-order-of-difficulty" aria-hidden="true">#</a></h2>
 <ol>
 <li><strong>Overflow bug hunt:</strong> write an 8-bit signed-integer simulator (Ch. 1) and find the exact input that wraps from 127 to -128.</li>
