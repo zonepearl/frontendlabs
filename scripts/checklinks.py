@@ -37,6 +37,7 @@ def ids(p: Path):
 
 def resolve(page: Path, url: str):
     """Return the dist file a URL points to, or None if it's outside the site."""
+    url = url.split("?")[0] if "?" in url.split("#")[0] else url  # cache-busting ?v= is not part of the path
     if url.startswith(base + "/") or url == base:
         rel = url[len(base):].lstrip("/")
         t = dist / unquote(rel.split("#")[0])

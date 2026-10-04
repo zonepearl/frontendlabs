@@ -1,6 +1,8 @@
 package site
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -59,6 +61,7 @@ func (b *Builder) loadTemplates() error {
 		"base":    path.Base,
 		"lower":   strings.ToLower,
 		"year":    func() int { return time.Now().Year() },
+		"ver":     b.assetVersion,
 	}).ParseFS(b.Assets, "templates/*.html")
 	if err != nil {
 		return err
@@ -413,6 +416,19 @@ func (b *Builder) render(name, out string, data any) error {
 		return err
 	}
 	return writeFile(filepath.Join(b.OutDir, filepath.FromSlash(out)), []byte(sb.String()))
+}
+
+// assetVersion returns "?v=<content hash>" for a file in static/. The asset URL
+// changes whenever its content does, so browsers and the CDN (GitHub Pages
+// caches for 10 minutes) cannot keep serving a stale stylesheet or script
+// after a deploy.
+func (b *Builder) assetVersion(name string) string {
+	data, err := fs.ReadFile(b.Assets, "static/"+name)
+	if err != nil {
+		return ""
+	}
+	sum := sha256.Sum256(data)
+	return "?v=" + hex.EncodeToString(sum[:5])
 }
 
 func (b *Builder) copyAssets() error {

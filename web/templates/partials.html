@@ -11,7 +11,7 @@
 <meta property="og:url" content="{{.Site.Abs .PageURL}}">
 <meta property="og:image" content="{{.Site.Abs "assets/brand/logo-512.png"}}">
 <meta name="twitter:card" content="summary">
-<link rel="stylesheet" href="{{rel .PageURL "assets/app.css"}}">
+<link rel="stylesheet" href="{{rel .PageURL "assets/app.css"}}{{ver "app.css"}}">
 <script>
   // Apply saved reader preferences before first paint (no flash of the wrong theme).
   (function () {
