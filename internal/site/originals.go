@@ -60,14 +60,15 @@ func (b *Builder) rewriteOriginal(html, orig string, copied map[string]bool, ori
 	ownIDs := idSet(html)
 	// a link from dist/originals/<dir>/ to a site path
 	up := strings.Repeat("../", strings.Count("originals/"+path.Dir(orig)+"/", "/"))
+	// The app splits guides into chapter pages: send the link to the page that holds the anchor.
 	toApp := func(u, frag string) string {
-		out := up + u
+		out := up + b.locate(u, frag)
 		if frag != "" {
 			out += "#" + frag
 		}
 		return out
 	}
-	appHas := func(u, frag string) bool { return frag == "" || b.appIDs[u][frag] }
+	appHas := func(u, frag string) bool { return frag == "" || b.appIDs[b.locate(u, frag)][frag] }
 
 	return reAnchorTag.ReplaceAllStringFunc(html, func(tag string) string {
 		m := reAnchorTag.FindStringSubmatch(tag)

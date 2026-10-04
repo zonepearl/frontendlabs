@@ -77,7 +77,7 @@
       var r = a.getBoundingClientRect(), tr = toc.getBoundingClientRect();
       if (r.top < tr.top + 60 || r.bottom > tr.bottom - 20) a.scrollIntoView({ block: "center" });
     }
-    var h = ch.querySelector("h2");
+    var h = ch.querySelector("h1.chapter-title, h2");
     if (where && h) where.textContent = h.textContent;
   }
 
@@ -106,11 +106,12 @@
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function () {
       if (!current || scrollY < 400) return;
-      var h = current.querySelector("h2");
+      var h = current.querySelector("h1.chapter-title, h2");
       var r = current.getBoundingClientRect();
       var pos = { ch: current.dataset.ch, title: h ? h.textContent : "", frac: Math.max(0, -r.top / Math.max(1, r.height)), t: Date.now() };
       save(resumeKey, pos);
-      var recent = load("fl:recent", []).filter(function (x) { return x.page !== page; });
+      // one "continue reading" entry per guide, pointing at the chapter page read last
+      var recent = load("fl:recent", []).filter(function (x) { return x.guide !== body.dataset.guide; });
       recent.unshift({ page: page, guide: body.dataset.guide, title: body.dataset.guideTitle, icon: body.dataset.emoji, chapter: pos.title, ch: pos.ch, t: pos.t });
       save("fl:recent", recent.slice(0, 6));
     }, 400);
@@ -118,7 +119,7 @@
 
   var resume = load(resumeKey, null);
   var resumeBox = document.getElementById("resume");
-  if (resume && !location.hash && document.getElementById("ch-" + resume.ch)) {
+  if (resumeBox && resume && !location.hash && document.getElementById("ch-" + resume.ch)) {
     var btn = document.createElement("button");
     btn.className = "resume-btn";
     btn.innerHTML = "Continue where you left off <span></span>";
@@ -130,8 +131,8 @@
     resumeBox.appendChild(btn);
   }
 
-  // previous / next chapter at the end of each chapter
-  chapters.forEach(function (ch, i) {
+  // previous / next chapter at the end of each chapter (one-page edition; chapter pages render their own)
+  if (chapters.length > 1) chapters.forEach(function (ch, i) {
     var nav = document.createElement("nav");
     nav.className = "chapnav";
     function link(target, label, cls) {
@@ -140,7 +141,7 @@
       a.className = cls;
       a.innerHTML = "<small></small><span></span>";
       a.querySelector("small").textContent = label;
-      a.querySelector("span").textContent = target.querySelector("h2").textContent;
+      a.querySelector("span").textContent = target.querySelector("h1.chapter-title, h2").textContent;
       return a;
     }
     nav.appendChild(i > 0 ? link(chapters[i - 1], "← Previous", "prev") : document.createElement("span"));
@@ -177,6 +178,34 @@
     cb.addEventListener("change", function () { checks[i] = cb.checked; save("fl:checks:" + page, checks); });
   });
 
+  function go(sel) { var a = document.querySelector(sel); if (a) location.href = a.href; }
+
+  // landing page: offer to continue at the chapter page read last in this guide
+  if (body.dataset.mode === "landing" && resumeBox) {
+    var last = load("fl:recent", []).filter(function (x) { return x.guide === body.dataset.guide && x.page !== page; })[0];
+    if (last) {
+      var cont = document.createElement("a");
+      cont.className = "resume-btn start-btn";
+      cont.href = relTo(last.page) + "#" + last.ch;
+      cont.innerHTML = "Continue reading <span></span>";
+      cont.querySelector("span").textContent = "· " + last.chapter;
+      resumeBox.insertBefore(cont, resumeBox.firstChild);
+    }
+  }
+  // a site path ("rust/ch/") relative to this page, using the page's own depth
+  function relTo(sitePath) { return new Array(page.split("/").length).join("../") + sitePath; }
+
+  // Old links to a guide's single page ("/rust/#some-heading") now land on its
+  // overview: find the chapter page that holds the heading and go there.
+  if (location.hash.length > 1 && body.dataset.anchors) {
+    var id = decodeURIComponent(location.hash.slice(1));
+    if (!document.getElementById(id)) {
+      fetch(body.dataset.anchors).then(function (r) { return r.ok ? r.json() : {}; }).then(function (map) {
+        if (map[id]) location.replace(body.dataset.landing + map[id] + "#" + encodeURIComponent(id));
+      }).catch(function () {});
+    }
+  }
+
   // ---------------------------------------------------------- keyboard --
   addEventListener("keydown", function (e) {
     if (e.metaKey || e.ctrlKey || e.altKey || /input|textarea|select/i.test(e.target.tagName)) return;
@@ -187,8 +216,8 @@
       case "w": cycleWidth(); break;
       case "+": case "=": font(0.05); break;
       case "-": font(-0.05); break;
-      case "n": if (chapters[i + 1]) chapters[i + 1].scrollIntoView(); break;
-      case "p": if (i > 0) chapters[i - 1].scrollIntoView(); else if (current) current.scrollIntoView(); break;
+      case "n": if (chapters[i + 1]) chapters[i + 1].scrollIntoView(); else go('a[rel="next"]'); break;
+      case "p": if (i > 0) chapters[i - 1].scrollIntoView(); else go('a[rel="prev"]'); break;
       case "/": e.preventDefault(); toggleToc(true); filter.focus(); break;
       case "Escape": if (!desktop.matches) toggleToc(false); break;
       default: return;

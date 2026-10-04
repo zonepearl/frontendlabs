@@ -69,7 +69,15 @@ func (lr *linkRewriter) byDir(dir string) (string, bool) {
 	return "", false
 }
 
+// sitePrefix marks a link resolved to a site path but not yet to a page. Once
+// every document is split into chapter pages, the builder replaces
+// "@site:<doc-url>#<id>" with a relative link to the page that holds <id>.
+const sitePrefix = "@site:"
+
 func (lr *linkRewriter) rewrite(dest string) string {
+	if strings.HasPrefix(dest, "#") && len(dest) > 1 { // same document: the anchor may now be on another chapter page
+		return sitePrefix + lr.doc.URL + dest
+	}
 	if dest == "" || strings.HasPrefix(dest, "#") || scheme.MatchString(dest) {
 		return dest
 	}
@@ -91,7 +99,7 @@ func (lr *linkRewriter) rewrite(dest string) string {
 			return dest
 		}
 	}
-	out := relURL(lr.doc.URL, url)
+	out := sitePrefix + url
 	if hasFrag {
 		out += "#" + frag
 	}

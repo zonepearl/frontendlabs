@@ -87,6 +87,22 @@ body.toc-open #toc { transform: none; }
 #content h1, #content h2, #content h3, #content h4 { font-weight: 750; color: var(--fg); }
 #content h1 { font-family: var(--font-sans); font-size: 1.9em; line-height: 1.2; margin: 5rem 0 1rem; padding-top: 2rem; border-top: 3px double var(--rule); color: var(--accent) !important; }
 #content h2 { font-family: var(--font-sans); font-size: 1.55em; line-height: 1.25; margin: 0 0 1rem; letter-spacing: -0.01em; }
+/* chapter pages: the chapter title is the page's h1, styled like a chapter heading (not a part heading) */
+#content h1.chapter-title { font-size: 1.85em; line-height: 1.2; margin: 0 0 1rem; padding-top: 0; border-top: 0; letter-spacing: -0.015em; color: var(--fg) !important; }
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; padding-top: 2.2rem; font-family: var(--font-sans); font-size: .8rem; color: var(--fg-faint); }
+.crumbs a { color: var(--fg-soft); text-decoration: none; }
+.crumbs a:hover { color: var(--accent); }
+/* landing page: the full contents, linking to every chapter page */
+.landing-toc { margin-top: 3.5rem; padding-top: 2rem; border-top: 1px solid var(--rule); font-family: var(--font-sans); }
+.landing-toc h2 { font-size: 1.4em; font-weight: 750; margin: 0 0 .4rem; }
+.landing-toc .hint { color: var(--fg-soft); font-size: .88rem; margin: 0 0 1.4rem; }
+.landing-toc ol { list-style: none; margin: 0; padding: 0; }
+.landing-toc li { display: flex; align-items: baseline; gap: .8rem; padding: .32rem 0; border-bottom: 1px dashed var(--rule); overflow-wrap: anywhere; }
+.landing-toc li a { color: var(--fg); text-decoration: none; font-weight: 550; }
+.landing-toc li a:hover { color: var(--accent); }
+.landing-toc li em { margin-left: auto; flex-shrink: 0; font-style: normal; font-size: .75rem; color: var(--fg-faint); }
+.landing-toc li.part { display: block; border: 0; margin-top: 1.6rem; padding-bottom: .2rem; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.start-btn { display: inline-block; text-decoration: none !important; }
 #content h3 { font-family: var(--font-sans); font-size: 1.12em; margin: 2.2rem 0 .6rem; }
 #content h4 { font-family: var(--font-sans); font-size: 1em; margin: 1.6rem 0 .4rem; color: var(--fg-soft); }
 #content p { margin: 0 0 1.05em; }
