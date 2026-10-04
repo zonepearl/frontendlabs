@@ -53,6 +53,11 @@ Each guide's Markdown is in [`docs/`](docs/); the site is the official, always-c
   Eckart–Young) and how AI and networking use them: attention's `√d_k`, Adam,
   backprop by hand, PageRank, Markov loss models, TCP's RTO and throughput,
   Kelly's fair-sharing. New: integral calculus and "How to read a formula".
+  The security and networking chapters got the same treatment: the RSA proof,
+  side channels, elliptic curves and ECDSA nonce reuse by hand, lattices,
+  min-entropy, detection thresholds, differential privacy, FGSM, M/M/1 and
+  Erlang C derived, AIMD fairness, max-flow/min-cut, the DFT, Wi-Fi 6's data
+  rate, and controller stability for the Kubernetes HPA.
 - **Docker & Kubernetes — The Real-Life Field Guide** ([`/kubernetes/`](https://frontendlabs.xyz/kubernetes/)).
   Beginner to production, built around one cloud system ("Orbit") assembled end to end:
   production Dockerfiles and supply-chain security, Kubernetes core and production workloads,

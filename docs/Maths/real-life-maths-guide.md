@@ -84,21 +84,21 @@ python3
 14. Probability distributions (CLT, LLN, concentration bounds, heavy tails, LLM sampling)
 15. Combinatorics & counting
 16. Bayes' theorem
-17. Graph theory
+17. Graph theory (Dijkstra's proof, max-flow/min-cut, spanning trees)
 18. Complexity & asymptotic analysis
-19. Number theory basics
+19. Number theory basics (extended Euclid, Fermat/Euler proofs, CRT, batch-GCD attacks)
 
 **Part 3 — Expert: domain-specific deep dives (senior level)**
 20. Linear algebra for AI/ML (SVD, PCA, tensors, attention)
 21. Optimization & backpropagation (learning-rate limits, Adam, Lagrange and TCP fairness)
 22. Statistics for ML & experimentation (MLE, z-tests, power analysis)
-23. Information theory (entropy, KL divergence, channel capacity)
-24. Cryptographic mathematics (RSA, Diffie-Hellman, elliptic curves)
-25. Network & systems mathematics (queueing, subnetting, congestion control)
-26. Quantitative security (entropy, detection theory, risk)
-27. Signal processing basics (Fourier, sampling)
-28. Game theory & adversarial thinking
-29. Control theory basics (feedback loops, PID)
+23. Information theory (entropy, min-entropy, Huffman coding, compression side channels)
+24. Cryptographic mathematics (RSA proof, side channels, elliptic curves by hand, ECDSA nonce reuse, lattices)
+25. Network & systems mathematics (M/M/1 derived, Erlang C, Kingman, AIMD fairness, buffer sizing)
+26. Quantitative security (detection theory, cost-optimal thresholds, password hashing, differential privacy)
+27. Signal processing basics (DFT by hand, convolution, decibels, QAM/OFDM, Wi-Fi rates)
+28. Game theory & adversarial thinking (FGSM derived, security games, defender's dilemma)
+29. Control theory basics (stability, dead time, steady-state error, the Kubernetes HPA)
 
 **Part 4 — Putting it together**
 - Role-based priority map · Formula cheat sheet · Practice labs
@@ -4152,6 +4152,138 @@ instead of just the first path found.
 distance-vector protocols like the classic RIP use a Bellman-Ford variant,
 while OSPF (Dijkstra-based) requires non-negative link costs.
 
+### Why Dijkstra is correct (and why negative weights break it)
+
+**Invariant:** when a node is taken off the priority queue, its distance is
+final.
+
+**Proof sketch.** Suppose node `u` is popped with distance `d(u)`, but some
+shorter path to `u` exists. That path starts inside the set of already-final
+nodes and must leave it at some edge into a not-yet-final node `y`. Every edge
+weight is non-negative, so the path's length is at least `d(y)`. And `d(y) ≥ d(u)`,
+because the queue popped `u` first, not `y`. So the "shorter" path is no
+shorter, a contradiction. ∎
+
+The proof uses non-negativity exactly once ("the rest of the path can't make
+it shorter"). A negative edge breaks that step, which is why Dijkstra fails on
+negative weights.
+
+**Cost:** with a binary heap, `O((V + E) · log V)`. OSPF recomputes this
+after every topology change. For a 1,000-router area with about 5,000 links
+that's around 60,000 heap operations, a few milliseconds. The expensive part
+of convergence is flooding the link-state updates, not the maths.
+
+### Bellman–Ford and count-to-infinity
+
+Distance-vector routing runs the Bellman–Ford update *distributed*. Each
+router repeatedly applies:
+
+```
+d(x) = min over neighbours v of [ cost(x, v) + d_v(destination) ]
+```
+
+| Symbol | Meaning |
+|---|---|
+| `d(x)` | x's current estimate of its distance to the destination |
+| `cost(x, v)` | the link cost to neighbour `v` |
+| `d_v(·)` | what neighbour `v` last advertised |
+
+It converges in at most `V - 1` rounds when costs are stable. But when a link
+**fails**, bad news travels slowly. Take a chain `A – B – C`, where C is the
+destination. If the `B–C` link dies, B hears A advertise "C is 2 hops away".
+That route actually goes back through B, but B doesn't know that. So B sets
+its distance to 3, A updates to 4, B to 5, and so on, one hop per exchange.
+This is **count to infinity**. RIP caps "infinity" at **16 hops**, so a
+destination is declared unreachable after about 16 exchanges, which is the
+reason RIP networks can't be wider than 15 hops. Split horizon and poison
+reverse suppress the simple case. Path-vector protocols (BGP) carry the whole
+path, so a router can see its own name in a route and reject the loop.
+
+### Max-flow / min-cut: how much can this network carry?
+
+Each link has a capacity. What's the maximum rate from source `S` to sink `T`?
+
+```
+      ┌──10──▶ A ──4───┐
+      │        │       ▼
+      S       15       T
+      │        ▼       ▲
+      └──5───▶ B ──10──┘
+```
+
+Links: `S→A 10`, `S→B 5`, `A→B 15`, `A→T 4`, `B→T 10`.
+
+> **Theorem (Max-flow min-cut, Ford & Fulkerson, 1956).** The maximum flow
+> from `S` to `T` equals the minimum total capacity of any **cut**, a set of
+> links whose removal disconnects `T` from `S`.
+
+**Finding the flow by hand (augmenting paths):**
+
+```
+path S→A→T:     bottleneck min(10, 4)      = 4     A→T now full
+path S→B→T:     bottleneck min(5, 10)      = 5     S→B now full
+path S→A→B→T:   bottleneck min(10-4, 15, 10-5) = 5  B→T now full
+no more paths with spare capacity.          total = 4 + 5 + 5 = 14
+```
+
+**Checking with a cut:** cut `{A→T, B→T}` has capacity `4 + 10 = 14`. The
+flow found (14) equals a cut's capacity (14), so both are optimal. The
+theorem guarantees the flow can't be more than any cut, so meeting one proves
+optimality.
+
+This is how you find the **real bottleneck** of a network: the min cut, not
+the slowest individual link. Here `S→B` (5) is the smallest link, but the
+true limit is the 14 Mbit/s into `T`. It's also the maths of DDoS capacity
+planning (the min cut between the internet and your origin is the most
+attack traffic you can absorb), datacenter fabric design and multi-path TCP
+scheduling.
+
+**Menger's theorem**, the unit-capacity special case: the number of
+**link-disjoint paths** between two nodes equals the minimum number of
+links whose failure disconnects them. "We have two disjoint paths to the
+DR site" and "no single link failure can isolate the DR site" are the same
+statement. For a full mesh of 4 routers, 3 disjoint paths between any pair
+means it survives any 2 link failures.
+
+### Spanning trees: STP, and how many there are
+
+A **spanning tree** connects all `V` nodes with exactly `V - 1` links and no
+loops. Ethernet needs one because broadcast frames loop forever in a
+cycle, and the Spanning Tree Protocol (STP) disables links until a tree
+remains. Kruskal's and Prim's algorithms find the *minimum-cost* spanning
+tree greedily. Their correctness rests on the **cut property**: the cheapest
+link crossing any cut is always safe to add.
+
+**How many spanning trees are there?** Kirchhoff's **matrix-tree theorem**
+(1847) gives the answer from the graph Laplacian `L = D - A` of Ch. 11:
+
+```
+number of spanning trees = det( L with any one row and its column removed )
+```
+
+| Topology (4 routers) | Spanning trees | Read it as |
+|---|---|---|
+| Line | 1 | no redundancy: any failure partitions |
+| Ring | 4 | remove any one of the 4 links |
+| Full mesh | 16 | Cayley's formula, `n^(n-2) = 4² = 16` |
+
+The count is a crude but real measure of how many ways a network can stay
+connected after failures, and it uses the same matrix whose `λ₂` measured
+robustness in Ch. 11.
+
+```python
+import numpy as np
+def spanning_trees(edges, n):
+    A = np.zeros((n, n))
+    for i, j in edges:
+        A[i, j] = A[j, i] = 1
+    L = np.diag(A.sum(axis=1)) - A
+    return round(np.linalg.det(L[1:, 1:]))
+
+print(spanning_trees([(0,1), (1,2), (2,3), (3,0)], 4))                  # 4   ring
+print(spanning_trees([(0,1),(0,2),(0,3),(1,2),(1,3),(2,3)], 4))         # 16  full mesh
+```
+
 ### Real-life engineering ties
 
 - **SWE:** dependency graphs (build systems, package managers — a
@@ -4425,6 +4557,157 @@ bookkeeping at each step.
 common factor). For a prime `p`: `φ(p) = p - 1`. For `n = p·q` (product of
 two distinct primes): `φ(n) = (p-1)(q-1)`. This exact formula is the
 crux of RSA key generation (Ch. 24 walks through the full derivation).
+
+**Why `(p-1)(q-1)`?** Out of `1 … pq`, the numbers that *do* share a factor
+with `pq` are the multiples of `p` (there are `q` of them) and the multiples
+of `q` (there are `p`), and `pq` itself got counted twice. So
+`φ(pq) = pq - q - p + 1 = (p-1)(q-1)`. That's inclusion–exclusion, the same
+"subtract the overlap" move as `P(A ∪ B)` in Ch. 8.
+
+### Reading modular notation
+
+```
+a ≡ b (mod n)      "a is congruent to b modulo n"
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `≡` | "is congruent to" | equal *after* reducing mod `n` |
+| `(mod n)` | "modulo n" | the clock size. Arithmetic wraps around at `n` |
+| `a ≡ b (mod n)` | | `n` divides `a - b`. Example: `17 ≡ 2 (mod 5)` because `5 \| 15` |
+| `a⁻¹ (mod n)` | "the inverse of a mod n" | the `x` with `a·x ≡ 1`. It exists **only if** `gcd(a, n) = 1` |
+| `ℤₙ` | "Z mod n" | the set `{0, 1, …, n-1}` with wrap-around `+` and `×` |
+| `ℤₙ*` | "the units mod n" | the elements of `ℤₙ` that have an inverse. There are `φ(n)` of them |
+
+Why must `gcd(a, n) = 1`? If `a` and `n` share a factor `g > 1`, every multiple
+`a·x` is also a multiple of `g`, and so is `n`. So `a·x mod n` is always a
+multiple of `g` and can never equal 1. That's why `e` in RSA must be coprime
+to `φ(n)`.
+
+### The extended Euclidean algorithm, by hand
+
+This is the real algorithm that computes RSA's private exponent. We want
+`d = 17⁻¹ (mod 3120)`, the numbers from Ch. 24's toy RSA.
+
+**Forward pass: plain GCD, but keep the quotients.**
+
+```
+3120 = 183 · 17 + 9
+  17 =   1 ·  9 + 8
+   9 =   1 ·  8 + 1      <- remainder 1, so gcd = 1 and an inverse exists
+```
+
+**Backward pass: write 1 as a combination of 3120 and 17.**
+
+```
+1 = 9 - 1·8                              (from line 3)
+  = 9 - 1·(17 - 1·9)    = 2·9 - 17       (substitute line 2 for the 8)
+  = 2·(3120 - 183·17) - 17               (substitute line 1 for the 9)
+  = 2·3120 - 367·17
+```
+
+Reduce mod 3120 and the `2·3120` term vanishes: `-367 · 17 ≡ 1`. So
+`d ≡ -367 ≡ 3120 - 367 = 2753 (mod 3120)`. That's exactly what
+`pow(17, -1, 3120)` returns. **Bézout's identity** is the theorem behind
+this: for any `a, b` there are integers `x, y` with `a·x + b·y = gcd(a, b)`,
+and the algorithm finds them.
+
+### Fermat's Little Theorem, proved
+
+> **Theorem (Fermat, 1640).** If `p` is prime and `p ∤ a`, then
+> `a^(p-1) ≡ 1 (mod p)`.
+
+**Proof idea.** Multiply every non-zero residue `1, 2, …, p-1` by `a`. Because
+`a` has an inverse, no two products can collide (if `a·i ≡ a·j`, multiply by
+`a⁻¹` and `i ≡ j`). So the products are the same `p-1` numbers, just
+shuffled:
+
+```
+(a·1)(a·2)…(a·(p-1)) ≡ 1·2·…·(p-1)     (mod p)
+a^(p-1) · (p-1)!     ≡ (p-1)!          (mod p)
+a^(p-1)              ≡ 1               (cancel (p-1)!, which is invertible mod p)
+```
+
+**Example:** `3¹⁰ mod 11`. Here `p = 11`, so the theorem says the answer is 1,
+with no multiplying needed. (Check: `3⁵ = 243 = 22·11 + 1`, so `3⁵ ≡ 1` and
+`3¹⁰ ≡ 1`.) ✓
+
+**Euler's theorem** generalizes it to any modulus, which is what RSA needs:
+
+```
+a^φ(n) ≡ 1 (mod n)          whenever gcd(a, n) = 1
+```
+
+The proof is the same shuffle, done over the `φ(n)` invertible residues
+instead of all `p - 1`. **Example: the last two digits of 7²⁰²⁶.** We need
+`7²⁰²⁶ mod 100`. `φ(100) = 40` and `gcd(7, 100) = 1`, so `7⁴⁰ ≡ 1`. Then
+`2026 = 50·40 + 26`, which gives `7²⁰²⁶ ≡ 7²⁶ (mod 100)`, and
+square-and-multiply (Ch. 24) gives **49**. Exponents can always be reduced
+mod `φ(n)`. That one fact is why RSA decryption works (Ch. 24).
+
+### Primality testing: how `openssl genrsa` finds primes
+
+**How many candidates?** The **Prime Number Theorem** says primes near `N`
+have density about `1 / ln N`:
+
+```
+π(N) ≈ N / ln N        (π(N) here = number of primes ≤ N, not 3.14...)
+```
+
+For a 1024-bit prime (half of an RSA-2048 key), `ln(2¹⁰²⁴) ≈ 710`. One random
+1024-bit number in 710 is prime, or one in about **355** if you only try odd
+numbers. That's a few hundred candidates, each tested in milliseconds.
+
+**How to test each candidate?** Fermat's theorem gives a test: if
+`a^(n-1) mod n ≠ 1`, then `n` is definitely composite. But some composites
+pass for *every* coprime `a`. These are the **Carmichael numbers**, and the
+smallest is `561 = 3·11·17`, with `2⁵⁶⁰ ≡ 1 (mod 561)` even though 561 isn't
+prime. **Miller–Rabin** closes that hole by also checking square roots of 1
+along the way. Each random round catches a composite with probability at
+least 3/4, so `k` rounds leave an error below `4⁻ᵏ`. With 64 rounds that's
+`2⁻¹²⁸`, far less likely than a cosmic-ray bit flip in your RAM.
+
+### The Chinese Remainder Theorem (CRT)
+
+> **Theorem.** If `n₁, n₂, …, nₖ` are pairwise coprime, then the system
+> `x ≡ a₁ (mod n₁)`, …, `x ≡ aₖ (mod nₖ)` has exactly one solution modulo
+> `N = n₁·n₂·…·nₖ`.
+
+Knowing a number mod 3, mod 5 and mod 7 pins it down mod 105. The classic
+puzzle from the 3rd-century *Sunzi Suanjing*: find `x` with `x ≡ 2 (mod 3)`,
+`x ≡ 3 (mod 5)`, `x ≡ 2 (mod 7)`. Answer: **23**. (`23 = 7·3 + 2 = 4·5 + 3 = 3·7 + 2` ✓)
+
+**Security in the wild: RSA-CRT is 4× faster, and dangerous.** Every real RSA
+implementation signs with CRT. Instead of one exponentiation mod `n` (2048
+bits), it does two mod `p` and mod `q` (1024 bits each) and recombines.
+Exponentiation cost grows roughly with the cube of the bit length, so two
+half-size exponentiations cost about `2 · (1/2)³ = 1/4` of one full-size one.
+
+The danger is the **Bellcore fault attack** (Boneh, DeMillo & Lipton, 1997).
+If a glitch (voltage spike, Rowhammer, cosmic ray) corrupts only the mod-`p`
+half, the faulty signature `s'` is still correct mod `q` but wrong mod `p`.
+Then `s'ᵉ - m` is divisible by `q` but not by `p`, so:
+
+```
+gcd(s'ᵉ - m, n) = q        -> the private key falls out of one bad signature
+```
+
+With the toy key (`n = 3233 = 61·53`), signing `m = 65` with a corrupted
+mod-61 half gives `s' = 2602` instead of `588`, and
+`gcd(2602¹⁷ - 65 mod 3233, 3233) = 53`. That's why OpenSSL and HSMs **verify
+every signature before releasing it**, which costs one cheap public-key
+operation.
+
+### Security in the wild: batch GCD on the internet's keys
+
+If two RSA keys accidentally share a prime, as in `n₁ = p·q₁` and `n₂ = p·q₂`,
+then `gcd(n₁, n₂) = p` breaks **both** keys instantly, with no factoring
+needed. Toy example: `gcd(3233, 4331) = 61`. In 2012 Heninger et al.
+("Mining Your Ps and Qs") ran a fast batch-GCD across millions of TLS and SSH
+keys collected from the internet. They factored the keys of about **0.5% of
+TLS hosts**, mostly embedded routers and firewalls that generated keys at
+first boot, before the kernel had gathered enough entropy (Ch. 23). Euclid's
+2,300-year-old algorithm broke real devices in production.
 
 ### Real-life engineering ties
 
@@ -5451,6 +5734,112 @@ def shannon_capacity(bandwidth_hz, snr_db):
 print(shannon_capacity(20_000_000, 30))  # 20 MHz channel, 30dB SNR -> bits/sec
 ```
 
+| Symbol | Meaning | Example |
+|---|---|---|
+| `C` | capacity: the maximum error-free bit rate | bits/s |
+| `B` | channel bandwidth | 20 MHz Wi-Fi channel |
+| `S/N` | signal-to-noise power ratio, linear (not dB) | 30 dB = `10³` = 1000 |
+| `log₂(1 + S/N)` | bits per second **per hertz**, the *spectral efficiency* | `log₂(1001) ≈ 9.97` |
+
+So `20 MHz × 9.97 ≈ 199 Mbit/s` is the ceiling for that channel. Ch. 27 shows
+how Wi-Fi 6 gets close to it.
+
+### Entropy, symbol by symbol, and why the log
+
+```
+H(X) = -Σₓ p(x) · log₂ p(x)  =  Σₓ p(x) · log₂(1 / p(x))
+```
+
+| Piece | Meaning |
+|---|---|
+| `p(x)` | probability of outcome `x` |
+| `log₂(1/p(x))` | the **surprise** (information content) of seeing `x`, in bits. A 1-in-8 event carries 3 bits |
+| `Σ p(x) · …` | the *expected* surprise, the average over outcomes (Ch. 8's `E[·]`) |
+
+Why a logarithm? We want the information from two independent events to
+**add**. Their probabilities **multiply**, `p(x,y) = p(x)·p(y)`, and only the
+log turns products into sums (Ch. 5). Shannon proved that, up to the choice
+of base, `-log p` is the *only* function with that property and a few other
+natural ones.
+
+### Min-entropy: the entropy that matters for keys
+
+Shannon entropy is an *average*. An attacker doesn't care about averages.
+They try the **most likely** value first. The right measure for guessing
+attacks is **min-entropy**:
+
+```
+H∞(X) = -log₂( maxₓ p(x) )
+```
+
+The two can be wildly different. Take a password generator that outputs
+`"password1"` half the time and otherwise picks uniformly from `2²⁰` random
+strings:
+
+```
+Shannon:      H  = 0.5·log₂(2) + 0.5·log₂(2·2²⁰) = 0.5·1 + 0.5·21 = 11 bits
+Min-entropy:  H∞ = -log₂(0.5)                                     =  1 bit
+```
+
+"11 bits" sounds respectable, but an attacker wins half the time on the
+**first guess**. Real data: if 1% of users pick `123456`, a breached password
+database has at most `-log₂(0.01) ≈ 6.6` bits of min-entropy for the most
+exposed accounts, whatever its average entropy is. That's why NIST's
+randomness-source standard (SP 800-90B) and key-derivation proofs are stated
+in **min-entropy**, and why credential-stuffing attackers use breach-frequency
+lists instead of brute force.
+
+### Source coding: entropy is the compression limit
+
+> **Theorem (Shannon's source coding theorem, 1948).** No lossless code can
+> use fewer than `H(X)` bits per symbol on average, and a code exists that
+> uses fewer than `H(X) + 1`.
+
+**Huffman coding by hand.** Symbols with probabilities `A: 0.5, B: 0.25,
+C: 0.125, D: 0.125`. Repeatedly merge the two least likely nodes:
+
+```
+merge C(0.125) + D(0.125) -> CD(0.25)
+merge B(0.25)  + CD(0.25) -> BCD(0.5)
+merge A(0.5)   + BCD(0.5) -> root(1.0)
+
+Read the codes off the tree (left = 0, right = 1):
+A = 0     B = 10     C = 110     D = 111
+
+average length = 0.5·1 + 0.25·2 + 0.125·3 + 0.125·3 = 1.75 bits
+entropy H      = 0.5·1 + 0.25·2 + 0.125·3 + 0.125·3 = 1.75 bits   <- optimal, exactly at the limit
+```
+
+A naive fixed-width code needs 2 bits per symbol, so Huffman saves 12.5% here
+by giving short codes to common symbols. No code is a prefix of another,
+so the bitstream decodes unambiguously. The **Kraft inequality**,
+`Σ 2^(-ℓᵢ) ≤ 1`, is the condition for code lengths `ℓᵢ` to allow such a
+prefix code: `2⁻¹ + 2⁻² + 2⁻³ + 2⁻³ = 1` ✓. DEFLATE (gzip, PNG, HTTP
+compression) uses Huffman, and zstd and Brotli use the closely related
+arithmetic/ANS coders, which can get even closer to `H`.
+
+### Security in the wild: compression is a side channel
+
+Compression works by finding repeats (low entropy). So **the compressed
+length leaks how much of the data repeats**. If a response contains both a
+secret (a session cookie or CSRF token) and text the attacker controls, the
+attacker can guess the secret one character at a time:
+
+```
+secret in the page:   token=7f3a...
+attacker injects:     token=7     -> repeats the secret's first char  -> compresses SMALLER
+attacker injects:     token=8     -> no repeat                         -> compresses larger
+```
+
+Each length difference confirms one character, so a 32-character token falls
+in a few thousand requests. This is **CRIME** (2012, TLS compression, which is
+why TLS compression was disabled everywhere) and **BREACH** (2013, HTTP-level
+gzip). Encryption hides content but not length, and the length here carries
+information. Mitigations reduce the mutual information (Ch. 23 above) between
+the secret and the observable length: never compress secrets alongside
+attacker input, mask tokens with a fresh random value each response, or pad
+lengths.
+
 ### Real-life engineering ties
 
 - **Security:** rigorous password/key entropy calculation (above); also
@@ -5648,6 +6037,236 @@ print(f"{birthday_bound(128):.2e}")   # MD5-scale: ~1.8 * 10^19 attempts to find
 print(f"{birthday_bound(256):.2e}")   # SHA-256-scale: ~1.3 * 10^38 attempts
 ```
 
+### Why RSA decryption gives back the message: the proof
+
+| Symbol | Meaning | Toy value |
+|---|---|---|
+| `p`, `q` | the two secret primes | 61, 53 |
+| `n = p·q` | public modulus | 3233 |
+| `φ(n)` | Euler's totient, `(p-1)(q-1)`, secret | 3120 |
+| `e` | public exponent, coprime to `φ(n)` | 17 |
+| `d` | private exponent, `e·d ≡ 1 (mod φ(n))` | 2753 (extended Euclid, Ch. 19) |
+| `m`, `c` | message and ciphertext, both in `ℤₙ` | 65, 2790 |
+
+Because `e·d ≡ 1 (mod φ(n))`, there's some integer `k` with `e·d = 1 + k·φ(n)`.
+Then, using Euler's theorem (`m^φ(n) ≡ 1`, Ch. 19):
+
+```
+c^d = (m^e)^d = m^(e·d) = m^(1 + k·φ(n)) = m · (m^φ(n))^k ≡ m · 1^k = m   (mod n)
+```
+
+Decryption undoes encryption *because the exponent wraps around at
+`φ(n)`*. Only someone who knows `φ(n)`, which means knowing `p` and `q`, can
+compute the `d` that makes the wrap land exactly on 1. (The proof above
+assumes `gcd(m, n) = 1`. The CRT from Ch. 19 extends it to every `m`.)
+
+### Why "textbook RSA" is broken: malleability and padding
+
+Raw RSA is **multiplicative**: `Enc(m₁) · Enc(m₂) = (m₁m₂)ᵉ = Enc(m₁·m₂)`. An
+attacker who sees `c = Enc(65) = 2790` can compute `c · 2ᵉ mod n` without any
+key, and that decrypts to `2 · 65 = 130`. If the message were an amount of
+money, the attacker just doubled it.
+
+Real RSA therefore pads the message with structured randomness first (OAEP
+for encryption, PSS for signatures). Padding has its own maths trap. In 1998
+Bleichenbacher showed that a server which merely reveals *whether* the
+padding was valid (an error message, or a timing difference) acts as an
+**oracle**. Each answer leaks a little information about `m`, and roughly a
+million adaptive queries decrypt any ciphertext. The 2017 ROBOT scan found
+the same flaw still live on major sites. That's why TLS 1.3 removed RSA key
+transport entirely.
+
+### Side channels: square-and-multiply leaks the key
+
+Look at the `fast_pow_mod` loop above. It multiplies **only when the current
+exponent bit is 1**. When the exponent is the private key `d`, the running
+time (or the power trace, or the cache footprint) of each step reveals each
+bit of `d`. Kocher's 1996 timing attack recovered RSA and DH keys from
+response timings alone, and later remote attacks did it across a LAN (Brumley
+& Boneh, 2003).
+
+The fix is mathematical, not cryptographic. A **Montgomery ladder** performs
+exactly one multiply and one square per bit, whatever the bit is, and
+**blinding** randomizes the input (`c · rᵉ`, decrypt, then divide out `r`).
+That's the same multiplicative property that made textbook RSA malleable,
+used here as a defence. "Constant-time code" in crypto libraries is
+fundamentally about making a program's resource usage independent of
+secret bits.
+
+### Diffie–Hellman, symbol by symbol, and why parameters matter
+
+| Symbol | Public? | Meaning |
+|---|---|---|
+| `p` | public | a large prime, the modulus |
+| `g` | public | a generator: its powers `g¹, g², …` cycle through a large subgroup of `ℤₚ*` |
+| `a`, `b` | **secret** | each side's random private exponent |
+| `A = gᵃ mod p`, `B = gᵇ mod p` | public | the values sent over the wire |
+| `K = gᵃᵇ mod p` | **secret** | the shared key, computed as `Bᵃ = Aᵇ` |
+
+Security depends on more than the size of `p`:
+
+- **Small subgroups.** If `p - 1` has only small prime factors, the discrete
+  log can be solved separately in each small subgroup and recombined with the
+  CRT (the Pohlig–Hellman algorithm). That's why DH uses **safe primes**
+  `p = 2q + 1` with `q` also prime, which leaves no small subgroups to hide
+  in. It's also why TLS 1.3 only allows a fixed list of vetted groups (RFC 7919).
+- **Precomputation.** The best discrete-log algorithm (the number field sieve)
+  spends most of its effort on work that depends only on `p`, not on `a` or
+  `b`. The 2015 **Logjam** paper showed that 512-bit "export" DH could be
+  broken in minutes once that precomputation was done. It also estimated that
+  a nation-state budget could precompute one *widely shared* 1024-bit prime,
+  enough to passively decrypt a large fraction of VPN and SSH traffic.
+  Shared parameters plus precomputation turned a per-connection cost into a
+  one-time cost.
+
+### Elliptic curves, by hand
+
+An elliptic curve over a prime field is the set of points `(x, y)` with
+
+```
+y² ≡ x³ + a·x + b   (mod p)
+```
+
+plus a special "point at infinity" `O`, which acts like zero. Points can be
+**added**. Geometrically, you draw the line through `P` and `Q`, find where
+it hits the curve a third time, and reflect that point. Algebraically:
+
+```
+slope:  λ = (y₂ - y₁) / (x₂ - x₁)          if P ≠ Q   (the chord)
+        λ = (3x₁² + a) / (2y₁)             if P = Q   (the tangent: implicit differentiation, Ch. 12!)
+
+sum:    x₃ = λ² - x₁ - x₂
+        y₃ = λ(x₁ - x₃) - y₁
+```
+
+Every "division" here means multiplying by a modular inverse (Ch. 19).
+
+**A toy curve:** `y² = x³ + 2x + 2 (mod 17)`, base point `G = (5, 1)`.
+Compute `2G` (doubling, so use the tangent):
+
+```
+λ  = (3·5² + 2) / (2·1) = 77 / 2 ≡ 77 · 9 ≡ 9 · 9 = 81 ≡ 13   (mod 17)   [2⁻¹ ≡ 9, since 2·9 = 18 ≡ 1; 77 ≡ 9]
+x₃ = 13² - 5 - 5 = 159 ≡ 6     (mod 17)
+y₃ = 13·(5 - 6) - 1 = -14 ≡ 3  (mod 17)
+2G = (6, 3)        check: 3² = 9,  6³ + 2·6 + 2 = 230 = 13·17 + 9 ≡ 9  ✓
+```
+
+Keep adding `G` and the points go `(5,1), (6,3), (10,6), (3,1), (9,16), …`.
+At `19G` you reach `O`, so the group has **order 19**, and `20G = G` again.
+That cycle is the "clock" ECC works on.
+
+**ECDH with toy numbers.** Alice picks secret `a = 3` and sends `A = 3G = (10, 6)`.
+Bob picks `b = 7` and sends `B = 7G = (0, 6)`. Alice computes `3·B` and Bob
+computes `7·A`. Both get `21G = 2G = (6, 3)`, because `21 mod 19 = 2`. An
+eavesdropper sees `G`, `(10,6)` and `(0,6)` and must solve the **elliptic
+curve discrete log problem** to recover 3 or 7. With 19 points that takes a
+moment. With about `2²⁵⁶` points (Curve25519, P-256), the best known attack
+(Pollard's rho) needs about `√(2²⁵⁶) = 2¹²⁸` steps. That square root is the
+birthday bound again (below), and it's why a 256-bit curve gives "128-bit
+security".
+
+### ECDSA nonce reuse: the PS3 hack, in algebra
+
+An ECDSA signature on message hash `z` with private key `d` uses a fresh
+secret nonce `k`, over a curve whose group has order `n`:
+
+```
+r = x-coordinate of (k·G)  mod n
+s = k⁻¹ · (z + r·d)        mod n
+```
+
+| Symbol | Meaning |
+|---|---|
+| `d` | the private key (a number) |
+| `k` | the per-signature nonce. It **must** be secret and unique |
+| `z` | hash of the message being signed |
+| `(r, s)` | the signature |
+
+Sign two different messages `z₁`, `z₂` with the **same** `k`. Then `r` is
+identical in both, and subtracting the two `s` equations eliminates `d`:
+
+```
+s₁ - s₂ = k⁻¹·(z₁ - z₂)       ->   k = (z₁ - z₂) / (s₁ - s₂)    (mod n)
+then from either signature:        d = (s₁·k - z₁) / r            (mod n)
+```
+
+Two signatures and two lines of algebra give you the private key. On the toy
+curve (`n = 19`) with `d = 7`, `k = 10`, `z₁ = 5`, `z₂ = 12`, the signatures
+are `(7, 13)` and `(7, 8)`. Then `k = (5-12)/(13-8) ≡ 10` and
+`d = (13·10 - 5)/7 ≡ 7`. Sony's PS3 used a **constant** `k` (2010). Android
+Bitcoin wallets with a broken `SecureRandom` repeated `k` (2013) and had funds
+stolen. Even a few *biased* bits of `k` are enough when many signatures are
+available, using lattice attacks (the 2019 Minerva and TPM-Fail attacks
+recovered keys from timing-leaked nonce bits). That's why modern
+implementations derive `k` deterministically from the key and the message
+(RFC 6979), and why Ed25519 was designed that way from the start.
+
+### The birthday bound, derived
+
+Put `k` items into `N` equally likely buckets one at a time. Item `i+1`
+avoids all `i` earlier ones with probability `1 - i/N`. So:
+
+```
+P(no collision) = (1 - 1/N)(1 - 2/N)…(1 - (k-1)/N)
+                ≈ e^(-1/N) · e^(-2/N) · … · e^(-(k-1)/N)     using 1 - x ≈ e^(-x)  (Taylor, Ch. 12)
+                = e^(-(1 + 2 + … + (k-1))/N)
+                = e^(-k(k-1)/(2N))                            (arithmetic series, Ch. 6)
+                ≈ e^(-k²/(2N))
+```
+
+Set `P(collision) = 1/2`: `k²/(2N) = ln 2`, so `k ≈ √(2 ln 2) · √N ≈ 1.18·√N`.
+For birthdays (`N = 365`) that gives `1.18 · 19.1 ≈ 22.5`, so 23 people. ✓
+
+| Where it bites | Numbers | Result |
+|---|---|---|
+| 64-bit random IDs | `1.18 · 2³²` | 50% collision chance after **5.1 billion** IDs, a real risk at scale |
+| UUIDv4 (122 random bits) | `10¹²` IDs | `P ≈ k²/2N ≈ 10⁻¹³`, which is safe |
+| AES-GCM random 96-bit nonces | `2³²` messages per key | `P ≈ 2⁶⁴/2⁹⁷ = 2⁻³³`. This is why NIST caps a key at `2³²` random-nonce messages, since a repeated GCM nonce leaks the authentication key |
+| SHA-1 (160-bit) | generic bound `2⁸⁰` | the 2017 SHAttered collision needed only about `2⁶³` by exploiting structure |
+
+### How many bits of security? One table to calibrate everything
+
+| Primitive | Best classical attack | Security (bits) | After a large quantum computer |
+|---|---|---|---|
+| AES-128 | brute force `2¹²⁸` | 128 | ~64 (Grover's square root), so use AES-256 for long-term data |
+| SHA-256 collision | birthday `2¹²⁸` | 128 | still about 128 in practice |
+| RSA-2048 | number field sieve | ~112 | **0** (Shor's algorithm) |
+| RSA-3072 | number field sieve | ~128 | **0** |
+| P-256 / X25519 | Pollard rho `√n` | ~128 | **0** (Shor's algorithm) |
+| ML-KEM-768 | lattice reduction | ~192 (NIST category 3, equivalent to AES-192) | about the same (no known large quantum speed-up) |
+
+Bits of security means "the attacker needs about `2ᵇ` operations". Each extra
+bit doubles the work, so 128 bits is about `3.4·10³⁸` operations, which is not
+reachable with any conceivable classical computer.
+
+### Post-quantum: Learning With Errors, the maths behind ML-KEM
+
+Shor's algorithm breaks RSA, DH and ECC because they all hide a secret in
+the **period** of modular exponentiation, and quantum computers find
+periods efficiently. Lattice cryptography hides the secret in **noise**
+instead:
+
+```
+b = A · s + e   (mod q)
+```
+
+| Symbol | Public? | Meaning |
+|---|---|---|
+| `A` | public | a random matrix, `m × n` |
+| `s` | **secret** | the secret vector (the key) |
+| `e` | **secret** | a small random error vector, entries like -2 … 2 |
+| `b` | public | the noisy product |
+| `q` | public | the modulus (ML-KEM uses `q = 3329`) |
+
+Without `e`, this is Ch. 10's `A·x = b`, which Gaussian elimination solves in
+milliseconds. With a little noise added, elimination amplifies the errors
+until the answer is garbage. The best known attacks (lattice reduction) take
+exponential time, **even on quantum computers**. That's the *Learning With
+Errors* problem (Regev, 2005). ML-KEM (FIPS 203, 2024) uses a structured
+version over polynomials of degree 256, and Chrome, Cloudflare and OpenSSH
+already negotiate hybrid X25519 + ML-KEM key exchange by default, so
+"harvest now, decrypt later" recordings of today's traffic stay safe.
+
 ### Real-life engineering ties
 
 - **Security:** this chapter is the mathematical grounding for evaluating
@@ -5837,6 +6456,182 @@ asymmetry (slow linear growth, fast halving) is deliberately conservative
 — a direct, real-world application of control theory (Ch. 29) tuned to
 avoid congestion collapse across the shared, uncoordinated internet.
 
+### Deriving the M/M/1 formulas (instead of trusting them)
+
+| Symbol | Meaning |
+|---|---|
+| `λ` | arrival rate (Poisson arrivals, Ch. 14) |
+| `μ` | service rate (exponential service times) |
+| `ρ = λ/μ` | utilization, the fraction of time the server is busy. Must be `< 1` |
+| `πₙ` | long-run probability that `n` requests are in the system |
+
+The number of requests in the system is a Markov chain (Ch. 11): it goes up
+by 1 at rate `λ` and down by 1 at rate `μ`. In steady state, the flow across
+each boundary between `n` and `n+1` must balance:
+
+```
+λ · πₙ = μ · πₙ₊₁     ->    πₙ₊₁ = ρ · πₙ     ->    πₙ = ρⁿ · π₀
+```
+
+The probabilities sum to 1, and `Σ ρⁿ = 1/(1 - ρ)` is a geometric series
+(Ch. 6), so `π₀ = 1 - ρ`:
+
+```
+πₙ = (1 - ρ) · ρⁿ                                (geometric distribution)
+L  = Σ n · πₙ = ρ / (1 - ρ)                      (average number in system)
+W  = L / λ = 1 / (μ - λ)                         (Little's Law, below)
+```
+
+**Example:** at `ρ = 0.9` the average queue holds `0.9/0.1 = 9` requests.
+
+**Buffer overflow probability falls out for free:** `P(n ≥ k) = ρᵏ`. A router
+port at 90% utilization exceeds 20 queued packets `0.9²⁰ ≈ 12%` of the time and
+50 packets `0.9⁵⁰ ≈ 0.5%` of the time. Read it backwards to size a buffer for a
+target drop rate: `k = ln(target) / ln(ρ)`.
+
+### Why Little's Law holds for any system
+
+`L = λ · W` holds whatever the arrival or service distributions. The proof is a
+counting argument. Plot `N(t)`, the number of requests in the system over a
+long window of length `T`, and compute the area under that curve two ways:
+
+```
+area = ∫₀ᵀ N(t) dt = L · T                    (average height × width)
+area = Σ over requests of (time each one spent) = (λ·T) · W   (count × average stay)
+
+L · T = λ · T · W     ->     L = λ · W
+```
+
+Each request contributes a horizontal strip as tall as one request and as long
+as its stay, so both sides measure the same area (an integral, Ch. 12). That's
+why Little's Law applies to a CPU run queue, a Kafka consumer group, a
+connection pool or a coffee shop.
+
+**Example:** a service handles 2,000 req/s with an average latency of 50 ms,
+so `L = 2000 · 0.05 = 100` requests are in flight on average. You need at
+least 100 concurrent connections or worker threads, plus headroom for the
+variance shown above.
+
+### Multiple servers: Erlang C, and why pooling wins
+
+For `c` identical servers sharing one queue (M/M/c), with offered load
+`a = λ/μ` (in **Erlangs**), the probability that an arriving request has to wait is
+the **Erlang C** formula:
+
+```
+            (aᶜ / c!) · c/(c - a)
+P_wait = ──────────────────────────────────────          W_q = P_wait / (c·μ - λ)
+         Σₖ₌₀^(c-1) aᵏ/k!  +  (aᶜ / c!) · c/(c - a)
+```
+
+| Symbol | Meaning |
+|---|---|
+| `c` | number of servers (workers, threads, agents) |
+| `a = λ/μ` | offered load in Erlangs: how many servers would be busy on average |
+| `P_wait` | the chance a request finds every server busy |
+| `W_q` | average time spent waiting before service starts |
+
+**Example: sizing a worker pool.** `λ = 90` jobs/s and each worker completes
+`μ = 10` jobs/s, so `a = 9` Erlangs. Nine workers is the bare minimum, but:
+
+| Workers `c` | Utilization | P(wait) | Avg queue wait |
+|---|---|---|---|
+| 10 | 90% | 67% | 66.9 ms |
+| 11 | 82% | 43% | 21.5 ms |
+| 12 | 75% | 27% | 8.9 ms |
+| 14 | 64% | 9% | 1.8 ms |
+
+Going from 10 to 12 workers (+20% cost) cuts queueing delay 7.5×. That's the
+same hyperbolic curve as M/M/1, now with a precise number for the decision.
+
+**Pooling.** Compare two separate M/M/1 servers, each getting 45 req/s with
+`μ = 50`, against one shared queue feeding both (M/M/2, 90 req/s):
+
+```
+separate queues:   W = 1/(50 - 45)                       = 200 ms
+one pooled queue:  W = W_q + 1/μ  (Erlang C, c = 2)      ≈ 105 ms
+```
+
+The same hardware and the same load give **half the latency**, just by sharing
+the queue. A request never waits behind a busy server while the other one is
+idle. That's why one shared work queue beats per-worker queues, why a single
+supermarket line feeding many tills is faster than one line per till, and why
+**work stealing** (Go's scheduler, Tokio, Java's ForkJoinPool) exists. It
+recovers most of the pooling benefit while keeping per-worker queues for cache
+locality.
+
+### Variability is the enemy: Kingman's formula
+
+Real traffic isn't Poisson and real service times aren't exponential. For a
+general single-server queue (G/G/1), Kingman's approximation gives the
+waiting time:
+
+```
+W_q ≈ ( ρ / (1 - ρ) ) · ( (c_a² + c_s²) / 2 ) · τ
+       utilization       variability          service time
+```
+
+| Symbol | Meaning |
+|---|---|
+| `c_a` | coefficient of variation (std ÷ mean, Ch. 9) of inter-arrival times. Poisson gives 1 |
+| `c_s` | coefficient of variation of service times. Exponential gives 1, constant gives 0 |
+| `τ` | mean service time |
+
+At `ρ = 0.8` and `τ = 10 ms`:
+
+| Arrivals / service | `c_a²`, `c_s²` | Wait |
+|---|---|---|
+| Poisson / exponential (M/M/1) | 1, 1 | 40 ms |
+| Poisson / constant service time | 1, 0 | 20 ms |
+| Bursty arrivals, heavy-tailed service | 4, 4 | **160 ms** |
+
+The three factors each say something different. **Utilization** explodes near
+1. **Variability** multiplies the wait linearly. **Service time** scales it. So
+cutting tail variance (timeouts, request size limits, splitting the slow
+endpoints onto their own pool) can matter as much as adding capacity. It's the
+reason "head-of-line blocking" by one huge request hurts everyone behind it.
+
+### Why AIMD converges to fairness
+
+Two flows share a link of capacity 16, starting very unfairly at
+`(x₁, x₂) = (10, 2)`. Each round, both add 1 if total `≤ 16`, or both halve if
+the link overflows:
+
+```
+(10, 2) → (11, 3) → (12, 4) → (13, 5)          diff 8   (increase keeps the difference)
+  cut   → (6.5, 2.5)                            diff 4   (halving halves the difference)
+  ...   → (10.5, 6.5) → cut → (5.25, 3.25)      diff 2
+  ...   → (9.25, 7.25) → cut → (4.6, 3.6)       diff 1
+```
+
+**Additive increase preserves the gap between the flows. Multiplicative
+decrease halves it.** After `k` congestion events the unfairness has shrunk by
+`2ᵏ`, so the flows converge to an equal share whatever their starting point.
+Chiu and Jain (1989) proved that among linear controls, AIMD is the one that
+converges to both efficiency and fairness. AIAD keeps the unfairness forever,
+and MIMD keeps the *ratio* forever. That paper is why TCP behaves the way it
+does.
+
+### How big should a router buffer be?
+
+The classic rule was "buffer = one bandwidth-delay product", so a single TCP
+flow's sawtooth never empties the queue. For a 10 Gbit/s link with 250 ms
+RTT that's `10¹⁰ · 0.25 / 8 = 312.5 MB` of fast memory, which is expensive.
+Appenzeller, Keslassy and McKeown (2004) showed that with `n` desynchronized
+flows the sawtooths average out (the CLT again, Ch. 14: the total window's
+fluctuations grow like `√n` while the mean grows like `n`), so you need only:
+
+```
+buffer ≈ BDP / √n
+```
+
+With 10,000 flows, `√n = 100` and the buffer drops to **3.1 MB**. That's the
+difference between off-chip DRAM and on-chip SRAM. Oversized buffers cause
+**bufferbloat**: full queues that add seconds of latency without adding
+throughput. CoDel and FQ-CoDel (Linux's default qdisc on many distributions)
+attack it by managing the *time* packets spend queued rather than the queue
+length, which is Little's Law applied as a control signal.
+
 ### Real-life engineering ties
 
 - **Network:** subnetting/CIDR is daily-driver math for any network
@@ -6010,6 +6805,145 @@ uniquely identifiable from just `{zip code, birth date, gender}` alone
 (Sweeney, 2000) — a striking demonstration that "anonymized" data with
 insufficient k-anonymity often isn't anonymous at all.
 
+### The confusion matrix, every rate named
+
+|  | Actually malicious | Actually benign |
+|---|---|---|
+| **Alerted** | TP (true positive) | FP (false positive) |
+| **Not alerted** | FN (false negative) | TN (true negative) |
+
+| Metric | Formula | Question it answers | Also called |
+|---|---|---|---|
+| TPR | `TP / (TP + FN)` | of real attacks, what fraction did we catch? | recall, sensitivity, detection rate |
+| FPR | `FP / (FP + TN)` | of benign events, what fraction did we wrongly flag? | fall-out, false-alarm rate |
+| Precision | `TP / (TP + FP)` | of alerts, what fraction were real? | positive predictive value |
+| F1 | `2·P·R / (P + R)` | one number balancing precision `P` and recall `R` | harmonic mean |
+
+For the 20-event example above (`P = 0.6`, `R = 0.75`),
+`F1 = 2·0.6·0.75 / 1.35 ≈ 0.67`. F1 uses the *harmonic* mean so that a
+detector can't hide a terrible precision behind a great recall. If either
+one goes to 0, so does F1.
+
+### Precision depends on the base rate, not just the detector
+
+TPR and FPR are properties of the **detector**. Precision also depends on
+the **environment**, through the base rate `π` = the fraction of events that
+are malicious. Bayes' theorem (Ch. 16) gives:
+
+```
+Precision = TPR · π / ( TPR · π  +  FPR · (1 - π) )
+```
+
+| Symbol | Meaning |
+|---|---|
+| `π` | base rate: P(event is malicious), *before* any detection |
+| `TPR · π` | the fraction of all events that are caught attacks |
+| `FPR · (1 - π)` | the fraction of all events that are false alarms |
+
+With `TPR = 0.99`, `FPR = 0.01`, `π = 10⁻⁴`, precision is `0.0098`. That's
+Ch. 16's "under 1% of alerts are real", now as a formula. Solve it the other
+way to get the design target: **for half of all alerts to be real, you need
+`FPR ≈ TPR · π / (1 - π) ≈ 10⁻⁴`**. The false-positive rate has to be about as
+small as the base rate. That's a 100× improvement over "99% accurate", and
+it's why production detection stacks layer cheap high-recall filters in
+front of expensive high-precision ones. Each stage raises the base rate
+seen by the next stage.
+
+### Choosing the alert threshold from costs
+
+If a false alarm costs `C_FP` (analyst time) and a missed attack costs
+`C_FN` (breach losses), alerting on an event is worth it when the expected
+cost of staying silent exceeds the expected cost of alerting:
+
+```
+alert  if   P(attack | evidence) · C_FN  >  (1 - P(attack | evidence)) · C_FP
+
+  <=>       P(attack | evidence)  >  C_FP / (C_FP + C_FN)
+```
+
+**Example:** triaging an alert costs about $50 of analyst time, and a missed
+intrusion costs about $100,000. The threshold is
+`50 / (50 + 100,000) ≈ 0.0005`. You should investigate anything with more than
+a **0.05%** chance of being real. That shows why "only page on high-confidence
+alerts" can be the wrong policy when misses are expensive, and the formula
+lets you defend the threshold with numbers in a design review. The same
+derivation sets the decision threshold of any classifier, from fraud to
+medical screening.
+
+### What AUC actually measures
+
+AUC has a clean probabilistic meaning (the Mann–Whitney U statistic):
+
+```
+AUC = P( score(random attack) > score(random benign event) )
+```
+
+Count it for the `sklearn` example above. There are 3 attacks, scored
+`0.8, 0.9, 0.7`, and 7 benign events, the highest of which scores `0.6`. All
+`3 × 7 = 21` attack/benign pairs are ranked correctly, so `AUC = 21/21 = 1.0`.
+Random guessing gives 0.5. AUC is threshold-free and **base-rate-free**, which
+makes it good for comparing detectors and bad for predicting alert volume. Use
+precision at your real `π` for that (above).
+
+### Password hashing: buying bits with work
+
+A deliberately slow hash adds "free" entropy. If a hash is `W` times slower
+for the attacker, it adds `log₂ W` bits of effective strength:
+
+```
+effective bits = entropy_bits + log₂(slowdown factor)
+```
+
+A single high-end GPU computes fast unsalted hashes like MD5 at tens of
+billions per second, but only tens of thousands of bcrypt hashes per second at
+a moderate cost setting. That's a slowdown of roughly a million, so about
+`log₂(10⁶) ≈ 20` extra bits. A 40-bit password behind bcrypt resists an offline
+attacker about as well as a 60-bit password behind MD5. Each +1 to bcrypt's
+cost parameter doubles the work (+1 bit). **Memory-hard** functions (scrypt,
+Argon2) also require a large block of RAM per guess, which removes the GPU's
+and ASIC's advantage from massive parallelism. That's why OWASP recommends
+Argon2id. **Salts** don't add bits per hash. They stop one computation from
+attacking every account at once, so precomputed rainbow tables become useless.
+
+### Differential privacy: a mathematical definition of "anonymous"
+
+k-anonymity (above) can be broken by combining it with outside data. **Differential
+privacy** (Dwork et al., 2006) gives a guarantee that holds against *any*
+auxiliary information. A randomized query `M` is `ε`-differentially private
+if, for any two datasets `D` and `D'` that differ in one person's record, and
+any set of outputs `S`:
+
+```
+P[ M(D) ∈ S ]  ≤  e^ε · P[ M(D') ∈ S ]
+```
+
+| Symbol | Meaning |
+|---|---|
+| `D`, `D'` | "neighbouring" datasets: identical except for one individual |
+| `M` | the randomized mechanism (the query plus noise) |
+| `ε` | "epsilon", the **privacy budget**. Smaller is more private. `e^ε ≈ 1 + ε` for small `ε` |
+
+In words: whether *you* are in the dataset changes the probability of any
+answer by at most a factor of `e^ε`, so nobody can learn much about you from
+the output.
+
+**The Laplace mechanism** achieves this for numeric queries. Add noise drawn
+from a Laplace distribution with scale `b = Δf / ε`, where `Δf` (the
+*sensitivity*) is the most one person can change the true answer.
+
+**Example:** "how many employees clicked the phishing link?" One person
+changes a count by at most 1, so `Δf = 1`. With `ε = 0.5`, the scale is
+`b = 2`, which gives a noise standard deviation of `√2 · b ≈ 2.8`. The published
+count is `true count ± about 3`, which is useful for a company of 5,000 and
+protective for any individual.
+
+Privacy losses **add up**: answering `k` such queries costs `k·ε` in total
+(the composition theorem). That's why deployments track a budget. The 2020
+US Census, Apple's keyboard and emoji telemetry, and Google's RAPPOR all use
+differential privacy, and DP-SGD (clip each example's gradient, add Gaussian
+noise) trains ML models with the same guarantee, so they can't memorize any
+single training record.
+
 ### Real-life engineering ties
 
 - **Security:** this entire chapter is core Sr.-security-engineer
@@ -6124,6 +7058,194 @@ sampling of a continuous signal — including monitoring systems: if you
 sample a metric (e.g., CPU usage) once a minute, you *cannot* detect
 spikes/oscillations happening faster than once every 2 minutes — they'll
 alias into misleading patterns in your dashboard.
+
+### Euler's formula: rotations as numbers
+
+The Fourier transform is written with complex exponentials, and one
+identity makes them readable:
+
+```
+e^(iθ) = cos θ + i · sin θ
+```
+
+| Symbol | Meaning |
+|---|---|
+| `i` | the imaginary unit, `i² = -1` |
+| `e^(iθ)` | the point at angle `θ` on the unit circle (Ch. 7): x-coordinate `cos θ`, y-coordinate `sin θ` |
+| `θ` | angle in radians. A full turn is `2π` |
+
+Multiplying by `e^(iθ)` **rotates** a point by `θ`. That's the rotation matrix
+from Ch. 10 packed into a single number. Set `θ = π` and you get
+`e^(iπ) + 1 = 0`, which links five fundamental constants in one line. A
+spinning phasor `e^(2πi·f·t)` goes round `f` times per second, so a sine wave
+of frequency `f` is just the vertical shadow of that rotation.
+
+### The Discrete Fourier Transform, symbol by symbol
+
+```
+X_k = Σₙ₌₀^(N-1)  x_n · e^(-2πi · k·n / N)          k = 0, 1, …, N-1
+```
+
+| Symbol | Meaning |
+|---|---|
+| `x_n` | the `n`-th time sample (`N` samples in total) |
+| `X_k` | a complex number: how much frequency `k` is present (`\|X_k\|` = strength, angle = phase) |
+| `k` | frequency index: `k` complete cycles across the `N` samples |
+| `e^(-2πi·kn/N)` | a probe wave spinning at frequency `k` |
+| `Σ x_n · (probe)` | a **dot product** (Ch. 10) between the signal and the probe |
+
+Every DFT coefficient answers one question: **how well does the signal line
+up with a wave of frequency `k`?** That's the same correlation idea as Ch. 9
+and the same dot product as cosine similarity. The DFT is a change of basis,
+a matrix multiplication by an `N × N` matrix of rotations, and the FFT computes
+it in `O(N log N)` instead of `O(N²)` by reusing shared sub-products.
+
+**A 4-point DFT by hand.** Signal `x = [1, 0, -1, 0]`, which is one full cosine
+cycle. For `N = 4`, the probe values `e^(-2πi·kn/4)` are just `1, -i, -1, i`
+raised to powers:
+
+```
+X₀ = 1 + 0 + (-1) + 0                  = 0     (no constant offset: the average is 0)
+X₁ = 1·1 + 0·(-i) + (-1)·(-1) + 0·(i)  = 2     (strong match at 1 cycle)
+X₂ = 1·1 + 0·(-1) + (-1)·(1)  + 0·(-1) = 0
+X₃ = 1·1 + 0·(i)  + (-1)·(-1) + 0·(-i) = 2     (the mirror of X₁, always true for real signals)
+```
+
+The energy sits at `k = 1` (and its mirror at `k = 3`), which correctly
+identifies "one cycle per window". `np.fft.fft([1, 0, -1, 0])` returns
+`[0, 2, 0, 2]`.
+
+### The convolution theorem: why the FFT is everywhere
+
+**Convolution** slides one signal across another, multiplying and summing at
+each offset. It's what a filter, an echo, a blur and a CNN layer all do:
+
+```
+(f * g)[n] = Σₘ f[m] · g[n - m]
+```
+
+> **Theorem (convolution).** Convolution in the time domain equals
+> element-wise multiplication in the frequency domain:
+> `DFT(f * g) = DFT(f) ⊙ DFT(g)`.
+
+Direct convolution of two length-`N` signals costs `O(N²)`. Going through
+the FFT (transform, multiply, transform back) costs `O(N log N)`. That's why
+audio effects, large-kernel image filters, radar matched filters and
+polynomial multiplication (including the number-theoretic transform at the
+heart of ML-KEM in Ch. 24) all run through FFTs. In AI, a CNN layer is a
+learned convolution. Long-sequence models such as Hyena and S4/Mamba-style
+state-space models use FFT convolutions to cover very long contexts in
+`O(N log N)` instead of attention's `O(N²)`.
+
+### Why Nyquist's theorem holds
+
+Sampling a signal every `T = 1/f_s` seconds makes its spectrum **repeat**
+every `f_s` hertz. Sampling is multiplication by a train of spikes, and by
+the convolution theorem that becomes *convolution* of the spectrum with
+spikes at multiples of `f_s`, which pastes copies of the spectrum at
+`0, ±f_s, ±2f_s, …`. Each copy extends from `-f_max` to `+f_max`. The copies
+stay separate only if:
+
+```
+f_s - f_max > f_max    <=>    f_s > 2 · f_max
+```
+
+If they overlap, a high frequency lands on top of a low one and the two can
+never be told apart. That's aliasing. The `|6 - 5| = 1 Hz` alias computed above
+is the copy at `f_s = 5` shifted back to 1 Hz. This is why every ADC has an
+analogue **anti-aliasing filter** in front of it to remove frequencies
+above `f_s/2` *before* sampling, since afterwards it's too late. For monitoring,
+the equivalent is to scrape fast and then downsample using max or a percentile,
+not a single point sample.
+
+### Decibels: the logarithm that radio engineers live in
+
+Signal powers span many orders of magnitude, so engineers use a log scale
+(Ch. 5):
+
+```
+gain (dB)   = 10 · log₁₀( P_out / P_in )
+power (dBm) = 10 · log₁₀( P / 1 mW )
+```
+
+| dB | Power ratio |
+|---|---|
+| +3 dB | ×2 |
+| +10 dB | ×10 |
+| +20 dB | ×100 |
+| -30 dB | ×0.001 |
+
+Multiplying ratios becomes **adding** decibels, so a link budget is plain
+addition: transmit power + antenna gains − losses = received power.
+**Example:** a Wi-Fi access point transmits at 20 dBm (100 mW). A laptop
+receiving at −70 dBm (`10⁻¹⁰` W, a ten-billionth of the transmitted
+power) still has a usable link. That's a 90 dB loss, and you can only
+reason about a ratio of a billion comfortably on a log scale.
+
+### Free-space path loss: why 5 GHz has shorter range
+
+```
+FSPL (dB) = 20·log₁₀(d) + 20·log₁₀(f) - 147.55        (d in metres, f in Hz)
+```
+
+| Symbol | Meaning |
+|---|---|
+| `d` | distance between the antennas |
+| `f` | carrier frequency |
+| `-147.55` | `20·log₁₀(4π/c)`, a constant from the speed of light `c` |
+
+The `20·log₁₀` (not `10`) comes from the inverse-square law: power spreads
+over a sphere of area `4πd²`. Worked out:
+
+```
+2.4 GHz at 10 m:  20·1 + 20·log₁₀(2.4·10⁹) - 147.55 = 20 + 187.6 - 147.55 ≈ 60.0 dB
+5 GHz at 10 m:                                                             ≈ 66.4 dB
+2.4 GHz at 20 m:                                                           ≈ 66.1 dB
+```
+
+Doubling distance costs 6 dB, and moving from 2.4 to 5 GHz *also* costs about 6 dB.
+5 GHz reaches roughly half as far for the same transmit power, before you
+even count walls, which absorb higher frequencies more. That's why mesh
+Wi-Fi and 5G millimetre-wave cells are placed so densely.
+
+### QAM and OFDM: how Wi-Fi approaches the Shannon limit
+
+**QAM** (quadrature amplitude modulation) sends `log₂ M` bits per symbol by
+choosing one of `M` points on a grid of amplitudes and phases:
+
+| Modulation | Bits/symbol | SNR floor from Shannon (`2ᵇ - 1`) | Used by |
+|---|---|---|---|
+| QPSK (4-QAM) | 2 | 4.8 dB | long range, poor signal |
+| 64-QAM | 6 | 18 dB | Wi-Fi 4/5 |
+| 256-QAM | 8 | 24 dB | Wi-Fi 5 |
+| 1024-QAM | 10 | 30 dB | Wi-Fi 6, DOCSIS 3.1 |
+
+The SNR column comes from inverting Shannon–Hartley (Ch. 23):
+`b = log₂(1 + SNR)` gives `SNR = 2ᵇ - 1`. Real radios need a few dB more than
+this floor, which is why your laptop drops to a lower modulation as you walk
+away: the SNR no longer supports the dense grid.
+
+**OFDM** splits a channel into many narrow **subcarriers**, spaced exactly
+`Δf = 1/T_symbol` apart. That spacing makes them **orthogonal**: their
+dot product over one symbol is zero (Ch. 10), so they overlap in frequency
+without interfering. The transmitter builds a symbol with an inverse FFT and
+the receiver takes it apart with an FFT. **Wi-Fi 6's peak rate, rebuilt from
+first principles** (20 MHz channel, one spatial stream, top MCS 11):
+
+```
+data subcarriers           = 234
+bits per subcarrier        = 10       (1024-QAM)
+coding rate                = 5/6      (error-correction overhead)
+symbol time                = 12.8 µs + 0.8 µs guard interval = 13.6 µs
+
+rate = 234 · 10 · (5/6) / 13.6 µs  ≈  143.4 Mbit/s
+```
+
+That's exactly the figure in the 802.11ax rate tables. Double the channel
+width, double the subcarriers, add spatial streams (MIMO, a linear-algebra
+trick that solves `y = H·x` for several streams, Ch. 10), and you reach
+the headline multi-gigabit numbers. Each factor in the formula is maths from
+this guide: the FFT, the logarithm, Shannon's limit and a matrix inverse.
 
 ### Real-life engineering ties
 
@@ -6255,6 +7377,94 @@ GAN (Generative Adversarial Network) training is the same minimax
 structure applied generatively — a generator and discriminator playing
 an adversarial game against each other until they reach (ideally) a Nash
 equilibrium.
+
+### The attack, derived: FGSM from a norm and a tangent line
+
+How do you find the `δ` that maximizes the loss? Take the first-order Taylor
+approximation of the loss around the clean input `x` (Ch. 12, 13):
+
+```
+Loss(x + δ) ≈ Loss(x) + ∇ₓLossᵀ · δ
+```
+
+So the attacker wants to maximize the dot product `∇ₓLossᵀ · δ` subject to
+`‖δ‖∞ ≤ ε` (no pixel changed by more than `ε`, using the L∞ norm from Ch. 10).
+A dot product is maximized term by term by making each `δᵢ` as large as
+allowed, `±ε`, with the **same sign** as the gradient component:
+
+```
+δ* = ε · sign(∇ₓ Loss)                  the Fast Gradient Sign Method (Goodfellow et al., 2015)
+```
+
+| Symbol | Meaning |
+|---|---|
+| `∇ₓLoss` | gradient with respect to the **input** pixels, not the weights (one `loss.backward()`) |
+| `sign(·)` | +1, 0 or -1 per component |
+| `ε` | the perturbation budget, e.g. `1/255` (one brightness level) |
+
+**Why tiny changes work: dimensionality.** The loss increases by about
+`ε · ‖∇ₓLoss‖₁`, and the L1 norm **grows with the number of inputs**. For a
+`224 × 224 × 3` image (`d = 150,528`) with `ε = 1/255` and an average gradient
+size of `0.01`, the first-order change is about `150,528 · 0.0039 · 0.01 ≈ 5.9`
+logits. That's enough to flip a confident prediction, even though no single
+pixel changed visibly. Many imperceptible changes add up in high dimensions,
+which is the same `d`-scaling as the attention variance argument in Ch. 20.
+**PGD** (projected gradient descent) repeats small FGSM steps and clips back
+into the `ε`-ball each time. It's the standard attack used in adversarial
+training and in LLM jailbreak research (GCG optimizes adversarial *token*
+suffixes the same way).
+
+### Mixed strategies: why security patrols should be random
+
+In many games the equilibrium is not a single action but a **probability
+distribution** over actions, a *mixed strategy*. The defender randomizes so
+the attacker can't exploit any pattern.
+
+**Worked example: one guard, two targets.** Target A is worth 10 to an
+attacker and target B is worth 5. The defender covers A with probability `c`
+and B with probability `1 - c`. An attack on a covered target fails (payoff 0),
+and an attack on an uncovered target succeeds:
+
+```
+attacker's expected payoff at A:  10 · (1 - c)
+attacker's expected payoff at B:   5 · c
+```
+
+If the defender always guards A (`c = 1`), the attacker hits B for 5. The
+defender's best randomization makes the attacker **indifferent** between the
+targets, leaving nothing predictable to exploit:
+
+```
+10 · (1 - c) = 5 · c   ->   c = 2/3          attacker's best payoff = 10/3 ≈ 3.3
+```
+
+Randomizing cuts the attacker's expected gain from 5 to 3.3 **with the same
+single guard**. Because the defender commits first and the attacker observes
+the *strategy* (but not each day's roll), this is a **Stackelberg security
+game**. Systems built on it have scheduled real patrols: ARMOR at LAX airport
+checkpoints (2007), the US Coast Guard's PROTECT in Boston harbour, and US
+Federal Air Marshal scheduling. Moving-target defences (ASLR, rotating
+credentials, randomized honeypot placement) apply the same idea in software.
+ASLR's strength, for example, is the min-entropy (Ch. 23) of the randomized
+address bits.
+
+### The defender's dilemma, quantified
+
+An attacker needs one way in. A defender has to close all of them. If a system
+has `n` independent weaknesses, each exploitable with probability `p`:
+
+```
+P(breach) = 1 - (1 - p)ⁿ
+```
+
+With 100 weaknesses at 1% each, `1 - 0.99¹⁰⁰ ≈ 63%`. That's the same formula
+as Ch. 14's tail-at-scale fan-out, now working against the defender. Two
+strategic consequences follow. Removing whole *classes* of weakness (memory-safe
+languages, parameterized queries) reduces `n` and beats patching instances one
+by one. And **defence in depth** turns the attacker's problem into a series
+chain, where they must beat every layer: three independent layers that each
+stop 90% of attempts let through only `0.1³ = 0.1%`, as long as the layers
+really are independent (Ch. 8).
 
 ### Real-life engineering ties
 
@@ -6404,6 +7614,111 @@ that thousands of independent, uncoordinated TCP senders across the global
 internet converge toward fair bandwidth sharing without a central
 controller — a remarkable real-world distributed-control-theory result.
 
+### Stability, derived: when does a feedback loop converge?
+
+Model the simplest loop in discrete time. Each control tick, a P-controller
+removes a fraction `K` of the current error:
+
+```
+e_{t+1} = e_t - K · e_t = (1 - K) · e_t        ->       e_t = (1 - K)ᵗ · e₀
+```
+
+| Symbol | Meaning |
+|---|---|
+| `e_t` | error at tick `t` (e.g. CPU % above target) |
+| `K` | loop gain: controller gain × how strongly the system responds |
+| `1 - K` | the factor applied to the error every tick |
+
+That's a geometric sequence (Ch. 6), so it converges if and only if
+`|1 - K| < 1`, that is, **`0 < K < 2`**. It's the identical condition to
+gradient descent's `η < 2/λ` in Ch. 21. A training loop and an autoscaler are
+the same mathematical object. With error `e₀ = 10`:
+
+| `K` | factor | Error over ticks | Behaviour |
+|---|---|---|---|
+| 0.5 | 0.5 | 10, 5, 2.5, 1.2, 0.6 … | smooth convergence |
+| 1.0 | 0 | 10, 0, 0, 0 … | "deadbeat": fixed in one step |
+| 1.5 | -0.5 | 10, -5, 2.5, -1.2 … | overshoots, but settles |
+| 2.5 | -1.5 | 10, -15, 22.5, -33.8 … | **unstable**: the thrashing autoscaler |
+
+For systems with many interacting state variables, the factor becomes a
+matrix and the rule becomes Ch. 11's: **stable if and only if every
+eigenvalue has magnitude below 1**. Control engineers call these eigenvalues
+the system's *poles*.
+
+### Delay halves the stable gain
+
+Real loops act on **stale** measurements: metrics scrape intervals,
+aggregation windows, pod start-up time. Add a delay of just one tick, so the
+controller corrects based on the error it saw last time:
+
+```
+e_{t+1} = e_t - K · e_{t-1}
+```
+
+Try a solution `e_t = zᵗ`. Substituting gives the **characteristic
+equation** `z² - z + K = 0`. For `K > 1/4` the roots are complex with
+magnitude `√K` (the product of the roots is `K`), so the loop is stable only
+if **`K < 1`**. The stability limit halves from 2 to 1:
+
+| `K` | No delay | One tick of delay |
+|---|---|---|
+| 0.5 | 10, 5, 2.5, 1.2 … converges | 10, 10, 5, 0, -2.5, -2.5, -1.2 … converges with a wobble |
+| 1.0 | 10, 0 … perfect | 10, 10, 0, -10, -10, 0, 10 … **oscillates forever** |
+| 1.5 | settles | 10, 10, -5, -20, -12.5, 17.5, 36 … **diverges** |
+
+The gain that was ideal without delay (`K = 1`) causes a permanent
+oscillation with delay. **This is the most common cause of autoscaler
+flapping and of "retry storms" that build in waves**: the controller keeps
+acting on a picture of the world that's already out of date. Longer delays
+shrink the stable gain further, so the fix is lower gain, a shorter feedback
+path, or both.
+
+### Steady-state error, and why the I-term exists
+
+Suppose a constant disturbance `D` keeps pushing the system off target, for
+example a steady background load the autoscaler doesn't see directly. With
+P-only control the loop settles where the controller's push balances the
+disturbance:
+
+```
+e_ss = D / (1 + K)
+```
+
+With `D = 20` and `K = 4`, the loop settles with a permanent error of
+`20/5 = 4`. Higher `K` shrinks that error but, as shown above, moves you
+toward instability. The **integral** term `Ki · Σ e` keeps growing as long
+as *any* error remains, so the only place the loop can come to rest is
+`e = 0`. That's the mathematical reason the I in PID exists, and also why
+an unbounded integral causes **windup** when the actuator saturates (for
+example, already at max replicas). Production controllers clamp the
+integral.
+
+### The Kubernetes HPA, read as a controller
+
+The Horizontal Pod Autoscaler's core formula is a proportional controller
+in multiplicative form:
+
+```
+desiredReplicas = ceil( currentReplicas · currentMetric / targetMetric )
+```
+
+**Example:** 4 replicas running at 90% CPU against a 60% target:
+`ceil(4 · 90/60) = ceil(6) = 6` replicas. Each mechanism the HPA adds around
+that formula maps onto the maths above:
+
+| HPA feature | Default | Control-theory role |
+|---|---|---|
+| tolerance | 10% (ignore ratios within 0.9–1.1) | **deadband**: don't react to noise |
+| scale-down stabilization window | 300 s (uses the highest recommendation in the window) | **hysteresis**: avoid flapping on stale or noisy signals |
+| scale-up/down `policies` (pods or % per period) | configurable | **rate limiting**: caps the effective gain `K` |
+| metrics resolution and pod readiness delay | ~15–60 s | **the dead time** that halves the stable gain |
+
+When an HPA flaps, the diagnosis is the same as for any controller: either
+the gain is too high (policies too aggressive), the delay is too long (slow
+metrics, slow pod start-up), or both. KEDA, Karpenter and cloud autoscalers
+are all variations on this loop.
+
 ### Real-life engineering ties
 
 - **SWE/SRE/Network:** autoscalers, rate limiters, adaptive timeout/retry
@@ -6489,13 +7804,38 @@ INFORMATION THEORY
   KL divergence                     = Σ p(x)·log2(p(x)/q(x))
   Shannon channel capacity          = B · log2(1 + S/N)
 
+NUMBER THEORY (Ch. 19)
+  Bézout / extended Euclid          a·x + b·y = gcd(a, b)
+  Fermat's little theorem           a^(p-1) ≡ 1 (mod p)
+  Euler's theorem                   a^φ(n) ≡ 1 (mod n),  gcd(a,n) = 1
+  prime density                     ≈ 1 / ln N
+  Miller-Rabin error after k rounds ≤ 4^(-k)
+  RSA-CRT fault attack              gcd(s'^e - m, n) = q
+
 CRYPTOGRAPHY
   RSA: n = p·q, φ(n) = (p-1)(q-1), d = e^-1 mod φ(n)
+  RSA correctness                   m^(ed) = m^(1 + kφ(n)) ≡ m (mod n)
+  EC point add slope                λ = (y₂-y₁)/(x₂-x₁),  doubling λ = (3x₁²+a)/(2y₁)
+  EC sum                            x₃ = λ² - x₁ - x₂,  y₃ = λ(x₁ - x₃) - y₁
+  ECDSA nonce reuse                 k = (z₁-z₂)/(s₁-s₂),  d = (s·k - z)/r   (mod n)
+  birthday, 50% collision           k ≈ 1.18 · √N
+  LWE                               b = A·s + e (mod q)
   Diffie-Hellman shared secret      = g^(a·b) mod p   (computed as (g^b)^a = (g^a)^b)
   birthday-bound collision attempts ≈ 2^(hash_bits / 2)
   brute-force expected time         = 2^(entropy_bits) / (2 · guesses_per_second)
 
 NETWORKING
+  M/M/1 queue length distribution   P(n) = (1-ρ)·ρⁿ,  P(n ≥ k) = ρᵏ,  L = ρ/(1-ρ)
+  Kingman (G/G/1 wait)              W_q ≈ (ρ/(1-ρ)) · ((c_a² + c_s²)/2) · τ
+  Erlang C                          P(wait) for c servers at load a = λ/μ
+  router buffer (many flows)        BDP / √n
+  max-flow = min-cut                (Ford-Fulkerson)
+  spanning trees                    det(Laplacian minus one row and column)
+  DFT                               X_k = Σ x_n · e^(-2πi·kn/N)
+  Nyquist                           f_s > 2·f_max
+  decibels                          10·log₁₀(P₁/P₂);  +3 dB ≈ ×2
+  free-space path loss (dB)         20·log₁₀(d) + 20·log₁₀(f) - 147.55
+  QAM SNR floor                     2^(bits/symbol) - 1
   subnet addresses                  = 2^(32 - cidr_bits)
   bandwidth-delay product           = bandwidth × RTT
   Little's Law                      = L (items in system) = λ (arrival rate) · W (time in system)
@@ -6548,8 +7888,21 @@ CALCULUS / ML
   Adam step                         w -= η · m̂ / (√v̂ + ε)
   Mathis TCP throughput             ≈ (MSS/RTT) · 1.22/√p
 
+SECURITY (Ch. 23, 26, 28)
+  min-entropy                       H∞ = -log₂(max p(x))
+  precision from base rate π        TPR·π / (TPR·π + FPR·(1-π))
+  cost-optimal alert threshold      P(attack|evidence) > C_FP / (C_FP + C_FN)
+  AUC                               P(score(attack) > score(benign))
+  differential privacy              P[M(D)∈S] ≤ e^ε · P[M(D')∈S],  Laplace scale Δf/ε
+  slow-hash bonus bits              log₂(slowdown factor)
+  FGSM                              δ = ε · sign(∇ₓ Loss)
+  P(breach) with n weaknesses       1 - (1-p)ⁿ
+
 CONTROL THEORY
   PID output = Kp·error + Ki·∫error·dt + Kd·(d(error)/dt)
+  P-loop stability                  0 < K < 2   (one tick of delay: K < 1)
+  P-only steady-state error         D / (1 + K)
+  Kubernetes HPA                    ceil(replicas · current / target)
 ```
 
 ## Practice labs (hands-on, in order of difficulty)

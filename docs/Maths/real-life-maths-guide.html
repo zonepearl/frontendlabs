@@ -280,22 +280,22 @@ python3</code></pre>
 <li>Probability distributions (CLT, LLN, concentration bounds, heavy tails, LLM sampling)</li>
 <li>Combinatorics &amp; counting</li>
 <li>Bayes' theorem</li>
-<li>Graph theory</li>
+<li>Graph theory (Dijkstra's proof, max-flow/min-cut, spanning trees)</li>
 <li>Complexity &amp; asymptotic analysis</li>
-<li>Number theory basics</li>
+<li>Number theory basics (extended Euclid, Fermat/Euler proofs, CRT, batch-GCD attacks)</li>
 </ol>
 <p><strong>Part 3 — Expert: domain-specific deep dives (senior level)</strong></p>
 <ol start="20">
 <li>Linear algebra for AI/ML (SVD, PCA, tensors, attention)</li>
 <li>Optimization &amp; backpropagation (learning-rate limits, Adam, Lagrange and TCP fairness)</li>
 <li>Statistics for ML &amp; experimentation (MLE, z-tests, power analysis)</li>
-<li>Information theory (entropy, KL divergence, channel capacity)</li>
-<li>Cryptographic mathematics (RSA, Diffie-Hellman, elliptic curves)</li>
-<li>Network &amp; systems mathematics (queueing, subnetting, congestion control)</li>
-<li>Quantitative security (entropy, detection theory, risk)</li>
-<li>Signal processing basics (Fourier, sampling)</li>
-<li>Game theory &amp; adversarial thinking</li>
-<li>Control theory basics (feedback loops, PID)</li>
+<li>Information theory (entropy, min-entropy, Huffman coding, compression side channels)</li>
+<li>Cryptographic mathematics (RSA proof, side channels, elliptic curves by hand, ECDSA nonce reuse, lattices)</li>
+<li>Network &amp; systems mathematics (M/M/1 derived, Erlang C, Kingman, AIMD fairness, buffer sizing)</li>
+<li>Quantitative security (detection theory, cost-optimal thresholds, password hashing, differential privacy)</li>
+<li>Signal processing basics (DFT by hand, convolution, decibels, QAM/OFDM, Wi-Fi rates)</li>
+<li>Game theory &amp; adversarial thinking (FGSM derived, security games, defender's dilemma)</li>
+<li>Control theory basics (stability, dead time, steady-state error, the Kubernetes HPA)</li>
 </ol>
 <p><strong>Part 4 — Putting it together</strong></p>
 <ul>
@@ -2349,6 +2349,63 @@ Visit D (dist 4) — no shorter paths found through it. Done.
 Final: A=0, B=1, C=3, D=4   ✓ matches the code output</code></pre>
 <p>The key move is that C's distance got revised <em>twice</em> (4, then 3) — Dijkstra never commits to a distance as final until that node is actually visited, which is exactly why it always finds the true shortest path instead of just the first path found.</p>
 <p><strong>Bellman-Ford</strong> is the alternative used when edge weights can be <em>negative</em> (Dijkstra breaks with negative weights) — this is why distance-vector protocols like the classic RIP use a Bellman-Ford variant, while OSPF (Dijkstra-based) requires non-negative link costs.</p>
+<h3 id="why-dijkstra-is-correct-and-why-negative-weights-break-it">Why Dijkstra is correct (and why negative weights break it)<a class="anchor" href="#why-dijkstra-is-correct-and-why-negative-weights-break-it" aria-hidden="true">#</a></h3>
+<p><strong>Invariant:</strong> when a node is taken off the priority queue, its distance is final.</p>
+<p><strong>Proof sketch.</strong> Suppose node <code>u</code> is popped with distance <code>d(u)</code>, but some shorter path to <code>u</code> exists. That path starts inside the set of already-final nodes and must leave it at some edge into a not-yet-final node <code>y</code>. Every edge weight is non-negative, so the path's length is at least <code>d(y)</code>. And <code>d(y) ≥ d(u)</code>, because the queue popped <code>u</code> first, not <code>y</code>. So the "shorter" path is no shorter, a contradiction. ∎</p>
+<p>The proof uses non-negativity exactly once ("the rest of the path can't make it shorter"). A negative edge breaks that step, which is why Dijkstra fails on negative weights.</p>
+<p><strong>Cost:</strong> with a binary heap, <code>O((V + E) · log V)</code>. OSPF recomputes this after every topology change. For a 1,000-router area with about 5,000 links that's around 60,000 heap operations, a few milliseconds. The expensive part of convergence is flooding the link-state updates, not the maths.</p>
+<h3 id="bellman-ford-and-count-to-infinity">Bellman–Ford and count-to-infinity<a class="anchor" href="#bellman-ford-and-count-to-infinity" aria-hidden="true">#</a></h3>
+<p>Distance-vector routing runs the Bellman–Ford update <em>distributed</em>. Each router repeatedly applies:</p>
+<pre><code>d(x) = min over neighbours v of [ cost(x, v) + d_v(destination) ]</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>d(x)</code></td><td>x's current estimate of its distance to the destination</td></tr>
+<tr><td><code>cost(x, v)</code></td><td>the link cost to neighbour <code>v</code></td></tr>
+<tr><td><code>d_v(·)</code></td><td>what neighbour <code>v</code> last advertised</td></tr>
+</tbody></table></div>
+<p>It converges in at most <code>V - 1</code> rounds when costs are stable. But when a link <strong>fails</strong>, bad news travels slowly. Take a chain <code>A – B – C</code>, where C is the destination. If the <code>B–C</code> link dies, B hears A advertise "C is 2 hops away". That route actually goes back through B, but B doesn't know that. So B sets its distance to 3, A updates to 4, B to 5, and so on, one hop per exchange. This is <strong>count to infinity</strong>. RIP caps "infinity" at <strong>16 hops</strong>, so a destination is declared unreachable after about 16 exchanges, which is the reason RIP networks can't be wider than 15 hops. Split horizon and poison reverse suppress the simple case. Path-vector protocols (BGP) carry the whole path, so a router can see its own name in a route and reject the loop.</p>
+<h3 id="max-flow-min-cut-how-much-can-this-network-carry">Max-flow / min-cut: how much can this network carry?<a class="anchor" href="#max-flow-min-cut-how-much-can-this-network-carry" aria-hidden="true">#</a></h3>
+<p>Each link has a capacity. What's the maximum rate from source <code>S</code> to sink <code>T</code>?</p>
+<pre><code>      ┌──10──▶ A ──4───┐
+      │        │       ▼
+      S       15       T
+      │        ▼       ▲
+      └──5───▶ B ──10──┘</code></pre>
+<p>Links: <code>S→A 10</code>, <code>S→B 5</code>, <code>A→B 15</code>, <code>A→T 4</code>, <code>B→T 10</code>.</p>
+<blockquote>
+<p><strong>Theorem (Max-flow min-cut, Ford &amp; Fulkerson, 1956).</strong> The maximum flow from <code>S</code> to <code>T</code> equals the minimum total capacity of any <strong>cut</strong>, a set of links whose removal disconnects <code>T</code> from <code>S</code>.</p>
+</blockquote>
+<p><strong>Finding the flow by hand (augmenting paths):</strong></p>
+<pre><code>path S→A→T:     bottleneck min(10, 4)      = 4     A→T now full
+path S→B→T:     bottleneck min(5, 10)      = 5     S→B now full
+path S→A→B→T:   bottleneck min(10-4, 15, 10-5) = 5  B→T now full
+no more paths with spare capacity.          total = 4 + 5 + 5 = 14</code></pre>
+<p><strong>Checking with a cut:</strong> cut <code>{A→T, B→T}</code> has capacity <code>4 + 10 = 14</code>. The flow found (14) equals a cut's capacity (14), so both are optimal. The theorem guarantees the flow can't be more than any cut, so meeting one proves optimality.</p>
+<p>This is how you find the <strong>real bottleneck</strong> of a network: the min cut, not the slowest individual link. Here <code>S→B</code> (5) is the smallest link, but the true limit is the 14 Mbit/s into <code>T</code>. It's also the maths of DDoS capacity planning (the min cut between the internet and your origin is the most attack traffic you can absorb), datacenter fabric design and multi-path TCP scheduling.</p>
+<p><strong>Menger's theorem</strong>, the unit-capacity special case: the number of <strong>link-disjoint paths</strong> between two nodes equals the minimum number of links whose failure disconnects them. "We have two disjoint paths to the DR site" and "no single link failure can isolate the DR site" are the same statement. For a full mesh of 4 routers, 3 disjoint paths between any pair means it survives any 2 link failures.</p>
+<h3 id="spanning-trees-stp-and-how-many-there-are">Spanning trees: STP, and how many there are<a class="anchor" href="#spanning-trees-stp-and-how-many-there-are" aria-hidden="true">#</a></h3>
+<p>A <strong>spanning tree</strong> connects all <code>V</code> nodes with exactly <code>V - 1</code> links and no loops. Ethernet needs one because broadcast frames loop forever in a cycle, and the Spanning Tree Protocol (STP) disables links until a tree remains. Kruskal's and Prim's algorithms find the <em>minimum-cost</em> spanning tree greedily. Their correctness rests on the <strong>cut property</strong>: the cheapest link crossing any cut is always safe to add.</p>
+<p><strong>How many spanning trees are there?</strong> Kirchhoff's <strong>matrix-tree theorem</strong> (1847) gives the answer from the graph Laplacian <code>L = D - A</code> of Ch. 11:</p>
+<pre><code>number of spanning trees = det( L with any one row and its column removed )</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Topology (4 routers)</th><th>Spanning trees</th><th>Read it as</th></tr></thead>
+<tbody>
+<tr><td>Line</td><td>1</td><td>no redundancy: any failure partitions</td></tr>
+<tr><td>Ring</td><td>4</td><td>remove any one of the 4 links</td></tr>
+<tr><td>Full mesh</td><td>16</td><td>Cayley's formula, <code>n^(n-2) = 4² = 16</code></td></tr>
+</tbody></table></div>
+<p>The count is a crude but real measure of how many ways a network can stay connected after failures, and it uses the same matrix whose <code>λ₂</code> measured robustness in Ch. 11.</p>
+<pre data-lang="python"><code>import numpy as np
+def spanning_trees(edges, n):
+    A = np.zeros((n, n))
+    for i, j in edges:
+        A[i, j] = A[j, i] = 1
+    L = np.diag(A.sum(axis=1)) - A
+    return round(np.linalg.det(L[1:, 1:]))
+
+print(spanning_trees([(0,1), (1,2), (2,3), (3,0)], 4))                  # 4   ring
+print(spanning_trees([(0,1),(0,2),(0,3),(1,2),(1,3),(2,3)], 4))         # 16  full mesh</code></pre>
 <h3 id="real-life-engineering-ties-15">Real-life engineering ties<a class="anchor" href="#real-life-engineering-ties-15" aria-hidden="true">#</a></h3>
 <ul>
 <li><strong>SWE:</strong> dependency graphs (build systems, package managers — a dependency cycle is a graph cycle-detection problem), org charts, state machines.</li>
@@ -2470,6 +2527,60 @@ print((a * inverse) % n)       # 1</code></pre>
 <p>This brute-force search works fine for small <code>n</code>, but for cryptographic sizes (hundreds of digits) it's infeasible — real implementations use the <strong>extended Euclidean algorithm</strong>, which runs the GCD trace above <em>backwards</em>, substituting each remainder equation back into the previous one to express <code>1</code> as <code>3·x + 11·y</code>, and reads <code>x mod 11</code> off as the inverse — same <code>O(log n)</code> speed as ordinary GCD, just tracked with extra bookkeeping at each step.</p>
 <h3 id="euler-s-totient-function">Euler's totient function<a class="anchor" href="#euler-s-totient-function" aria-hidden="true">#</a></h3>
 <p><code>φ(n)</code> counts how many integers from 1 to <code>n</code> are coprime to <code>n</code> (share no common factor). For a prime <code>p</code>: <code>φ(p) = p - 1</code>. For <code>n = p·q</code> (product of two distinct primes): <code>φ(n) = (p-1)(q-1)</code>. This exact formula is the crux of RSA key generation (Ch. 24 walks through the full derivation).</p>
+<p><strong>Why <code>(p-1)(q-1)</code>?</strong> Out of <code>1 … pq</code>, the numbers that <em>do</em> share a factor with <code>pq</code> are the multiples of <code>p</code> (there are <code>q</code> of them) and the multiples of <code>q</code> (there are <code>p</code>), and <code>pq</code> itself got counted twice. So <code>φ(pq) = pq - q - p + 1 = (p-1)(q-1)</code>. That's inclusion–exclusion, the same "subtract the overlap" move as <code>P(A ∪ B)</code> in Ch. 8.</p>
+<h3 id="reading-modular-notation">Reading modular notation<a class="anchor" href="#reading-modular-notation" aria-hidden="true">#</a></h3>
+<pre><code>a ≡ b (mod n)      "a is congruent to b modulo n"</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Say it as</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>≡</code></td><td>"is congruent to"</td><td>equal <em>after</em> reducing mod <code>n</code></td></tr>
+<tr><td><code>(mod n)</code></td><td>"modulo n"</td><td>the clock size. Arithmetic wraps around at <code>n</code></td></tr>
+<tr><td><code>a ≡ b (mod n)</code></td><td></td><td><code>n</code> divides <code>a - b</code>. Example: <code>17 ≡ 2 (mod 5)</code> because <code>5 | 15</code></td></tr>
+<tr><td><code>a⁻¹ (mod n)</code></td><td>"the inverse of a mod n"</td><td>the <code>x</code> with <code>a·x ≡ 1</code>. It exists <strong>only if</strong> <code>gcd(a, n) = 1</code></td></tr>
+<tr><td><code>ℤₙ</code></td><td>"Z mod n"</td><td>the set <code>{0, 1, …, n-1}</code> with wrap-around <code>+</code> and <code>×</code></td></tr>
+<tr><td><code>ℤₙ*</code></td><td>"the units mod n"</td><td>the elements of <code>ℤₙ</code> that have an inverse. There are <code>φ(n)</code> of them</td></tr>
+</tbody></table></div>
+<p>Why must <code>gcd(a, n) = 1</code>? If <code>a</code> and <code>n</code> share a factor <code>g &gt; 1</code>, every multiple <code>a·x</code> is also a multiple of <code>g</code>, and so is <code>n</code>. So <code>a·x mod n</code> is always a multiple of <code>g</code> and can never equal 1. That's why <code>e</code> in RSA must be coprime to <code>φ(n)</code>.</p>
+<h3 id="the-extended-euclidean-algorithm-by-hand">The extended Euclidean algorithm, by hand<a class="anchor" href="#the-extended-euclidean-algorithm-by-hand" aria-hidden="true">#</a></h3>
+<p>This is the real algorithm that computes RSA's private exponent. We want <code>d = 17⁻¹ (mod 3120)</code>, the numbers from Ch. 24's toy RSA.</p>
+<p><strong>Forward pass: plain GCD, but keep the quotients.</strong></p>
+<pre><code>3120 = 183 · 17 + 9
+  17 =   1 ·  9 + 8
+   9 =   1 ·  8 + 1      &lt;- remainder 1, so gcd = 1 and an inverse exists</code></pre>
+<p><strong>Backward pass: write 1 as a combination of 3120 and 17.</strong></p>
+<pre><code>1 = 9 - 1·8                              (from line 3)
+  = 9 - 1·(17 - 1·9)    = 2·9 - 17       (substitute line 2 for the 8)
+  = 2·(3120 - 183·17) - 17               (substitute line 1 for the 9)
+  = 2·3120 - 367·17</code></pre>
+<p>Reduce mod 3120 and the <code>2·3120</code> term vanishes: <code>-367 · 17 ≡ 1</code>. So <code>d ≡ -367 ≡ 3120 - 367 = 2753 (mod 3120)</code>. That's exactly what <code>pow(17, -1, 3120)</code> returns. <strong>Bézout's identity</strong> is the theorem behind this: for any <code>a, b</code> there are integers <code>x, y</code> with <code>a·x + b·y = gcd(a, b)</code>, and the algorithm finds them.</p>
+<h3 id="fermat-s-little-theorem-proved">Fermat's Little Theorem, proved<a class="anchor" href="#fermat-s-little-theorem-proved" aria-hidden="true">#</a></h3>
+<blockquote>
+<p><strong>Theorem (Fermat, 1640).</strong> If <code>p</code> is prime and <code>p ∤ a</code>, then <code>a^(p-1) ≡ 1 (mod p)</code>.</p>
+</blockquote>
+<p><strong>Proof idea.</strong> Multiply every non-zero residue <code>1, 2, …, p-1</code> by <code>a</code>. Because <code>a</code> has an inverse, no two products can collide (if <code>a·i ≡ a·j</code>, multiply by <code>a⁻¹</code> and <code>i ≡ j</code>). So the products are the same <code>p-1</code> numbers, just shuffled:</p>
+<pre><code>(a·1)(a·2)…(a·(p-1)) ≡ 1·2·…·(p-1)     (mod p)
+a^(p-1) · (p-1)!     ≡ (p-1)!          (mod p)
+a^(p-1)              ≡ 1               (cancel (p-1)!, which is invertible mod p)</code></pre>
+<p><strong>Example:</strong> <code>3¹⁰ mod 11</code>. Here <code>p = 11</code>, so the theorem says the answer is 1, with no multiplying needed. (Check: <code>3⁵ = 243 = 22·11 + 1</code>, so <code>3⁵ ≡ 1</code> and <code>3¹⁰ ≡ 1</code>.) ✓</p>
+<p><strong>Euler's theorem</strong> generalizes it to any modulus, which is what RSA needs:</p>
+<pre><code>a^φ(n) ≡ 1 (mod n)          whenever gcd(a, n) = 1</code></pre>
+<p>The proof is the same shuffle, done over the <code>φ(n)</code> invertible residues instead of all <code>p - 1</code>. <strong>Example: the last two digits of 7²⁰²⁶.</strong> We need <code>7²⁰²⁶ mod 100</code>. <code>φ(100) = 40</code> and <code>gcd(7, 100) = 1</code>, so <code>7⁴⁰ ≡ 1</code>. Then <code>2026 = 50·40 + 26</code>, which gives <code>7²⁰²⁶ ≡ 7²⁶ (mod 100)</code>, and square-and-multiply (Ch. 24) gives <strong>49</strong>. Exponents can always be reduced mod <code>φ(n)</code>. That one fact is why RSA decryption works (Ch. 24).</p>
+<h3 id="primality-testing-how-openssl-genrsa-finds-primes">Primality testing: how <code>openssl genrsa</code> finds primes<a class="anchor" href="#primality-testing-how-openssl-genrsa-finds-primes" aria-hidden="true">#</a></h3>
+<p><strong>How many candidates?</strong> The <strong>Prime Number Theorem</strong> says primes near <code>N</code> have density about <code>1 / ln N</code>:</p>
+<pre><code>π(N) ≈ N / ln N        (π(N) here = number of primes ≤ N, not 3.14...)</code></pre>
+<p>For a 1024-bit prime (half of an RSA-2048 key), <code>ln(2¹⁰²⁴) ≈ 710</code>. One random 1024-bit number in 710 is prime, or one in about <strong>355</strong> if you only try odd numbers. That's a few hundred candidates, each tested in milliseconds.</p>
+<p><strong>How to test each candidate?</strong> Fermat's theorem gives a test: if <code>a^(n-1) mod n ≠ 1</code>, then <code>n</code> is definitely composite. But some composites pass for <em>every</em> coprime <code>a</code>. These are the <strong>Carmichael numbers</strong>, and the smallest is <code>561 = 3·11·17</code>, with <code>2⁵⁶⁰ ≡ 1 (mod 561)</code> even though 561 isn't prime. <strong>Miller–Rabin</strong> closes that hole by also checking square roots of 1 along the way. Each random round catches a composite with probability at least 3/4, so <code>k</code> rounds leave an error below <code>4⁻ᵏ</code>. With 64 rounds that's <code>2⁻¹²⁸</code>, far less likely than a cosmic-ray bit flip in your RAM.</p>
+<h3 id="the-chinese-remainder-theorem-crt">The Chinese Remainder Theorem (CRT)<a class="anchor" href="#the-chinese-remainder-theorem-crt" aria-hidden="true">#</a></h3>
+<blockquote>
+<p><strong>Theorem.</strong> If <code>n₁, n₂, …, nₖ</code> are pairwise coprime, then the system <code>x ≡ a₁ (mod n₁)</code>, …, <code>x ≡ aₖ (mod nₖ)</code> has exactly one solution modulo <code>N = n₁·n₂·…·nₖ</code>.</p>
+</blockquote>
+<p>Knowing a number mod 3, mod 5 and mod 7 pins it down mod 105. The classic puzzle from the 3rd-century <em>Sunzi Suanjing</em>: find <code>x</code> with <code>x ≡ 2 (mod 3)</code>, <code>x ≡ 3 (mod 5)</code>, <code>x ≡ 2 (mod 7)</code>. Answer: <strong>23</strong>. (<code>23 = 7·3 + 2 = 4·5 + 3 = 3·7 + 2</code> ✓)</p>
+<p><strong>Security in the wild: RSA-CRT is 4× faster, and dangerous.</strong> Every real RSA implementation signs with CRT. Instead of one exponentiation mod <code>n</code> (2048 bits), it does two mod <code>p</code> and mod <code>q</code> (1024 bits each) and recombines. Exponentiation cost grows roughly with the cube of the bit length, so two half-size exponentiations cost about <code>2 · (1/2)³ = 1/4</code> of one full-size one.</p>
+<p>The danger is the <strong>Bellcore fault attack</strong> (Boneh, DeMillo &amp; Lipton, 1997). If a glitch (voltage spike, Rowhammer, cosmic ray) corrupts only the mod-<code>p</code> half, the faulty signature <code>s'</code> is still correct mod <code>q</code> but wrong mod <code>p</code>. Then <code>s'ᵉ - m</code> is divisible by <code>q</code> but not by <code>p</code>, so:</p>
+<pre><code>gcd(s'ᵉ - m, n) = q        -&gt; the private key falls out of one bad signature</code></pre>
+<p>With the toy key (<code>n = 3233 = 61·53</code>), signing <code>m = 65</code> with a corrupted mod-61 half gives <code>s' = 2602</code> instead of <code>588</code>, and <code>gcd(2602¹⁷ - 65 mod 3233, 3233) = 53</code>. That's why OpenSSL and HSMs <strong>verify every signature before releasing it</strong>, which costs one cheap public-key operation.</p>
+<h3 id="security-in-the-wild-batch-gcd-on-the-internet-s-keys">Security in the wild: batch GCD on the internet's keys<a class="anchor" href="#security-in-the-wild-batch-gcd-on-the-internet-s-keys" aria-hidden="true">#</a></h3>
+<p>If two RSA keys accidentally share a prime, as in <code>n₁ = p·q₁</code> and <code>n₂ = p·q₂</code>, then <code>gcd(n₁, n₂) = p</code> breaks <strong>both</strong> keys instantly, with no factoring needed. Toy example: <code>gcd(3233, 4331) = 61</code>. In 2012 Heninger et al. ("Mining Your Ps and Qs") ran a fast batch-GCD across millions of TLS and SSH keys collected from the internet. They factored the keys of about <strong>0.5% of TLS hosts</strong>, mostly embedded routers and firewalls that generated keys at first boot, before the kernel had gathered enough entropy (Ch. 23). Euclid's 2,300-year-old algorithm broke real devices in production.</p>
 <h3 id="real-life-engineering-ties-17">Real-life engineering ties<a class="anchor" href="#real-life-engineering-ties-17" aria-hidden="true">#</a></h3>
 <ul>
 <li><strong>Security/Crypto:</strong> this entire chapter is direct preparation for understanding <em>why</em> RSA, Diffie-Hellman, and DSA work — not just how to call the library functions (Ch. 24).</li>
@@ -2952,6 +3063,53 @@ def shannon_capacity(bandwidth_hz, snr_db):
     return bandwidth_hz * math.log2(1 + snr_linear)
 
 print(shannon_capacity(20_000_000, 30))  # 20 MHz channel, 30dB SNR -&gt; bits/sec</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td><code>C</code></td><td>capacity: the maximum error-free bit rate</td><td>bits/s</td></tr>
+<tr><td><code>B</code></td><td>channel bandwidth</td><td>20 MHz Wi-Fi channel</td></tr>
+<tr><td><code>S/N</code></td><td>signal-to-noise power ratio, linear (not dB)</td><td>30 dB = <code>10³</code> = 1000</td></tr>
+<tr><td><code>log₂(1 + S/N)</code></td><td>bits per second <strong>per hertz</strong>, the <em>spectral efficiency</em></td><td><code>log₂(1001) ≈ 9.97</code></td></tr>
+</tbody></table></div>
+<p>So <code>20 MHz × 9.97 ≈ 199 Mbit/s</code> is the ceiling for that channel. Ch. 27 shows how Wi-Fi 6 gets close to it.</p>
+<h3 id="entropy-symbol-by-symbol-and-why-the-log">Entropy, symbol by symbol, and why the log<a class="anchor" href="#entropy-symbol-by-symbol-and-why-the-log" aria-hidden="true">#</a></h3>
+<pre><code>H(X) = -Σₓ p(x) · log₂ p(x)  =  Σₓ p(x) · log₂(1 / p(x))</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Piece</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>p(x)</code></td><td>probability of outcome <code>x</code></td></tr>
+<tr><td><code>log₂(1/p(x))</code></td><td>the <strong>surprise</strong> (information content) of seeing <code>x</code>, in bits. A 1-in-8 event carries 3 bits</td></tr>
+<tr><td><code>Σ p(x) · …</code></td><td>the <em>expected</em> surprise, the average over outcomes (Ch. 8's <code>E[·]</code>)</td></tr>
+</tbody></table></div>
+<p>Why a logarithm? We want the information from two independent events to <strong>add</strong>. Their probabilities <strong>multiply</strong>, <code>p(x,y) = p(x)·p(y)</code>, and only the log turns products into sums (Ch. 5). Shannon proved that, up to the choice of base, <code>-log p</code> is the <em>only</em> function with that property and a few other natural ones.</p>
+<h3 id="min-entropy-the-entropy-that-matters-for-keys">Min-entropy: the entropy that matters for keys<a class="anchor" href="#min-entropy-the-entropy-that-matters-for-keys" aria-hidden="true">#</a></h3>
+<p>Shannon entropy is an <em>average</em>. An attacker doesn't care about averages. They try the <strong>most likely</strong> value first. The right measure for guessing attacks is <strong>min-entropy</strong>:</p>
+<pre><code>H∞(X) = -log₂( maxₓ p(x) )</code></pre>
+<p>The two can be wildly different. Take a password generator that outputs <code>"password1"</code> half the time and otherwise picks uniformly from <code>2²⁰</code> random strings:</p>
+<pre><code>Shannon:      H  = 0.5·log₂(2) + 0.5·log₂(2·2²⁰) = 0.5·1 + 0.5·21 = 11 bits
+Min-entropy:  H∞ = -log₂(0.5)                                     =  1 bit</code></pre>
+<p>"11 bits" sounds respectable, but an attacker wins half the time on the <strong>first guess</strong>. Real data: if 1% of users pick <code>123456</code>, a breached password database has at most <code>-log₂(0.01) ≈ 6.6</code> bits of min-entropy for the most exposed accounts, whatever its average entropy is. That's why NIST's randomness-source standard (SP 800-90B) and key-derivation proofs are stated in <strong>min-entropy</strong>, and why credential-stuffing attackers use breach-frequency lists instead of brute force.</p>
+<h3 id="source-coding-entropy-is-the-compression-limit">Source coding: entropy is the compression limit<a class="anchor" href="#source-coding-entropy-is-the-compression-limit" aria-hidden="true">#</a></h3>
+<blockquote>
+<p><strong>Theorem (Shannon's source coding theorem, 1948).</strong> No lossless code can use fewer than <code>H(X)</code> bits per symbol on average, and a code exists that uses fewer than <code>H(X) + 1</code>.</p>
+</blockquote>
+<p><strong>Huffman coding by hand.</strong> Symbols with probabilities <code>A: 0.5, B: 0.25, C: 0.125, D: 0.125</code>. Repeatedly merge the two least likely nodes:</p>
+<pre><code>merge C(0.125) + D(0.125) -&gt; CD(0.25)
+merge B(0.25)  + CD(0.25) -&gt; BCD(0.5)
+merge A(0.5)   + BCD(0.5) -&gt; root(1.0)
+
+Read the codes off the tree (left = 0, right = 1):
+A = 0     B = 10     C = 110     D = 111
+
+average length = 0.5·1 + 0.25·2 + 0.125·3 + 0.125·3 = 1.75 bits
+entropy H      = 0.5·1 + 0.25·2 + 0.125·3 + 0.125·3 = 1.75 bits   &lt;- optimal, exactly at the limit</code></pre>
+<p>A naive fixed-width code needs 2 bits per symbol, so Huffman saves 12.5% here by giving short codes to common symbols. No code is a prefix of another, so the bitstream decodes unambiguously. The <strong>Kraft inequality</strong>, <code>Σ 2^(-ℓᵢ) ≤ 1</code>, is the condition for code lengths <code>ℓᵢ</code> to allow such a prefix code: <code>2⁻¹ + 2⁻² + 2⁻³ + 2⁻³ = 1</code> ✓. DEFLATE (gzip, PNG, HTTP compression) uses Huffman, and zstd and Brotli use the closely related arithmetic/ANS coders, which can get even closer to <code>H</code>.</p>
+<h3 id="security-in-the-wild-compression-is-a-side-channel">Security in the wild: compression is a side channel<a class="anchor" href="#security-in-the-wild-compression-is-a-side-channel" aria-hidden="true">#</a></h3>
+<p>Compression works by finding repeats (low entropy). So <strong>the compressed length leaks how much of the data repeats</strong>. If a response contains both a secret (a session cookie or CSRF token) and text the attacker controls, the attacker can guess the secret one character at a time:</p>
+<pre><code>secret in the page:   token=7f3a...
+attacker injects:     token=7     -&gt; repeats the secret's first char  -&gt; compresses SMALLER
+attacker injects:     token=8     -&gt; no repeat                         -&gt; compresses larger</code></pre>
+<p>Each length difference confirms one character, so a 32-character token falls in a few thousand requests. This is <strong>CRIME</strong> (2012, TLS compression, which is why TLS compression was disabled everywhere) and <strong>BREACH</strong> (2013, HTTP-level gzip). Encryption hides content but not length, and the length here carries information. Mitigations reduce the mutual information (Ch. 23 above) between the secret and the observable length: never compress secrets alongside attacker input, mask tokens with a fresh random value each response, or pad lengths.</p>
 <h3 id="real-life-engineering-ties-21">Real-life engineering ties<a class="anchor" href="#real-life-engineering-ties-21" aria-hidden="true">#</a></h3>
 <ul>
 <li><strong>Security:</strong> rigorous password/key entropy calculation (above); also the theoretical basis for evaluating whether a random number generator is producing enough real entropy (<code>/dev/random</code> blocking behavior on Linux exists precisely because of this concern).</li>
@@ -3046,6 +3204,115 @@ print(alice_shared_secret == bob_shared_secret)   # True — both derive the sam
 
 print(f"{birthday_bound(128):.2e}")   # MD5-scale: ~1.8 * 10^19 attempts to find a collision
 print(f"{birthday_bound(256):.2e}")   # SHA-256-scale: ~1.3 * 10^38 attempts</code></pre>
+<h3 id="why-rsa-decryption-gives-back-the-message-the-proof">Why RSA decryption gives back the message: the proof<a class="anchor" href="#why-rsa-decryption-gives-back-the-message-the-proof" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th><th>Toy value</th></tr></thead>
+<tbody>
+<tr><td><code>p</code>, <code>q</code></td><td>the two secret primes</td><td>61, 53</td></tr>
+<tr><td><code>n = p·q</code></td><td>public modulus</td><td>3233</td></tr>
+<tr><td><code>φ(n)</code></td><td>Euler's totient, <code>(p-1)(q-1)</code>, secret</td><td>3120</td></tr>
+<tr><td><code>e</code></td><td>public exponent, coprime to <code>φ(n)</code></td><td>17</td></tr>
+<tr><td><code>d</code></td><td>private exponent, <code>e·d ≡ 1 (mod φ(n))</code></td><td>2753 (extended Euclid, Ch. 19)</td></tr>
+<tr><td><code>m</code>, <code>c</code></td><td>message and ciphertext, both in <code>ℤₙ</code></td><td>65, 2790</td></tr>
+</tbody></table></div>
+<p>Because <code>e·d ≡ 1 (mod φ(n))</code>, there's some integer <code>k</code> with <code>e·d = 1 + k·φ(n)</code>. Then, using Euler's theorem (<code>m^φ(n) ≡ 1</code>, Ch. 19):</p>
+<pre><code>c^d = (m^e)^d = m^(e·d) = m^(1 + k·φ(n)) = m · (m^φ(n))^k ≡ m · 1^k = m   (mod n)</code></pre>
+<p>Decryption undoes encryption <em>because the exponent wraps around at <code>φ(n)</code></em>. Only someone who knows <code>φ(n)</code>, which means knowing <code>p</code> and <code>q</code>, can compute the <code>d</code> that makes the wrap land exactly on 1. (The proof above assumes <code>gcd(m, n) = 1</code>. The CRT from Ch. 19 extends it to every <code>m</code>.)</p>
+<h3 id="why-textbook-rsa-is-broken-malleability-and-padding">Why "textbook RSA" is broken: malleability and padding<a class="anchor" href="#why-textbook-rsa-is-broken-malleability-and-padding" aria-hidden="true">#</a></h3>
+<p>Raw RSA is <strong>multiplicative</strong>: <code>Enc(m₁) · Enc(m₂) = (m₁m₂)ᵉ = Enc(m₁·m₂)</code>. An attacker who sees <code>c = Enc(65) = 2790</code> can compute <code>c · 2ᵉ mod n</code> without any key, and that decrypts to <code>2 · 65 = 130</code>. If the message were an amount of money, the attacker just doubled it.</p>
+<p>Real RSA therefore pads the message with structured randomness first (OAEP for encryption, PSS for signatures). Padding has its own maths trap. In 1998 Bleichenbacher showed that a server which merely reveals <em>whether</em> the padding was valid (an error message, or a timing difference) acts as an <strong>oracle</strong>. Each answer leaks a little information about <code>m</code>, and roughly a million adaptive queries decrypt any ciphertext. The 2017 ROBOT scan found the same flaw still live on major sites. That's why TLS 1.3 removed RSA key transport entirely.</p>
+<h3 id="side-channels-square-and-multiply-leaks-the-key">Side channels: square-and-multiply leaks the key<a class="anchor" href="#side-channels-square-and-multiply-leaks-the-key" aria-hidden="true">#</a></h3>
+<p>Look at the <code>fast_pow_mod</code> loop above. It multiplies <strong>only when the current exponent bit is 1</strong>. When the exponent is the private key <code>d</code>, the running time (or the power trace, or the cache footprint) of each step reveals each bit of <code>d</code>. Kocher's 1996 timing attack recovered RSA and DH keys from response timings alone, and later remote attacks did it across a LAN (Brumley &amp; Boneh, 2003).</p>
+<p>The fix is mathematical, not cryptographic. A <strong>Montgomery ladder</strong> performs exactly one multiply and one square per bit, whatever the bit is, and <strong>blinding</strong> randomizes the input (<code>c · rᵉ</code>, decrypt, then divide out <code>r</code>). That's the same multiplicative property that made textbook RSA malleable, used here as a defence. "Constant-time code" in crypto libraries is fundamentally about making a program's resource usage independent of secret bits.</p>
+<h3 id="diffie-hellman-symbol-by-symbol-and-why-parameters-matter">Diffie–Hellman, symbol by symbol, and why parameters matter<a class="anchor" href="#diffie-hellman-symbol-by-symbol-and-why-parameters-matter" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Public?</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>p</code></td><td>public</td><td>a large prime, the modulus</td></tr>
+<tr><td><code>g</code></td><td>public</td><td>a generator: its powers <code>g¹, g², …</code> cycle through a large subgroup of <code>ℤₚ*</code></td></tr>
+<tr><td><code>a</code>, <code>b</code></td><td><strong>secret</strong></td><td>each side's random private exponent</td></tr>
+<tr><td><code>A = gᵃ mod p</code>, <code>B = gᵇ mod p</code></td><td>public</td><td>the values sent over the wire</td></tr>
+<tr><td><code>K = gᵃᵇ mod p</code></td><td><strong>secret</strong></td><td>the shared key, computed as <code>Bᵃ = Aᵇ</code></td></tr>
+</tbody></table></div>
+<p>Security depends on more than the size of <code>p</code>:</p>
+<ul>
+<li><strong>Small subgroups.</strong> If <code>p - 1</code> has only small prime factors, the discrete log can be solved separately in each small subgroup and recombined with the CRT (the Pohlig–Hellman algorithm). That's why DH uses <strong>safe primes</strong> <code>p = 2q + 1</code> with <code>q</code> also prime, which leaves no small subgroups to hide in. It's also why TLS 1.3 only allows a fixed list of vetted groups (RFC 7919).</li>
+<li><strong>Precomputation.</strong> The best discrete-log algorithm (the number field sieve) spends most of its effort on work that depends only on <code>p</code>, not on <code>a</code> or <code>b</code>. The 2015 <strong>Logjam</strong> paper showed that 512-bit "export" DH could be broken in minutes once that precomputation was done. It also estimated that a nation-state budget could precompute one <em>widely shared</em> 1024-bit prime, enough to passively decrypt a large fraction of VPN and SSH traffic. Shared parameters plus precomputation turned a per-connection cost into a one-time cost.</li>
+</ul>
+<h3 id="elliptic-curves-by-hand">Elliptic curves, by hand<a class="anchor" href="#elliptic-curves-by-hand" aria-hidden="true">#</a></h3>
+<p>An elliptic curve over a prime field is the set of points <code>(x, y)</code> with</p>
+<pre><code>y² ≡ x³ + a·x + b   (mod p)</code></pre>
+<p>plus a special "point at infinity" <code>O</code>, which acts like zero. Points can be <strong>added</strong>. Geometrically, you draw the line through <code>P</code> and <code>Q</code>, find where it hits the curve a third time, and reflect that point. Algebraically:</p>
+<pre><code>slope:  λ = (y₂ - y₁) / (x₂ - x₁)          if P ≠ Q   (the chord)
+        λ = (3x₁² + a) / (2y₁)             if P = Q   (the tangent: implicit differentiation, Ch. 12!)
+
+sum:    x₃ = λ² - x₁ - x₂
+        y₃ = λ(x₁ - x₃) - y₁</code></pre>
+<p>Every "division" here means multiplying by a modular inverse (Ch. 19).</p>
+<p><strong>A toy curve:</strong> <code>y² = x³ + 2x + 2 (mod 17)</code>, base point <code>G = (5, 1)</code>. Compute <code>2G</code> (doubling, so use the tangent):</p>
+<pre><code>λ  = (3·5² + 2) / (2·1) = 77 / 2 ≡ 77 · 9 ≡ 9 · 9 = 81 ≡ 13   (mod 17)   [2⁻¹ ≡ 9, since 2·9 = 18 ≡ 1; 77 ≡ 9]
+x₃ = 13² - 5 - 5 = 159 ≡ 6     (mod 17)
+y₃ = 13·(5 - 6) - 1 = -14 ≡ 3  (mod 17)
+2G = (6, 3)        check: 3² = 9,  6³ + 2·6 + 2 = 230 = 13·17 + 9 ≡ 9  ✓</code></pre>
+<p>Keep adding <code>G</code> and the points go <code>(5,1), (6,3), (10,6), (3,1), (9,16), …</code>. At <code>19G</code> you reach <code>O</code>, so the group has <strong>order 19</strong>, and <code>20G = G</code> again. That cycle is the "clock" ECC works on.</p>
+<p><strong>ECDH with toy numbers.</strong> Alice picks secret <code>a = 3</code> and sends <code>A = 3G = (10, 6)</code>. Bob picks <code>b = 7</code> and sends <code>B = 7G = (0, 6)</code>. Alice computes <code>3·B</code> and Bob computes <code>7·A</code>. Both get <code>21G = 2G = (6, 3)</code>, because <code>21 mod 19 = 2</code>. An eavesdropper sees <code>G</code>, <code>(10,6)</code> and <code>(0,6)</code> and must solve the <strong>elliptic curve discrete log problem</strong> to recover 3 or 7. With 19 points that takes a moment. With about <code>2²⁵⁶</code> points (Curve25519, P-256), the best known attack (Pollard's rho) needs about <code>√(2²⁵⁶) = 2¹²⁸</code> steps. That square root is the birthday bound again (below), and it's why a 256-bit curve gives "128-bit security".</p>
+<h3 id="ecdsa-nonce-reuse-the-ps3-hack-in-algebra">ECDSA nonce reuse: the PS3 hack, in algebra<a class="anchor" href="#ecdsa-nonce-reuse-the-ps3-hack-in-algebra" aria-hidden="true">#</a></h3>
+<p>An ECDSA signature on message hash <code>z</code> with private key <code>d</code> uses a fresh secret nonce <code>k</code>, over a curve whose group has order <code>n</code>:</p>
+<pre><code>r = x-coordinate of (k·G)  mod n
+s = k⁻¹ · (z + r·d)        mod n</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>d</code></td><td>the private key (a number)</td></tr>
+<tr><td><code>k</code></td><td>the per-signature nonce. It <strong>must</strong> be secret and unique</td></tr>
+<tr><td><code>z</code></td><td>hash of the message being signed</td></tr>
+<tr><td><code>(r, s)</code></td><td>the signature</td></tr>
+</tbody></table></div>
+<p>Sign two different messages <code>z₁</code>, <code>z₂</code> with the <strong>same</strong> <code>k</code>. Then <code>r</code> is identical in both, and subtracting the two <code>s</code> equations eliminates <code>d</code>:</p>
+<pre><code>s₁ - s₂ = k⁻¹·(z₁ - z₂)       -&gt;   k = (z₁ - z₂) / (s₁ - s₂)    (mod n)
+then from either signature:        d = (s₁·k - z₁) / r            (mod n)</code></pre>
+<p>Two signatures and two lines of algebra give you the private key. On the toy curve (<code>n = 19</code>) with <code>d = 7</code>, <code>k = 10</code>, <code>z₁ = 5</code>, <code>z₂ = 12</code>, the signatures are <code>(7, 13)</code> and <code>(7, 8)</code>. Then <code>k = (5-12)/(13-8) ≡ 10</code> and <code>d = (13·10 - 5)/7 ≡ 7</code>. Sony's PS3 used a <strong>constant</strong> <code>k</code> (2010). Android Bitcoin wallets with a broken <code>SecureRandom</code> repeated <code>k</code> (2013) and had funds stolen. Even a few <em>biased</em> bits of <code>k</code> are enough when many signatures are available, using lattice attacks (the 2019 Minerva and TPM-Fail attacks recovered keys from timing-leaked nonce bits). That's why modern implementations derive <code>k</code> deterministically from the key and the message (RFC 6979), and why Ed25519 was designed that way from the start.</p>
+<h3 id="the-birthday-bound-derived">The birthday bound, derived<a class="anchor" href="#the-birthday-bound-derived" aria-hidden="true">#</a></h3>
+<p>Put <code>k</code> items into <code>N</code> equally likely buckets one at a time. Item <code>i+1</code> avoids all <code>i</code> earlier ones with probability <code>1 - i/N</code>. So:</p>
+<pre><code>P(no collision) = (1 - 1/N)(1 - 2/N)…(1 - (k-1)/N)
+                ≈ e^(-1/N) · e^(-2/N) · … · e^(-(k-1)/N)     using 1 - x ≈ e^(-x)  (Taylor, Ch. 12)
+                = e^(-(1 + 2 + … + (k-1))/N)
+                = e^(-k(k-1)/(2N))                            (arithmetic series, Ch. 6)
+                ≈ e^(-k²/(2N))</code></pre>
+<p>Set <code>P(collision) = 1/2</code>: <code>k²/(2N) = ln 2</code>, so <code>k ≈ √(2 ln 2) · √N ≈ 1.18·√N</code>. For birthdays (<code>N = 365</code>) that gives <code>1.18 · 19.1 ≈ 22.5</code>, so 23 people. ✓</p>
+<div class="tbl"><table>
+<thead><tr><th>Where it bites</th><th>Numbers</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>64-bit random IDs</td><td><code>1.18 · 2³²</code></td><td>50% collision chance after <strong>5.1 billion</strong> IDs, a real risk at scale</td></tr>
+<tr><td>UUIDv4 (122 random bits)</td><td><code>10¹²</code> IDs</td><td><code>P ≈ k²/2N ≈ 10⁻¹³</code>, which is safe</td></tr>
+<tr><td>AES-GCM random 96-bit nonces</td><td><code>2³²</code> messages per key</td><td><code>P ≈ 2⁶⁴/2⁹⁷ = 2⁻³³</code>. This is why NIST caps a key at <code>2³²</code> random-nonce messages, since a repeated GCM nonce leaks the authentication key</td></tr>
+<tr><td>SHA-1 (160-bit)</td><td>generic bound <code>2⁸⁰</code></td><td>the 2017 SHAttered collision needed only about <code>2⁶³</code> by exploiting structure</td></tr>
+</tbody></table></div>
+<h3 id="how-many-bits-of-security-one-table-to-calibrate-everything">How many bits of security? One table to calibrate everything<a class="anchor" href="#how-many-bits-of-security-one-table-to-calibrate-everything" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Primitive</th><th>Best classical attack</th><th>Security (bits)</th><th>After a large quantum computer</th></tr></thead>
+<tbody>
+<tr><td>AES-128</td><td>brute force <code>2¹²⁸</code></td><td>128</td><td>~64 (Grover's square root), so use AES-256 for long-term data</td></tr>
+<tr><td>SHA-256 collision</td><td>birthday <code>2¹²⁸</code></td><td>128</td><td>still about 128 in practice</td></tr>
+<tr><td>RSA-2048</td><td>number field sieve</td><td>~112</td><td><strong>0</strong> (Shor's algorithm)</td></tr>
+<tr><td>RSA-3072</td><td>number field sieve</td><td>~128</td><td><strong>0</strong></td></tr>
+<tr><td>P-256 / X25519</td><td>Pollard rho <code>√n</code></td><td>~128</td><td><strong>0</strong> (Shor's algorithm)</td></tr>
+<tr><td>ML-KEM-768</td><td>lattice reduction</td><td>~192 (NIST category 3, equivalent to AES-192)</td><td>about the same (no known large quantum speed-up)</td></tr>
+</tbody></table></div>
+<p>Bits of security means "the attacker needs about <code>2ᵇ</code> operations". Each extra bit doubles the work, so 128 bits is about <code>3.4·10³⁸</code> operations, which is not reachable with any conceivable classical computer.</p>
+<h3 id="post-quantum-learning-with-errors-the-maths-behind-ml-kem">Post-quantum: Learning With Errors, the maths behind ML-KEM<a class="anchor" href="#post-quantum-learning-with-errors-the-maths-behind-ml-kem" aria-hidden="true">#</a></h3>
+<p>Shor's algorithm breaks RSA, DH and ECC because they all hide a secret in the <strong>period</strong> of modular exponentiation, and quantum computers find periods efficiently. Lattice cryptography hides the secret in <strong>noise</strong> instead:</p>
+<pre><code>b = A · s + e   (mod q)</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Public?</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>A</code></td><td>public</td><td>a random matrix, <code>m × n</code></td></tr>
+<tr><td><code>s</code></td><td><strong>secret</strong></td><td>the secret vector (the key)</td></tr>
+<tr><td><code>e</code></td><td><strong>secret</strong></td><td>a small random error vector, entries like -2 … 2</td></tr>
+<tr><td><code>b</code></td><td>public</td><td>the noisy product</td></tr>
+<tr><td><code>q</code></td><td>public</td><td>the modulus (ML-KEM uses <code>q = 3329</code>)</td></tr>
+</tbody></table></div>
+<p>Without <code>e</code>, this is Ch. 10's <code>A·x = b</code>, which Gaussian elimination solves in milliseconds. With a little noise added, elimination amplifies the errors until the answer is garbage. The best known attacks (lattice reduction) take exponential time, <strong>even on quantum computers</strong>. That's the <em>Learning With Errors</em> problem (Regev, 2005). ML-KEM (FIPS 203, 2024) uses a structured version over polynomials of degree 256, and Chrome, Cloudflare and OpenSSH already negotiate hybrid X25519 + ML-KEM key exchange by default, so "harvest now, decrypt later" recordings of today's traffic stay safe.</p>
 <h3 id="real-life-engineering-ties-22">Real-life engineering ties<a class="anchor" href="#real-life-engineering-ties-22" aria-hidden="true">#</a></h3>
 <ul>
 <li><strong>Security:</strong> this chapter is the mathematical grounding for evaluating cryptographic choices — key sizes, algorithm deprecation decisions (why MD5/SHA-1 are banned for security use), TLS cipher suite selection.</li>
@@ -3132,6 +3399,93 @@ for util in [0.5, 0.7, 0.9, 0.95, 0.99]:
 
 print(aimd_simulation(20, loss_at_round=10))</code></pre>
 <p>This produces the classic loss-based TCP <strong>"sawtooth"</strong> throughput graph. The asymmetry (slow linear growth, fast halving) is deliberately conservative — a direct, real-world application of control theory (Ch. 29) tuned to avoid congestion collapse across the shared, uncoordinated internet.</p>
+<h3 id="deriving-the-m-m-1-formulas-instead-of-trusting-them">Deriving the M/M/1 formulas (instead of trusting them)<a class="anchor" href="#deriving-the-m-m-1-formulas-instead-of-trusting-them" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>λ</code></td><td>arrival rate (Poisson arrivals, Ch. 14)</td></tr>
+<tr><td><code>μ</code></td><td>service rate (exponential service times)</td></tr>
+<tr><td><code>ρ = λ/μ</code></td><td>utilization, the fraction of time the server is busy. Must be <code>&lt; 1</code></td></tr>
+<tr><td><code>πₙ</code></td><td>long-run probability that <code>n</code> requests are in the system</td></tr>
+</tbody></table></div>
+<p>The number of requests in the system is a Markov chain (Ch. 11): it goes up by 1 at rate <code>λ</code> and down by 1 at rate <code>μ</code>. In steady state, the flow across each boundary between <code>n</code> and <code>n+1</code> must balance:</p>
+<pre><code>λ · πₙ = μ · πₙ₊₁     -&gt;    πₙ₊₁ = ρ · πₙ     -&gt;    πₙ = ρⁿ · π₀</code></pre>
+<p>The probabilities sum to 1, and <code>Σ ρⁿ = 1/(1 - ρ)</code> is a geometric series (Ch. 6), so <code>π₀ = 1 - ρ</code>:</p>
+<pre><code>πₙ = (1 - ρ) · ρⁿ                                (geometric distribution)
+L  = Σ n · πₙ = ρ / (1 - ρ)                      (average number in system)
+W  = L / λ = 1 / (μ - λ)                         (Little's Law, below)</code></pre>
+<p><strong>Example:</strong> at <code>ρ = 0.9</code> the average queue holds <code>0.9/0.1 = 9</code> requests.</p>
+<p><strong>Buffer overflow probability falls out for free:</strong> <code>P(n ≥ k) = ρᵏ</code>. A router port at 90% utilization exceeds 20 queued packets <code>0.9²⁰ ≈ 12%</code> of the time and 50 packets <code>0.9⁵⁰ ≈ 0.5%</code> of the time. Read it backwards to size a buffer for a target drop rate: <code>k = ln(target) / ln(ρ)</code>.</p>
+<h3 id="why-little-s-law-holds-for-any-system">Why Little's Law holds for any system<a class="anchor" href="#why-little-s-law-holds-for-any-system" aria-hidden="true">#</a></h3>
+<p><code>L = λ · W</code> holds whatever the arrival or service distributions. The proof is a counting argument. Plot <code>N(t)</code>, the number of requests in the system over a long window of length <code>T</code>, and compute the area under that curve two ways:</p>
+<pre><code>area = ∫₀ᵀ N(t) dt = L · T                    (average height × width)
+area = Σ over requests of (time each one spent) = (λ·T) · W   (count × average stay)
+
+L · T = λ · T · W     -&gt;     L = λ · W</code></pre>
+<p>Each request contributes a horizontal strip as tall as one request and as long as its stay, so both sides measure the same area (an integral, Ch. 12). That's why Little's Law applies to a CPU run queue, a Kafka consumer group, a connection pool or a coffee shop.</p>
+<p><strong>Example:</strong> a service handles 2,000 req/s with an average latency of 50 ms, so <code>L = 2000 · 0.05 = 100</code> requests are in flight on average. You need at least 100 concurrent connections or worker threads, plus headroom for the variance shown above.</p>
+<h3 id="multiple-servers-erlang-c-and-why-pooling-wins">Multiple servers: Erlang C, and why pooling wins<a class="anchor" href="#multiple-servers-erlang-c-and-why-pooling-wins" aria-hidden="true">#</a></h3>
+<p>For <code>c</code> identical servers sharing one queue (M/M/c), with offered load <code>a = λ/μ</code> (in <strong>Erlangs</strong>), the probability that an arriving request has to wait is the <strong>Erlang C</strong> formula:</p>
+<pre><code>            (aᶜ / c!) · c/(c - a)
+P_wait = ──────────────────────────────────────          W_q = P_wait / (c·μ - λ)
+         Σₖ₌₀^(c-1) aᵏ/k!  +  (aᶜ / c!) · c/(c - a)</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>c</code></td><td>number of servers (workers, threads, agents)</td></tr>
+<tr><td><code>a = λ/μ</code></td><td>offered load in Erlangs: how many servers would be busy on average</td></tr>
+<tr><td><code>P_wait</code></td><td>the chance a request finds every server busy</td></tr>
+<tr><td><code>W_q</code></td><td>average time spent waiting before service starts</td></tr>
+</tbody></table></div>
+<p><strong>Example: sizing a worker pool.</strong> <code>λ = 90</code> jobs/s and each worker completes <code>μ = 10</code> jobs/s, so <code>a = 9</code> Erlangs. Nine workers is the bare minimum, but:</p>
+<div class="tbl"><table>
+<thead><tr><th>Workers <code>c</code></th><th>Utilization</th><th>P(wait)</th><th>Avg queue wait</th></tr></thead>
+<tbody>
+<tr><td>10</td><td>90%</td><td>67%</td><td>66.9 ms</td></tr>
+<tr><td>11</td><td>82%</td><td>43%</td><td>21.5 ms</td></tr>
+<tr><td>12</td><td>75%</td><td>27%</td><td>8.9 ms</td></tr>
+<tr><td>14</td><td>64%</td><td>9%</td><td>1.8 ms</td></tr>
+</tbody></table></div>
+<p>Going from 10 to 12 workers (+20% cost) cuts queueing delay 7.5×. That's the same hyperbolic curve as M/M/1, now with a precise number for the decision.</p>
+<p><strong>Pooling.</strong> Compare two separate M/M/1 servers, each getting 45 req/s with <code>μ = 50</code>, against one shared queue feeding both (M/M/2, 90 req/s):</p>
+<pre><code>separate queues:   W = 1/(50 - 45)                       = 200 ms
+one pooled queue:  W = W_q + 1/μ  (Erlang C, c = 2)      ≈ 105 ms</code></pre>
+<p>The same hardware and the same load give <strong>half the latency</strong>, just by sharing the queue. A request never waits behind a busy server while the other one is idle. That's why one shared work queue beats per-worker queues, why a single supermarket line feeding many tills is faster than one line per till, and why <strong>work stealing</strong> (Go's scheduler, Tokio, Java's ForkJoinPool) exists. It recovers most of the pooling benefit while keeping per-worker queues for cache locality.</p>
+<h3 id="variability-is-the-enemy-kingman-s-formula">Variability is the enemy: Kingman's formula<a class="anchor" href="#variability-is-the-enemy-kingman-s-formula" aria-hidden="true">#</a></h3>
+<p>Real traffic isn't Poisson and real service times aren't exponential. For a general single-server queue (G/G/1), Kingman's approximation gives the waiting time:</p>
+<pre><code>W_q ≈ ( ρ / (1 - ρ) ) · ( (c_a² + c_s²) / 2 ) · τ
+       utilization       variability          service time</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>c_a</code></td><td>coefficient of variation (std ÷ mean, Ch. 9) of inter-arrival times. Poisson gives 1</td></tr>
+<tr><td><code>c_s</code></td><td>coefficient of variation of service times. Exponential gives 1, constant gives 0</td></tr>
+<tr><td><code>τ</code></td><td>mean service time</td></tr>
+</tbody></table></div>
+<p>At <code>ρ = 0.8</code> and <code>τ = 10 ms</code>:</p>
+<div class="tbl"><table>
+<thead><tr><th>Arrivals / service</th><th><code>c_a²</code>, <code>c_s²</code></th><th>Wait</th></tr></thead>
+<tbody>
+<tr><td>Poisson / exponential (M/M/1)</td><td>1, 1</td><td>40 ms</td></tr>
+<tr><td>Poisson / constant service time</td><td>1, 0</td><td>20 ms</td></tr>
+<tr><td>Bursty arrivals, heavy-tailed service</td><td>4, 4</td><td><strong>160 ms</strong></td></tr>
+</tbody></table></div>
+<p>The three factors each say something different. <strong>Utilization</strong> explodes near</p>
+<ol>
+<li><strong>Variability</strong> multiplies the wait linearly. <strong>Service time</strong> scales it. So</li>
+</ol>
+<p>cutting tail variance (timeouts, request size limits, splitting the slow endpoints onto their own pool) can matter as much as adding capacity. It's the reason "head-of-line blocking" by one huge request hurts everyone behind it.</p>
+<h3 id="why-aimd-converges-to-fairness">Why AIMD converges to fairness<a class="anchor" href="#why-aimd-converges-to-fairness" aria-hidden="true">#</a></h3>
+<p>Two flows share a link of capacity 16, starting very unfairly at <code>(x₁, x₂) = (10, 2)</code>. Each round, both add 1 if total <code>≤ 16</code>, or both halve if the link overflows:</p>
+<pre><code>(10, 2) → (11, 3) → (12, 4) → (13, 5)          diff 8   (increase keeps the difference)
+  cut   → (6.5, 2.5)                            diff 4   (halving halves the difference)
+  ...   → (10.5, 6.5) → cut → (5.25, 3.25)      diff 2
+  ...   → (9.25, 7.25) → cut → (4.6, 3.6)       diff 1</code></pre>
+<p><strong>Additive increase preserves the gap between the flows. Multiplicative decrease halves it.</strong> After <code>k</code> congestion events the unfairness has shrunk by <code>2ᵏ</code>, so the flows converge to an equal share whatever their starting point. Chiu and Jain (1989) proved that among linear controls, AIMD is the one that converges to both efficiency and fairness. AIAD keeps the unfairness forever, and MIMD keeps the <em>ratio</em> forever. That paper is why TCP behaves the way it does.</p>
+<h3 id="how-big-should-a-router-buffer-be">How big should a router buffer be?<a class="anchor" href="#how-big-should-a-router-buffer-be" aria-hidden="true">#</a></h3>
+<p>The classic rule was "buffer = one bandwidth-delay product", so a single TCP flow's sawtooth never empties the queue. For a 10 Gbit/s link with 250 ms RTT that's <code>10¹⁰ · 0.25 / 8 = 312.5 MB</code> of fast memory, which is expensive. Appenzeller, Keslassy and McKeown (2004) showed that with <code>n</code> desynchronized flows the sawtooths average out (the CLT again, Ch. 14: the total window's fluctuations grow like <code>√n</code> while the mean grows like <code>n</code>), so you need only:</p>
+<pre><code>buffer ≈ BDP / √n</code></pre>
+<p>With 10,000 flows, <code>√n = 100</code> and the buffer drops to <strong>3.1 MB</strong>. That's the difference between off-chip DRAM and on-chip SRAM. Oversized buffers cause <strong>bufferbloat</strong>: full queues that add seconds of latency without adding throughput. CoDel and FQ-CoDel (Linux's default qdisc on many distributions) attack it by managing the <em>time</em> packets spend queued rather than the queue length, which is Little's Law applied as a control signal.</p>
 <h3 id="real-life-engineering-ties-23">Real-life engineering ties<a class="anchor" href="#real-life-engineering-ties-23" aria-hidden="true">#</a></h3>
 <ul>
 <li><strong>Network:</strong> subnetting/CIDR is daily-driver math for any network engineer; BDP explains "why is my transcontinental transfer slow despite huge bandwidth"; queueing theory is the rigorous basis for capacity planning and SLA design.</li>
@@ -3216,6 +3570,61 @@ group_sizes = df.groupby(["zip","age"]).size()
 k = group_sizes.min()
 print("k-anonymity level:", k)   # smallest group size = the anonymity guarantee</code></pre>
 <p>A famous real-world result of this exact math: 87% of the US population is uniquely identifiable from just <code>{zip code, birth date, gender}</code> alone (Sweeney, 2000) — a striking demonstration that "anonymized" data with insufficient k-anonymity often isn't anonymous at all.</p>
+<h3 id="the-confusion-matrix-every-rate-named">The confusion matrix, every rate named<a class="anchor" href="#the-confusion-matrix-every-rate-named" aria-hidden="true">#</a></h3>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Actually malicious</th><th>Actually benign</th></tr></thead>
+<tbody>
+<tr><td><strong>Alerted</strong></td><td>TP (true positive)</td><td>FP (false positive)</td></tr>
+<tr><td><strong>Not alerted</strong></td><td>FN (false negative)</td><td>TN (true negative)</td></tr>
+</tbody></table></div>
+<div class="tbl"><table>
+<thead><tr><th>Metric</th><th>Formula</th><th>Question it answers</th><th>Also called</th></tr></thead>
+<tbody>
+<tr><td>TPR</td><td><code>TP / (TP + FN)</code></td><td>of real attacks, what fraction did we catch?</td><td>recall, sensitivity, detection rate</td></tr>
+<tr><td>FPR</td><td><code>FP / (FP + TN)</code></td><td>of benign events, what fraction did we wrongly flag?</td><td>fall-out, false-alarm rate</td></tr>
+<tr><td>Precision</td><td><code>TP / (TP + FP)</code></td><td>of alerts, what fraction were real?</td><td>positive predictive value</td></tr>
+<tr><td>F1</td><td><code>2·P·R / (P + R)</code></td><td>one number balancing precision <code>P</code> and recall <code>R</code></td><td>harmonic mean</td></tr>
+</tbody></table></div>
+<p>For the 20-event example above (<code>P = 0.6</code>, <code>R = 0.75</code>), <code>F1 = 2·0.6·0.75 / 1.35 ≈ 0.67</code>. F1 uses the <em>harmonic</em> mean so that a detector can't hide a terrible precision behind a great recall. If either one goes to 0, so does F1.</p>
+<h3 id="precision-depends-on-the-base-rate-not-just-the-detector">Precision depends on the base rate, not just the detector<a class="anchor" href="#precision-depends-on-the-base-rate-not-just-the-detector" aria-hidden="true">#</a></h3>
+<p>TPR and FPR are properties of the <strong>detector</strong>. Precision also depends on the <strong>environment</strong>, through the base rate <code>π</code> = the fraction of events that are malicious. Bayes' theorem (Ch. 16) gives:</p>
+<pre><code>Precision = TPR · π / ( TPR · π  +  FPR · (1 - π) )</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>π</code></td><td>base rate: P(event is malicious), <em>before</em> any detection</td></tr>
+<tr><td><code>TPR · π</code></td><td>the fraction of all events that are caught attacks</td></tr>
+<tr><td><code>FPR · (1 - π)</code></td><td>the fraction of all events that are false alarms</td></tr>
+</tbody></table></div>
+<p>With <code>TPR = 0.99</code>, <code>FPR = 0.01</code>, <code>π = 10⁻⁴</code>, precision is <code>0.0098</code>. That's Ch. 16's "under 1% of alerts are real", now as a formula. Solve it the other way to get the design target: <strong>for half of all alerts to be real, you need <code>FPR ≈ TPR · π / (1 - π) ≈ 10⁻⁴</code></strong>. The false-positive rate has to be about as small as the base rate. That's a 100× improvement over "99% accurate", and it's why production detection stacks layer cheap high-recall filters in front of expensive high-precision ones. Each stage raises the base rate seen by the next stage.</p>
+<h3 id="choosing-the-alert-threshold-from-costs">Choosing the alert threshold from costs<a class="anchor" href="#choosing-the-alert-threshold-from-costs" aria-hidden="true">#</a></h3>
+<p>If a false alarm costs <code>C_FP</code> (analyst time) and a missed attack costs <code>C_FN</code> (breach losses), alerting on an event is worth it when the expected cost of staying silent exceeds the expected cost of alerting:</p>
+<pre><code>alert  if   P(attack | evidence) · C_FN  &gt;  (1 - P(attack | evidence)) · C_FP
+
+  &lt;=&gt;       P(attack | evidence)  &gt;  C_FP / (C_FP + C_FN)</code></pre>
+<p><strong>Example:</strong> triaging an alert costs about $50 of analyst time, and a missed intrusion costs about $100,000. The threshold is <code>50 / (50 + 100,000) ≈ 0.0005</code>. You should investigate anything with more than a <strong>0.05%</strong> chance of being real. That shows why "only page on high-confidence alerts" can be the wrong policy when misses are expensive, and the formula lets you defend the threshold with numbers in a design review. The same derivation sets the decision threshold of any classifier, from fraud to medical screening.</p>
+<h3 id="what-auc-actually-measures">What AUC actually measures<a class="anchor" href="#what-auc-actually-measures" aria-hidden="true">#</a></h3>
+<p>AUC has a clean probabilistic meaning (the Mann–Whitney U statistic):</p>
+<pre><code>AUC = P( score(random attack) &gt; score(random benign event) )</code></pre>
+<p>Count it for the <code>sklearn</code> example above. There are 3 attacks, scored <code>0.8, 0.9, 0.7</code>, and 7 benign events, the highest of which scores <code>0.6</code>. All <code>3 × 7 = 21</code> attack/benign pairs are ranked correctly, so <code>AUC = 21/21 = 1.0</code>. Random guessing gives 0.5. AUC is threshold-free and <strong>base-rate-free</strong>, which makes it good for comparing detectors and bad for predicting alert volume. Use precision at your real <code>π</code> for that (above).</p>
+<h3 id="password-hashing-buying-bits-with-work">Password hashing: buying bits with work<a class="anchor" href="#password-hashing-buying-bits-with-work" aria-hidden="true">#</a></h3>
+<p>A deliberately slow hash adds "free" entropy. If a hash is <code>W</code> times slower for the attacker, it adds <code>log₂ W</code> bits of effective strength:</p>
+<pre><code>effective bits = entropy_bits + log₂(slowdown factor)</code></pre>
+<p>A single high-end GPU computes fast unsalted hashes like MD5 at tens of billions per second, but only tens of thousands of bcrypt hashes per second at a moderate cost setting. That's a slowdown of roughly a million, so about <code>log₂(10⁶) ≈ 20</code> extra bits. A 40-bit password behind bcrypt resists an offline attacker about as well as a 60-bit password behind MD5. Each +1 to bcrypt's cost parameter doubles the work (+1 bit). <strong>Memory-hard</strong> functions (scrypt, Argon2) also require a large block of RAM per guess, which removes the GPU's and ASIC's advantage from massive parallelism. That's why OWASP recommends Argon2id. <strong>Salts</strong> don't add bits per hash. They stop one computation from attacking every account at once, so precomputed rainbow tables become useless.</p>
+<h3 id="differential-privacy-a-mathematical-definition-of-anonymous">Differential privacy: a mathematical definition of "anonymous"<a class="anchor" href="#differential-privacy-a-mathematical-definition-of-anonymous" aria-hidden="true">#</a></h3>
+<p>k-anonymity (above) can be broken by combining it with outside data. <strong>Differential privacy</strong> (Dwork et al., 2006) gives a guarantee that holds against <em>any</em> auxiliary information. A randomized query <code>M</code> is <code>ε</code>-differentially private if, for any two datasets <code>D</code> and <code>D'</code> that differ in one person's record, and any set of outputs <code>S</code>:</p>
+<pre><code>P[ M(D) ∈ S ]  ≤  e^ε · P[ M(D') ∈ S ]</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>D</code>, <code>D'</code></td><td>"neighbouring" datasets: identical except for one individual</td></tr>
+<tr><td><code>M</code></td><td>the randomized mechanism (the query plus noise)</td></tr>
+<tr><td><code>ε</code></td><td>"epsilon", the <strong>privacy budget</strong>. Smaller is more private. <code>e^ε ≈ 1 + ε</code> for small <code>ε</code></td></tr>
+</tbody></table></div>
+<p>In words: whether <em>you</em> are in the dataset changes the probability of any answer by at most a factor of <code>e^ε</code>, so nobody can learn much about you from the output.</p>
+<p><strong>The Laplace mechanism</strong> achieves this for numeric queries. Add noise drawn from a Laplace distribution with scale <code>b = Δf / ε</code>, where <code>Δf</code> (the <em>sensitivity</em>) is the most one person can change the true answer.</p>
+<p><strong>Example:</strong> "how many employees clicked the phishing link?" One person changes a count by at most 1, so <code>Δf = 1</code>. With <code>ε = 0.5</code>, the scale is <code>b = 2</code>, which gives a noise standard deviation of <code>√2 · b ≈ 2.8</code>. The published count is <code>true count ± about 3</code>, which is useful for a company of 5,000 and protective for any individual.</p>
+<p>Privacy losses <strong>add up</strong>: answering <code>k</code> such queries costs <code>k·ε</code> in total (the composition theorem). That's why deployments track a budget. The 2020 US Census, Apple's keyboard and emoji telemetry, and Google's RAPPOR all use differential privacy, and DP-SGD (clip each example's gradient, add Gaussian noise) trains ML models with the same guarantee, so they can't memorize any single training record.</p>
 <h3 id="real-life-engineering-ties-24">Real-life engineering ties<a class="anchor" href="#real-life-engineering-ties-24" aria-hidden="true">#</a></h3>
 <ul>
 <li><strong>Security:</strong> this entire chapter is core Sr.-security-engineer vocabulary — precision/recall/AUC for evaluating any detection system, entropy+rate-limiting reasoning for authentication design, Monte Carlo risk quantification for prioritizing a remediation backlog defensibly instead of by gut feeling.</li>
@@ -3259,6 +3668,92 @@ print(sorted(set(abs(f) for f in dominant_freqs if f &gt; 0)))  # ~[5.0, 50.0]</
                  = 1 Hz</code></pre>
 <p>Sampling a 6Hz wave at 5Hz makes it look exactly like a slow 1Hz wave in the recorded data — indistinguishable from the real thing once sampled, which is <em>why</em> aliasing is dangerous: nothing in the sampled data itself flags that anything went wrong.</p>
 <p>This is why audio CDs sample at 44.1kHz (comfortably above 2×20kHz, the upper edge of human hearing), and it applies directly to <em>any</em> discrete sampling of a continuous signal — including monitoring systems: if you sample a metric (e.g., CPU usage) once a minute, you <em>cannot</em> detect spikes/oscillations happening faster than once every 2 minutes — they'll alias into misleading patterns in your dashboard.</p>
+<h3 id="euler-s-formula-rotations-as-numbers">Euler's formula: rotations as numbers<a class="anchor" href="#euler-s-formula-rotations-as-numbers" aria-hidden="true">#</a></h3>
+<p>The Fourier transform is written with complex exponentials, and one identity makes them readable:</p>
+<pre><code>e^(iθ) = cos θ + i · sin θ</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>i</code></td><td>the imaginary unit, <code>i² = -1</code></td></tr>
+<tr><td><code>e^(iθ)</code></td><td>the point at angle <code>θ</code> on the unit circle (Ch. 7): x-coordinate <code>cos θ</code>, y-coordinate <code>sin θ</code></td></tr>
+<tr><td><code>θ</code></td><td>angle in radians. A full turn is <code>2π</code></td></tr>
+</tbody></table></div>
+<p>Multiplying by <code>e^(iθ)</code> <strong>rotates</strong> a point by <code>θ</code>. That's the rotation matrix from Ch. 10 packed into a single number. Set <code>θ = π</code> and you get <code>e^(iπ) + 1 = 0</code>, which links five fundamental constants in one line. A spinning phasor <code>e^(2πi·f·t)</code> goes round <code>f</code> times per second, so a sine wave of frequency <code>f</code> is just the vertical shadow of that rotation.</p>
+<h3 id="the-discrete-fourier-transform-symbol-by-symbol">The Discrete Fourier Transform, symbol by symbol<a class="anchor" href="#the-discrete-fourier-transform-symbol-by-symbol" aria-hidden="true">#</a></h3>
+<pre><code>X_k = Σₙ₌₀^(N-1)  x_n · e^(-2πi · k·n / N)          k = 0, 1, …, N-1</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>x_n</code></td><td>the <code>n</code>-th time sample (<code>N</code> samples in total)</td></tr>
+<tr><td><code>X_k</code></td><td>a complex number: how much frequency <code>k</code> is present (<code>|X_k|</code> = strength, angle = phase)</td></tr>
+<tr><td><code>k</code></td><td>frequency index: <code>k</code> complete cycles across the <code>N</code> samples</td></tr>
+<tr><td><code>e^(-2πi·kn/N)</code></td><td>a probe wave spinning at frequency <code>k</code></td></tr>
+<tr><td><code>Σ x_n · (probe)</code></td><td>a <strong>dot product</strong> (Ch. 10) between the signal and the probe</td></tr>
+</tbody></table></div>
+<p>Every DFT coefficient answers one question: <strong>how well does the signal line up with a wave of frequency <code>k</code>?</strong> That's the same correlation idea as Ch. 9 and the same dot product as cosine similarity. The DFT is a change of basis, a matrix multiplication by an <code>N × N</code> matrix of rotations, and the FFT computes it in <code>O(N log N)</code> instead of <code>O(N²)</code> by reusing shared sub-products.</p>
+<p><strong>A 4-point DFT by hand.</strong> Signal <code>x = [1, 0, -1, 0]</code>, which is one full cosine cycle. For <code>N = 4</code>, the probe values <code>e^(-2πi·kn/4)</code> are just <code>1, -i, -1, i</code> raised to powers:</p>
+<pre><code>X₀ = 1 + 0 + (-1) + 0                  = 0     (no constant offset: the average is 0)
+X₁ = 1·1 + 0·(-i) + (-1)·(-1) + 0·(i)  = 2     (strong match at 1 cycle)
+X₂ = 1·1 + 0·(-1) + (-1)·(1)  + 0·(-1) = 0
+X₃ = 1·1 + 0·(i)  + (-1)·(-1) + 0·(-i) = 2     (the mirror of X₁, always true for real signals)</code></pre>
+<p>The energy sits at <code>k = 1</code> (and its mirror at <code>k = 3</code>), which correctly identifies "one cycle per window". <code>np.fft.fft([1, 0, -1, 0])</code> returns <code>[0, 2, 0, 2]</code>.</p>
+<h3 id="the-convolution-theorem-why-the-fft-is-everywhere">The convolution theorem: why the FFT is everywhere<a class="anchor" href="#the-convolution-theorem-why-the-fft-is-everywhere" aria-hidden="true">#</a></h3>
+<p><strong>Convolution</strong> slides one signal across another, multiplying and summing at each offset. It's what a filter, an echo, a blur and a CNN layer all do:</p>
+<pre><code>(f * g)[n] = Σₘ f[m] · g[n - m]</code></pre>
+<blockquote>
+<p><strong>Theorem (convolution).</strong> Convolution in the time domain equals element-wise multiplication in the frequency domain: <code>DFT(f * g) = DFT(f) ⊙ DFT(g)</code>.</p>
+</blockquote>
+<p>Direct convolution of two length-<code>N</code> signals costs <code>O(N²)</code>. Going through the FFT (transform, multiply, transform back) costs <code>O(N log N)</code>. That's why audio effects, large-kernel image filters, radar matched filters and polynomial multiplication (including the number-theoretic transform at the heart of ML-KEM in Ch. 24) all run through FFTs. In AI, a CNN layer is a learned convolution. Long-sequence models such as Hyena and S4/Mamba-style state-space models use FFT convolutions to cover very long contexts in <code>O(N log N)</code> instead of attention's <code>O(N²)</code>.</p>
+<h3 id="why-nyquist-s-theorem-holds">Why Nyquist's theorem holds<a class="anchor" href="#why-nyquist-s-theorem-holds" aria-hidden="true">#</a></h3>
+<p>Sampling a signal every <code>T = 1/f_s</code> seconds makes its spectrum <strong>repeat</strong> every <code>f_s</code> hertz. Sampling is multiplication by a train of spikes, and by the convolution theorem that becomes <em>convolution</em> of the spectrum with spikes at multiples of <code>f_s</code>, which pastes copies of the spectrum at <code>0, ±f_s, ±2f_s, …</code>. Each copy extends from <code>-f_max</code> to <code>+f_max</code>. The copies stay separate only if:</p>
+<pre><code>f_s - f_max &gt; f_max    &lt;=&gt;    f_s &gt; 2 · f_max</code></pre>
+<p>If they overlap, a high frequency lands on top of a low one and the two can never be told apart. That's aliasing. The <code>|6 - 5| = 1 Hz</code> alias computed above is the copy at <code>f_s = 5</code> shifted back to 1 Hz. This is why every ADC has an analogue <strong>anti-aliasing filter</strong> in front of it to remove frequencies above <code>f_s/2</code> <em>before</em> sampling, since afterwards it's too late. For monitoring, the equivalent is to scrape fast and then downsample using max or a percentile, not a single point sample.</p>
+<h3 id="decibels-the-logarithm-that-radio-engineers-live-in">Decibels: the logarithm that radio engineers live in<a class="anchor" href="#decibels-the-logarithm-that-radio-engineers-live-in" aria-hidden="true">#</a></h3>
+<p>Signal powers span many orders of magnitude, so engineers use a log scale (Ch. 5):</p>
+<pre><code>gain (dB)   = 10 · log₁₀( P_out / P_in )
+power (dBm) = 10 · log₁₀( P / 1 mW )</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>dB</th><th>Power ratio</th></tr></thead>
+<tbody>
+<tr><td>+3 dB</td><td>×2</td></tr>
+<tr><td>+10 dB</td><td>×10</td></tr>
+<tr><td>+20 dB</td><td>×100</td></tr>
+<tr><td>-30 dB</td><td>×0.001</td></tr>
+</tbody></table></div>
+<p>Multiplying ratios becomes <strong>adding</strong> decibels, so a link budget is plain addition: transmit power + antenna gains − losses = received power. <strong>Example:</strong> a Wi-Fi access point transmits at 20 dBm (100 mW). A laptop receiving at −70 dBm (<code>10⁻¹⁰</code> W, a ten-billionth of the transmitted power) still has a usable link. That's a 90 dB loss, and you can only reason about a ratio of a billion comfortably on a log scale.</p>
+<h3 id="free-space-path-loss-why-5-ghz-has-shorter-range">Free-space path loss: why 5 GHz has shorter range<a class="anchor" href="#free-space-path-loss-why-5-ghz-has-shorter-range" aria-hidden="true">#</a></h3>
+<pre><code>FSPL (dB) = 20·log₁₀(d) + 20·log₁₀(f) - 147.55        (d in metres, f in Hz)</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>d</code></td><td>distance between the antennas</td></tr>
+<tr><td><code>f</code></td><td>carrier frequency</td></tr>
+<tr><td><code>-147.55</code></td><td><code>20·log₁₀(4π/c)</code>, a constant from the speed of light <code>c</code></td></tr>
+</tbody></table></div>
+<p>The <code>20·log₁₀</code> (not <code>10</code>) comes from the inverse-square law: power spreads over a sphere of area <code>4πd²</code>. Worked out:</p>
+<pre><code>2.4 GHz at 10 m:  20·1 + 20·log₁₀(2.4·10⁹) - 147.55 = 20 + 187.6 - 147.55 ≈ 60.0 dB
+5 GHz at 10 m:                                                             ≈ 66.4 dB
+2.4 GHz at 20 m:                                                           ≈ 66.1 dB</code></pre>
+<p>Doubling distance costs 6 dB, and moving from 2.4 to 5 GHz <em>also</em> costs about 6 dB. 5 GHz reaches roughly half as far for the same transmit power, before you even count walls, which absorb higher frequencies more. That's why mesh Wi-Fi and 5G millimetre-wave cells are placed so densely.</p>
+<h3 id="qam-and-ofdm-how-wi-fi-approaches-the-shannon-limit">QAM and OFDM: how Wi-Fi approaches the Shannon limit<a class="anchor" href="#qam-and-ofdm-how-wi-fi-approaches-the-shannon-limit" aria-hidden="true">#</a></h3>
+<p><strong>QAM</strong> (quadrature amplitude modulation) sends <code>log₂ M</code> bits per symbol by choosing one of <code>M</code> points on a grid of amplitudes and phases:</p>
+<div class="tbl"><table>
+<thead><tr><th>Modulation</th><th>Bits/symbol</th><th>SNR floor from Shannon (<code>2ᵇ - 1</code>)</th><th>Used by</th></tr></thead>
+<tbody>
+<tr><td>QPSK (4-QAM)</td><td>2</td><td>4.8 dB</td><td>long range, poor signal</td></tr>
+<tr><td>64-QAM</td><td>6</td><td>18 dB</td><td>Wi-Fi 4/5</td></tr>
+<tr><td>256-QAM</td><td>8</td><td>24 dB</td><td>Wi-Fi 5</td></tr>
+<tr><td>1024-QAM</td><td>10</td><td>30 dB</td><td>Wi-Fi 6, DOCSIS 3.1</td></tr>
+</tbody></table></div>
+<p>The SNR column comes from inverting Shannon–Hartley (Ch. 23): <code>b = log₂(1 + SNR)</code> gives <code>SNR = 2ᵇ - 1</code>. Real radios need a few dB more than this floor, which is why your laptop drops to a lower modulation as you walk away: the SNR no longer supports the dense grid.</p>
+<p><strong>OFDM</strong> splits a channel into many narrow <strong>subcarriers</strong>, spaced exactly <code>Δf = 1/T_symbol</code> apart. That spacing makes them <strong>orthogonal</strong>: their dot product over one symbol is zero (Ch. 10), so they overlap in frequency without interfering. The transmitter builds a symbol with an inverse FFT and the receiver takes it apart with an FFT. <strong>Wi-Fi 6's peak rate, rebuilt from first principles</strong> (20 MHz channel, one spatial stream, top MCS 11):</p>
+<pre><code>data subcarriers           = 234
+bits per subcarrier        = 10       (1024-QAM)
+coding rate                = 5/6      (error-correction overhead)
+symbol time                = 12.8 µs + 0.8 µs guard interval = 13.6 µs
+
+rate = 234 · 10 · (5/6) / 13.6 µs  ≈  143.4 Mbit/s</code></pre>
+<p>That's exactly the figure in the 802.11ax rate tables. Double the channel width, double the subcarriers, add spatial streams (MIMO, a linear-algebra trick that solves <code>y = H·x</code> for several streams, Ch. 10), and you reach the headline multi-gigabit numbers. Each factor in the formula is maths from this guide: the FFT, the logarithm, Shannon's limit and a matrix inverse.</p>
 <h3 id="real-life-engineering-ties-25">Real-life engineering ties<a class="anchor" href="#real-life-engineering-ties-25" aria-hidden="true">#</a></h3>
 <ul>
 <li><strong>Network:</strong> RF/wireless engineering (channel width, OFDM sub-carrier spacing) is direct Fourier-domain reasoning; understanding <em>why</em> wider Wi-Fi channels (Ch. 23's Shannon-Hartley) carry more data.</li>
@@ -3315,6 +3810,31 @@ is NOT a Nash equilibrium — it's unstable, even though it's better for both.</
 <p>This is a direct callback to gradient ascent from Ch. 21 (instead of descending the loss w.r.t. weights, you ascend it w.r.t. the input), framed as an adversary optimizing against your model. <strong>Adversarial training</strong> (a defense) turns this into a full minimax game: the defender trains to minimize loss <em>even under the worst-case attacker perturbation</em>:</p>
 <pre><code>min_θ  max_δ  Loss(model_θ(x + δ), true_label)</code></pre>
 <p>GAN (Generative Adversarial Network) training is the same minimax structure applied generatively — a generator and discriminator playing an adversarial game against each other until they reach (ideally) a Nash equilibrium.</p>
+<h3 id="the-attack-derived-fgsm-from-a-norm-and-a-tangent-line">The attack, derived: FGSM from a norm and a tangent line<a class="anchor" href="#the-attack-derived-fgsm-from-a-norm-and-a-tangent-line" aria-hidden="true">#</a></h3>
+<p>How do you find the <code>δ</code> that maximizes the loss? Take the first-order Taylor approximation of the loss around the clean input <code>x</code> (Ch. 12, 13):</p>
+<pre><code>Loss(x + δ) ≈ Loss(x) + ∇ₓLossᵀ · δ</code></pre>
+<p>So the attacker wants to maximize the dot product <code>∇ₓLossᵀ · δ</code> subject to <code>‖δ‖∞ ≤ ε</code> (no pixel changed by more than <code>ε</code>, using the L∞ norm from Ch. 10). A dot product is maximized term by term by making each <code>δᵢ</code> as large as allowed, <code>±ε</code>, with the <strong>same sign</strong> as the gradient component:</p>
+<pre><code>δ* = ε · sign(∇ₓ Loss)                  the Fast Gradient Sign Method (Goodfellow et al., 2015)</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>∇ₓLoss</code></td><td>gradient with respect to the <strong>input</strong> pixels, not the weights (one <code>loss.backward()</code>)</td></tr>
+<tr><td><code>sign(·)</code></td><td>+1, 0 or -1 per component</td></tr>
+<tr><td><code>ε</code></td><td>the perturbation budget, e.g. <code>1/255</code> (one brightness level)</td></tr>
+</tbody></table></div>
+<p><strong>Why tiny changes work: dimensionality.</strong> The loss increases by about <code>ε · ‖∇ₓLoss‖₁</code>, and the L1 norm <strong>grows with the number of inputs</strong>. For a <code>224 × 224 × 3</code> image (<code>d = 150,528</code>) with <code>ε = 1/255</code> and an average gradient size of <code>0.01</code>, the first-order change is about <code>150,528 · 0.0039 · 0.01 ≈ 5.9</code> logits. That's enough to flip a confident prediction, even though no single pixel changed visibly. Many imperceptible changes add up in high dimensions, which is the same <code>d</code>-scaling as the attention variance argument in Ch. 20. <strong>PGD</strong> (projected gradient descent) repeats small FGSM steps and clips back into the <code>ε</code>-ball each time. It's the standard attack used in adversarial training and in LLM jailbreak research (GCG optimizes adversarial <em>token</em> suffixes the same way).</p>
+<h3 id="mixed-strategies-why-security-patrols-should-be-random">Mixed strategies: why security patrols should be random<a class="anchor" href="#mixed-strategies-why-security-patrols-should-be-random" aria-hidden="true">#</a></h3>
+<p>In many games the equilibrium is not a single action but a <strong>probability distribution</strong> over actions, a <em>mixed strategy</em>. The defender randomizes so the attacker can't exploit any pattern.</p>
+<p><strong>Worked example: one guard, two targets.</strong> Target A is worth 10 to an attacker and target B is worth 5. The defender covers A with probability <code>c</code> and B with probability <code>1 - c</code>. An attack on a covered target fails (payoff 0), and an attack on an uncovered target succeeds:</p>
+<pre><code>attacker's expected payoff at A:  10 · (1 - c)
+attacker's expected payoff at B:   5 · c</code></pre>
+<p>If the defender always guards A (<code>c = 1</code>), the attacker hits B for 5. The defender's best randomization makes the attacker <strong>indifferent</strong> between the targets, leaving nothing predictable to exploit:</p>
+<pre><code>10 · (1 - c) = 5 · c   -&gt;   c = 2/3          attacker's best payoff = 10/3 ≈ 3.3</code></pre>
+<p>Randomizing cuts the attacker's expected gain from 5 to 3.3 <strong>with the same single guard</strong>. Because the defender commits first and the attacker observes the <em>strategy</em> (but not each day's roll), this is a <strong>Stackelberg security game</strong>. Systems built on it have scheduled real patrols: ARMOR at LAX airport checkpoints (2007), the US Coast Guard's PROTECT in Boston harbour, and US Federal Air Marshal scheduling. Moving-target defences (ASLR, rotating credentials, randomized honeypot placement) apply the same idea in software. ASLR's strength, for example, is the min-entropy (Ch. 23) of the randomized address bits.</p>
+<h3 id="the-defender-s-dilemma-quantified">The defender's dilemma, quantified<a class="anchor" href="#the-defender-s-dilemma-quantified" aria-hidden="true">#</a></h3>
+<p>An attacker needs one way in. A defender has to close all of them. If a system has <code>n</code> independent weaknesses, each exploitable with probability <code>p</code>:</p>
+<pre><code>P(breach) = 1 - (1 - p)ⁿ</code></pre>
+<p>With 100 weaknesses at 1% each, <code>1 - 0.99¹⁰⁰ ≈ 63%</code>. That's the same formula as Ch. 14's tail-at-scale fan-out, now working against the defender. Two strategic consequences follow. Removing whole <em>classes</em> of weakness (memory-safe languages, parameterized queries) reduces <code>n</code> and beats patching instances one by one. And <strong>defence in depth</strong> turns the attacker's problem into a series chain, where they must beat every layer: three independent layers that each stop 90% of attempts let through only <code>0.1³ = 0.1%</code>, as long as the layers really are independent (Ch. 8).</p>
 <h3 id="real-life-engineering-ties-26">Real-life engineering ties<a class="anchor" href="#real-life-engineering-ties-26" aria-hidden="true">#</a></h3>
 <ul>
 <li><strong>Security:</strong> threat modeling is applied game theory — reasoning about a <em>rational, adaptive</em> adversary is fundamentally different from reasoning about random failures (Ch. 14), and mixing up the two framings is a common root cause of security controls that look good on paper but fail against a motivated attacker who simply routes around them.</li>
@@ -3387,6 +3907,55 @@ Step 2 — CPU eased to 70 (prev_error is now -25):
 </ul>
 <h3 id="tcp-congestion-control-as-control-theory">TCP congestion control as control theory<a class="anchor" href="#tcp-congestion-control-as-control-theory" aria-hidden="true">#</a></h3>
 <p>Revisiting Ch. 25's AIMD from a control-theory lens: TCP's congestion window is a <strong>feedback-controlled variable</strong>, where packet loss is the "error signal" telling the sender it exceeded the network's capacity. The conservative asymmetry (slow additive increase, fast multiplicative decrease) is a deliberately <em>stable</em> control law, chosen specifically so that thousands of independent, uncoordinated TCP senders across the global internet converge toward fair bandwidth sharing without a central controller — a remarkable real-world distributed-control-theory result.</p>
+<h3 id="stability-derived-when-does-a-feedback-loop-converge">Stability, derived: when does a feedback loop converge?<a class="anchor" href="#stability-derived-when-does-a-feedback-loop-converge" aria-hidden="true">#</a></h3>
+<p>Model the simplest loop in discrete time. Each control tick, a P-controller removes a fraction <code>K</code> of the current error:</p>
+<pre><code>e_{t+1} = e_t - K · e_t = (1 - K) · e_t        -&gt;       e_t = (1 - K)ᵗ · e₀</code></pre>
+<div class="tbl"><table>
+<thead><tr><th>Symbol</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>e_t</code></td><td>error at tick <code>t</code> (e.g. CPU % above target)</td></tr>
+<tr><td><code>K</code></td><td>loop gain: controller gain × how strongly the system responds</td></tr>
+<tr><td><code>1 - K</code></td><td>the factor applied to the error every tick</td></tr>
+</tbody></table></div>
+<p>That's a geometric sequence (Ch. 6), so it converges if and only if <code>|1 - K| &lt; 1</code>, that is, <strong><code>0 &lt; K &lt; 2</code></strong>. It's the identical condition to gradient descent's <code>η &lt; 2/λ</code> in Ch. 21. A training loop and an autoscaler are the same mathematical object. With error <code>e₀ = 10</code>:</p>
+<div class="tbl"><table>
+<thead><tr><th><code>K</code></th><th>factor</th><th>Error over ticks</th><th>Behaviour</th></tr></thead>
+<tbody>
+<tr><td>0.5</td><td>0.5</td><td>10, 5, 2.5, 1.2, 0.6 …</td><td>smooth convergence</td></tr>
+<tr><td>1.0</td><td>0</td><td>10, 0, 0, 0 …</td><td>"deadbeat": fixed in one step</td></tr>
+<tr><td>1.5</td><td>-0.5</td><td>10, -5, 2.5, -1.2 …</td><td>overshoots, but settles</td></tr>
+<tr><td>2.5</td><td>-1.5</td><td>10, -15, 22.5, -33.8 …</td><td><strong>unstable</strong>: the thrashing autoscaler</td></tr>
+</tbody></table></div>
+<p>For systems with many interacting state variables, the factor becomes a matrix and the rule becomes Ch. 11's: <strong>stable if and only if every eigenvalue has magnitude below 1</strong>. Control engineers call these eigenvalues the system's <em>poles</em>.</p>
+<h3 id="delay-halves-the-stable-gain">Delay halves the stable gain<a class="anchor" href="#delay-halves-the-stable-gain" aria-hidden="true">#</a></h3>
+<p>Real loops act on <strong>stale</strong> measurements: metrics scrape intervals, aggregation windows, pod start-up time. Add a delay of just one tick, so the controller corrects based on the error it saw last time:</p>
+<pre><code>e_{t+1} = e_t - K · e_{t-1}</code></pre>
+<p>Try a solution <code>e_t = zᵗ</code>. Substituting gives the <strong>characteristic equation</strong> <code>z² - z + K = 0</code>. For <code>K &gt; 1/4</code> the roots are complex with magnitude <code>√K</code> (the product of the roots is <code>K</code>), so the loop is stable only if <strong><code>K &lt; 1</code></strong>. The stability limit halves from 2 to 1:</p>
+<div class="tbl"><table>
+<thead><tr><th><code>K</code></th><th>No delay</th><th>One tick of delay</th></tr></thead>
+<tbody>
+<tr><td>0.5</td><td>10, 5, 2.5, 1.2 … converges</td><td>10, 10, 5, 0, -2.5, -2.5, -1.2 … converges with a wobble</td></tr>
+<tr><td>1.0</td><td>10, 0 … perfect</td><td>10, 10, 0, -10, -10, 0, 10 … <strong>oscillates forever</strong></td></tr>
+<tr><td>1.5</td><td>settles</td><td>10, 10, -5, -20, -12.5, 17.5, 36 … <strong>diverges</strong></td></tr>
+</tbody></table></div>
+<p>The gain that was ideal without delay (<code>K = 1</code>) causes a permanent oscillation with delay. <strong>This is the most common cause of autoscaler flapping and of "retry storms" that build in waves</strong>: the controller keeps acting on a picture of the world that's already out of date. Longer delays shrink the stable gain further, so the fix is lower gain, a shorter feedback path, or both.</p>
+<h3 id="steady-state-error-and-why-the-i-term-exists">Steady-state error, and why the I-term exists<a class="anchor" href="#steady-state-error-and-why-the-i-term-exists" aria-hidden="true">#</a></h3>
+<p>Suppose a constant disturbance <code>D</code> keeps pushing the system off target, for example a steady background load the autoscaler doesn't see directly. With P-only control the loop settles where the controller's push balances the disturbance:</p>
+<pre><code>e_ss = D / (1 + K)</code></pre>
+<p>With <code>D = 20</code> and <code>K = 4</code>, the loop settles with a permanent error of <code>20/5 = 4</code>. Higher <code>K</code> shrinks that error but, as shown above, moves you toward instability. The <strong>integral</strong> term <code>Ki · Σ e</code> keeps growing as long as <em>any</em> error remains, so the only place the loop can come to rest is <code>e = 0</code>. That's the mathematical reason the I in PID exists, and also why an unbounded integral causes <strong>windup</strong> when the actuator saturates (for example, already at max replicas). Production controllers clamp the integral.</p>
+<h3 id="the-kubernetes-hpa-read-as-a-controller">The Kubernetes HPA, read as a controller<a class="anchor" href="#the-kubernetes-hpa-read-as-a-controller" aria-hidden="true">#</a></h3>
+<p>The Horizontal Pod Autoscaler's core formula is a proportional controller in multiplicative form:</p>
+<pre><code>desiredReplicas = ceil( currentReplicas · currentMetric / targetMetric )</code></pre>
+<p><strong>Example:</strong> 4 replicas running at 90% CPU against a 60% target: <code>ceil(4 · 90/60) = ceil(6) = 6</code> replicas. Each mechanism the HPA adds around that formula maps onto the maths above:</p>
+<div class="tbl"><table>
+<thead><tr><th>HPA feature</th><th>Default</th><th>Control-theory role</th></tr></thead>
+<tbody>
+<tr><td>tolerance</td><td>10% (ignore ratios within 0.9–1.1)</td><td><strong>deadband</strong>: don't react to noise</td></tr>
+<tr><td>scale-down stabilization window</td><td>300 s (uses the highest recommendation in the window)</td><td><strong>hysteresis</strong>: avoid flapping on stale or noisy signals</td></tr>
+<tr><td>scale-up/down <code>policies</code> (pods or % per period)</td><td>configurable</td><td><strong>rate limiting</strong>: caps the effective gain <code>K</code></td></tr>
+<tr><td>metrics resolution and pod readiness delay</td><td>~15–60 s</td><td><strong>the dead time</strong> that halves the stable gain</td></tr>
+</tbody></table></div>
+<p>When an HPA flaps, the diagnosis is the same as for any controller: either the gain is too high (policies too aggressive), the delay is too long (slow metrics, slow pod start-up), or both. KEDA, Karpenter and cloud autoscalers are all variations on this loop.</p>
 <h3 id="real-life-engineering-ties-27">Real-life engineering ties<a class="anchor" href="#real-life-engineering-ties-27" aria-hidden="true">#</a></h3>
 <ul>
 <li><strong>SWE/SRE/Network:</strong> autoscalers, rate limiters, adaptive timeout/retry systems, and load-shedding controllers are all PID-flavored (even when implemented as simpler heuristics, they're approximating the same feedback-control idea, often badly, which is why they sometimes oscillate in production).</li>
@@ -3430,13 +3999,38 @@ INFORMATION THEORY
   KL divergence                     = Σ p(x)·log2(p(x)/q(x))
   Shannon channel capacity          = B · log2(1 + S/N)
 
+NUMBER THEORY (Ch. 19)
+  Bézout / extended Euclid          a·x + b·y = gcd(a, b)
+  Fermat's little theorem           a^(p-1) ≡ 1 (mod p)
+  Euler's theorem                   a^φ(n) ≡ 1 (mod n),  gcd(a,n) = 1
+  prime density                     ≈ 1 / ln N
+  Miller-Rabin error after k rounds ≤ 4^(-k)
+  RSA-CRT fault attack              gcd(s'^e - m, n) = q
+
 CRYPTOGRAPHY
   RSA: n = p·q, φ(n) = (p-1)(q-1), d = e^-1 mod φ(n)
+  RSA correctness                   m^(ed) = m^(1 + kφ(n)) ≡ m (mod n)
+  EC point add slope                λ = (y₂-y₁)/(x₂-x₁),  doubling λ = (3x₁²+a)/(2y₁)
+  EC sum                            x₃ = λ² - x₁ - x₂,  y₃ = λ(x₁ - x₃) - y₁
+  ECDSA nonce reuse                 k = (z₁-z₂)/(s₁-s₂),  d = (s·k - z)/r   (mod n)
+  birthday, 50% collision           k ≈ 1.18 · √N
+  LWE                               b = A·s + e (mod q)
   Diffie-Hellman shared secret      = g^(a·b) mod p   (computed as (g^b)^a = (g^a)^b)
   birthday-bound collision attempts ≈ 2^(hash_bits / 2)
   brute-force expected time         = 2^(entropy_bits) / (2 · guesses_per_second)
 
 NETWORKING
+  M/M/1 queue length distribution   P(n) = (1-ρ)·ρⁿ,  P(n ≥ k) = ρᵏ,  L = ρ/(1-ρ)
+  Kingman (G/G/1 wait)              W_q ≈ (ρ/(1-ρ)) · ((c_a² + c_s²)/2) · τ
+  Erlang C                          P(wait) for c servers at load a = λ/μ
+  router buffer (many flows)        BDP / √n
+  max-flow = min-cut                (Ford-Fulkerson)
+  spanning trees                    det(Laplacian minus one row and column)
+  DFT                               X_k = Σ x_n · e^(-2πi·kn/N)
+  Nyquist                           f_s &gt; 2·f_max
+  decibels                          10·log₁₀(P₁/P₂);  +3 dB ≈ ×2
+  free-space path loss (dB)         20·log₁₀(d) + 20·log₁₀(f) - 147.55
+  QAM SNR floor                     2^(bits/symbol) - 1
   subnet addresses                  = 2^(32 - cidr_bits)
   bandwidth-delay product           = bandwidth × RTT
   Little's Law                      = L (items in system) = λ (arrival rate) · W (time in system)
@@ -3489,8 +4083,21 @@ CALCULUS / ML
   Adam step                         w -= η · m̂ / (√v̂ + ε)
   Mathis TCP throughput             ≈ (MSS/RTT) · 1.22/√p
 
+SECURITY (Ch. 23, 26, 28)
+  min-entropy                       H∞ = -log₂(max p(x))
+  precision from base rate π        TPR·π / (TPR·π + FPR·(1-π))
+  cost-optimal alert threshold      P(attack|evidence) &gt; C_FP / (C_FP + C_FN)
+  AUC                               P(score(attack) &gt; score(benign))
+  differential privacy              P[M(D)∈S] ≤ e^ε · P[M(D')∈S],  Laplace scale Δf/ε
+  slow-hash bonus bits              log₂(slowdown factor)
+  FGSM                              δ = ε · sign(∇ₓ Loss)
+  P(breach) with n weaknesses       1 - (1-p)ⁿ
+
 CONTROL THEORY
-  PID output = Kp·error + Ki·∫error·dt + Kd·(d(error)/dt)</code></pre>
+  PID output = Kp·error + Ki·∫error·dt + Kd·(d(error)/dt)
+  P-loop stability                  0 &lt; K &lt; 2   (one tick of delay: K &lt; 1)
+  P-only steady-state error         D / (1 + K)
+  Kubernetes HPA                    ceil(replicas · current / target)</code></pre>
 <h2 id="practice-labs-hands-on-in-order-of-difficulty">Practice labs (hands-on, in order of difficulty)<a class="anchor" href="#practice-labs-hands-on-in-order-of-difficulty" aria-hidden="true">#</a></h2>
 <ol>
 <li><strong>Overflow bug hunt:</strong> write an 8-bit signed-integer simulator (Ch. 1) and find the exact input that wraps from 127 to -128.</li>
