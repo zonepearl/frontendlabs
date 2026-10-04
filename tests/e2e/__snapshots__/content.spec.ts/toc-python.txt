@@ -1,0 +1,84 @@
+How to use this guide
+Table of contents
+0.1 Setup: Python, uv, ruff, a type checker, and an editor
+0.2 The series: OS → networking → security → AI, in Python
+0.3 The Go ↔ Rust ↔ Python phrasebook
+0.4 The Python labs: what you build for each guide in the series
+0.5 Why Python runs AI, and where it does not belong
+1. What Python is: CPython, bytecode, and the REPL
+2. Names, objects, and references: the model behind every Python bug
+3. Numbers, text, and bytes
+4. Control flow and pattern matching
+5. Functions: arguments, scope, and closures
+6. Collections: list , tuple , dict , set , and comprehensions
+7. Errors and exceptions
+8. Files, paths, and context managers
+9. Modules, packages, and imports
+10. 🔎 Checkpoint: names, objects, and collections
+11. Terminal project: a word-frequency counter
+12. Terminal project: a web access-log analyzer
+13. Iterators and generators: lazy pipelines
+14. Decorators
+15. Classes, properties, and dataclasses
+16. The data model: making your objects feel built in
+17. Inheritance, composition, ABCs, and protocols
+18. Type hints that pay for themselves
+19. The standard library you will use every week
+20. Testing with pytest and Hypothesis
+21. Projects and packaging: pyproject.toml , uv , lockfiles
+22. 🔎 Checkpoint: generators, classes, and types
+23. Terminal project: pygrep , a tested grep clone
+24. Terminal project: an LRU cache with TTL, two ways
+25. How CPython runs your code: bytecode, frames, and the specializing interpreter
+26. Memory: reference counting, the cycle collector, and __slots__
+27. The GIL, threads, and free-threaded Python
+28. Processes: multiprocessing and concurrent.futures
+29. asyncio: the event loop, tasks, timeouts, and cancellation
+30. Descriptors, __init_subclass__ , and metaclasses: how frameworks work
+31. Performance: measure first, then vectorize, cache, or go native
+32. Project: a parallel file hasher, four ways
+33. Syscalls from Python: what open() really does
+34. Processes: subprocess done right, exit codes, and signals
+35. Files that survive crashes: fsync and atomic replacement
+36. Reading /proc : build your own ps
+37. mmap , shared memory, and pipes
+38. Python as a better shell: automation and a systemd service
+39. A container in 80 lines: namespaces with os.unshare
+40. Sockets four ways: blocking, threads, selectors , asyncio
+41. A DNS client from raw bytes with struct
+42. HTTP/1.1 from a bare socket
+43. HTTP clients done right: timeouts, retries, pooling, and an SSRF guard
+44. A production API with FastAPI: validation, limits, and shutdown
+45. TLS and mutual TLS with the ssl module
+46. Project: an async service health checker
+47. Python's own attack surface
+48. Cryptography done right: secrets , hmac , AEAD, password hashing
+49. Web security in Python: injection, templates, and uploads
+50. Supply chain: lockfiles, hashes, audits, and trusted publishing
+51. Project: an auth service with Argon2 and JWTs
+52. Project: a log-based intrusion detector
+53. NumPy: arrays, broadcasting, and why vectorized code is fast
+54. pandas and Polars: tables, groupby, joins, and time series
+55. Plotting just enough: matplotlib
+56. scikit-learn: the fit/predict contract, pipelines, and leakage
+57. Autograd from scratch: the engine inside PyTorch in 120 lines
+58. PyTorch: tensors, nn.Module , and the training loop
+59. Hugging Face: tokenizers, models, and datasets
+60. Data pipelines for training: extraction, cleaning, dedup, JSONL
+61. LLM apps in Python: structured output, RAG, a tool-calling agent, an MCP server
+62. Experiment hygiene: seeds, configs, notebooks, and reproducibility
+63. How to read a real codebase
+64. The call path: requests.get() to the socket
+65. The design lessons in requests
+66. Running the tests and making a change
+67. Library and API design: making code other people can use
+68. Logging and observability
+69. Debugging: pdb , faulthandler , py-spy , and remote attach
+70. Shipping Python: containers, wheels, and GPU images
+71. How not to write Python: an anti-pattern catalog
+72. Capstone: one request, every layer, every guide, in Python
+Appendix A — Traceback decoder: the 15 exceptions you will actually see
+Appendix B — Tooling cheat sheet
+Appendix C — Glossary
+Appendix D — A 90-day plan
+Appendix E — The guides, books, and codebases this guide draws on

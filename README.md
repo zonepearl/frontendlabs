@@ -34,6 +34,7 @@ with runnable labs in every guide.
 | 🐹 | [Go — The Complete Field Guide](https://frontendlabs.xyz/go/) | Programming | Beginner → Expert · alongside |
 | 🗓️ | [Go 120-Day Engineering Plan](https://frontendlabs.xyz/go-plan/) | Programming | Day by day |
 | 🦀 | [Rust — The Complete Field Guide](https://frontendlabs.xyz/rust/) | Programming | Beginner → Expert · alongside |
+| 🐍 | [Python — The Complete Field Guide](https://frontendlabs.xyz/python/) | Programming | Beginner → Expert · alongside |
 | 🛠️ | [C — The Complete Field Guide](https://frontendlabs.xyz/c/) | Programming | Beginner → Expert |
 | 🟨 | [JavaScript — The Complete Field Guide](https://frontendlabs.xyz/javascript/) | Programming | Beginner → Expert |
 | 🧩 | [Data Structures & Algorithms](https://frontendlabs.xyz/dsa/) | Programming | Beginner → Advanced |

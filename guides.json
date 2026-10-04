@@ -257,6 +257,18 @@
       ]
     },
     {
+      "slug": "python",
+      "title": "Python — The Complete Field Guide",
+      "short": "Python",
+      "icon": "🐍",
+      "category": "languages",
+      "step": "Alongside",
+      "level": "Beginner → Expert",
+      "summary": "Names and objects to CPython internals, asyncio and the GIL, the OS, network and security labs in Python, NumPy to PyTorch and LLM apps, and requests read end to end.",
+      "source": "python/real-life-python-guide.md",
+      "originals": []
+    },
+    {
       "slug": "dsa",
       "title": "Data Structures & Algorithms",
       "icon": "🧩",
@@ -367,6 +379,7 @@
         "go",
         "go-plan",
         "rust",
+        "python",
         "c",
         "javascript",
         "dsa"
