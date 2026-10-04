@@ -312,7 +312,7 @@
       "icon": "🤖",
       "category": "more",
       "level": "Beginner → Expert",
-      "summary": "From classical ML through Transformers to training, serving, and optimizing LLMs, plus agents and governance.",
+      "summary": "From classical ML through Transformers to training, serving, and optimizing LLMs, plus agents, harnesses, production deployment, and world models.",
       "source": "AI-ML/real-life-ai-example-v1.md",
       "originals": [
         "AI-ML/real-life-ai-example-v1-book.html",
@@ -421,11 +421,30 @@
       {
         "title": "Guardrails",
         "anchor": "part-14-guardrails-making-it-safe"
+      },
+      {
+        "title": "Agent harnesses",
+        "anchor": "chapter-74-the-harness-everything-around-the-loop"
+      },
+      {
+        "title": "Long-running loops",
+        "anchor": "chapter-75-loops-that-run-for-hours-long-horizon-agents"
+      },
+      {
+        "title": "Agents in production",
+        "anchor": "chapter-77-deploying-agents-to-production"
+      },
+      {
+        "title": "Jev & decision models",
+        "anchor": "chapter-80-system-one-models-jev-and-llm-writes-model-decides-code-acts"
+      },
+      {
+        "title": "JEPA & world models",
+        "anchor": "chapter-81-jepa-and-world-models-predicting-meaning-not-tokens"
       }
     ],
     "coming": [
-      "Data science",
-      "Agentic AI in depth"
+      "Data science"
     ]
   }
 }

@@ -79,3 +79,11 @@ Chapter 70 — AI governance and compliance
 Chapter 71 — How AdamW actually works
 Chapter 72 — GQA: shrinking the KV cache without losing (much) quality
 Chapter 73 — Quantization: from float32 to int4, the actual algorithm
+Chapter 74 — The harness: everything around the loop
+Chapter 75 — Loops that run for hours: long-horizon agents
+Chapter 76 — Evaluating agents: "works once" vs "works every time"
+Chapter 77 — Deploying agents to production
+Chapter 78 — Agent interop: AGENTS.md, Skills, MCP, and A2A
+Chapter 79 — Project 6: an overnight agent that opens real pull requests
+Chapter 80 — System One models: Jev and "LLM writes, model decides, code acts"
+Chapter 81 — JEPA and world models: predicting meaning, not tokens
