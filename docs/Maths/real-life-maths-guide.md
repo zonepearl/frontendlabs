@@ -118,11 +118,11 @@ You don't need all 29 chapters at equal depth. Use this as a priority map —
 | 4. Sets & functions | P1 | P2 | P2 | P2 |
 | 5. Exponents & logs | P1 | P1 | P2 | P1 |
 | 6. Sequences & growth | P2 | P2 | P2 | P2 |
-| 7. Geometry & trig | P3 | P2 | P2 | P3 |
+| 7. Geometry & trig | P3 | P2 | P2 | P2 |
 | 8. Basic probability | P2 | P1 | P2 | P1 |
 | 9. Basic statistics | P1 | P1 | P2 | P1 |
 | 10–11. Linear algebra | P2 | P1 | P3 | P2 |
-| 12–13. Calculus | P2 | P1 | P3 | P2 |
+| 12–13. Calculus | P2 | P1 | P2 | P2 |
 | 14. Distributions | P2 | P1 | P2 | P1 |
 | 15. Combinatorics | P2 | P2 | P2 | P1 |
 | 16. Bayes' theorem | P2 | P1 | P2 | P1 |
@@ -8452,7 +8452,6 @@ and who tends to need them:
 | **Measure theory & rigorous probability** | Formal foundations under Ch. 8–9/14/22, needed for continuous-time stochastic processes | ML researchers (theory-heavy roles), quants |
 | **Stochastic calculus / Brownian motion** | Diffusion/score-based generative model theory, quantitative finance | AI researchers (generative models), fintech quants |
 | **Time-series analysis (ARIMA, seasonality, wavelets)** | Forecasting, capacity planning over time, anomaly detection with seasonality | SRE/capacity planning, AI (forecasting models) |
-| **Differential privacy math** | Formal privacy guarantees when training on or querying sensitive data | AI/ML engineers handling regulated data, privacy engineers |
 | **Zero-knowledge proofs, homomorphic encryption, secure multi-party computation** | Privacy-preserving computation, blockchain, verifiable computation without revealing inputs | Security/cryptography engineers, blockchain engineers |
 | **Lattice-based cryptography (deep dive)** | Full mathematical detail behind NIST's post-quantum standards (ML-KEM, ML-DSA), beyond the overview in Ch. 24 | Cryptography engineers preparing PQC migrations |
 | **Quantum computing math (qubits, superposition, Shor's/Grover's algorithms)** | Understanding the actual mechanism of the quantum threat referenced in Ch. 19/24 | Security engineers tracking PQC timelines, quantum researchers |
