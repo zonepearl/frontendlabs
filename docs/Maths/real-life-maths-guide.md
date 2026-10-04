@@ -16,10 +16,13 @@
 1. Read and reason about **Big-O**, entropy, and probability without hand-waving.
 2. Explain **why floating point breaks money math**, and how to avoid it.
 3. Compute **subnet ranges, bandwidth-delay products, and queue depths** by hand.
-4. Derive **gradient descent and backpropagation** from the chain rule, not from memory.
-5. Explain **why RSA and Diffie-Hellman are secure**, using the actual number theory.
-6. Quantify **password strength, hash collisions, and detection system false-positive rates**.
-7. Know which branch of math to reach for when a new problem shows up, and where
+4. Derive **gradient descent and backpropagation** from the chain rule, not from memory,
+   and explain why attention divides by `√d_k` and why `η < 2/λ_max`.
+5. Read a formula like an API signature: name every symbol, check the units, and
+   test it on simple numbers and extreme values.
+6. Explain **why RSA and Diffie-Hellman are secure**, using the actual number theory.
+7. Quantify **password strength, hash collisions, and detection system false-positive rates**.
+8. Know which branch of math to reach for when a new problem shows up, and where
    to go deeper.
 
 ---
@@ -34,8 +37,9 @@ Each of the 29 chapters follows the same shape:
 **You'll use this for:** <the 1-line reason a senior engineer needs it>
 
 - The idea (plain language)
-- The formula / mechanism
-- Worked example (by hand, with real numbers)
+- The formula / mechanism, with a table naming every symbol
+- Worked example (by hand, with real numbers), directly under the formula
+- The theorems behind it, and how AI and networking systems use it
 - Code (Python, runnable)
 - Real-life engineering ties (SWE / AI / Network / Security)
 - Common mistake
@@ -59,7 +63,7 @@ python3
 ## Contents
 
 **Part 0 — Start here**
-- How to use this guide · Role-based learning paths · Notation cheat sheet
+- How to use this guide · Role-based learning paths · Notation cheat sheet · How to read a formula
 
 **Part 1 — Beginner: the foundations everyone needs**
 1. Number systems & bit-level math
@@ -69,15 +73,15 @@ python3
 5. Exponents & logarithms
 6. Sequences, series & growth rates
 7. Geometry & trigonometry essentials
-8. Basic probability
-9. Basic statistics
+8. Basic probability (axioms, conditional probability, expectation)
+9. Basic statistics (correlation, EWMA and TCP's retransmission timer)
 
 **Part 2 — Intermediate: core engineering mathematics**
-10. Linear algebra I — vectors & matrices
-11. Linear algebra II — eigenvalues, eigenvectors, determinants
-12. Calculus I — limits, derivatives, rates of change
-13. Calculus II — gradients, partial derivatives, the chain rule
-14. Probability distributions
+10. Linear algebra I — vectors & matrices (norms, neural layers, routing matrices, least squares)
+11. Linear algebra II — eigenvalues, eigenvectors, determinants (PageRank, Markov chains, graph Laplacians)
+12. Calculus I — limits, derivatives, integrals (Taylor, Newton's method, the Fundamental Theorem)
+13. Calculus II — gradients, Jacobians, Hessians, the chain rule (backprop by hand, softmax gradient)
+14. Probability distributions (CLT, LLN, concentration bounds, heavy tails, LLM sampling)
 15. Combinatorics & counting
 16. Bayes' theorem
 17. Graph theory
@@ -85,9 +89,9 @@ python3
 19. Number theory basics
 
 **Part 3 — Expert: domain-specific deep dives (senior level)**
-20. Linear algebra for AI/ML (SVD, PCA, tensors)
-21. Optimization & backpropagation
-22. Statistics for ML & experimentation
+20. Linear algebra for AI/ML (SVD, PCA, tensors, attention)
+21. Optimization & backpropagation (learning-rate limits, Adam, Lagrange and TCP fairness)
+22. Statistics for ML & experimentation (MLE, z-tests, power analysis)
 23. Information theory (entropy, KL divergence, channel capacity)
 24. Cryptographic mathematics (RSA, Diffie-Hellman, elliptic curves)
 25. Network & systems mathematics (queueing, subnetting, congestion control)
@@ -148,6 +152,68 @@ You don't need all 29 chapters at equal depth. Use this as a priority map —
 | `P(A\|B)` | probability of A given B | `E[X]` | expected value of X |
 | `∇f` | gradient of f | `∂f/∂x` | partial derivative |
 | `⊕` | XOR | `≡` | congruent (modular equality) |
+| `ℝⁿ` | the space of lists of `n` real numbers | `x ∈ ℝⁿ` | "x is a vector with n real entries" |
+| `‖x‖` | length (norm) of vector `x` | `Aᵀ` | transpose of `A` (rows ↔ columns) |
+| `A⁻¹` | inverse of matrix `A` | `det(A)` | determinant of `A` |
+| `I` | identity matrix (1s on the diagonal) | `⊙` | element-wise product |
+| `∫ₐᵇ f(x) dx` | integral: area under `f` from `a` to `b` | `lim(h→0)` | the value approached as `h` shrinks to 0 |
+| `X ~ N(μ, σ²)` | "X is drawn from a normal distribution with mean μ, variance σ²" | `∝` | "proportional to" |
+| `argmax_θ f(θ)` | the `θ` that makes `f` largest (not the largest value itself) | `x̄` | sample mean of `x` |
+| `Var(X)` | variance of X | `Cov(X,Y)` | covariance of X and Y |
+
+The Greek letters you will meet over and over, and what they usually stand for:
+
+| Letter | Name | Usually means | Letter | Name | Usually means |
+|---|---|---|---|---|---|
+| `α` | alpha | significance level, smoothing factor | `β` | beta | momentum/decay factor, Type II error |
+| `δ` `Δ` | delta | a small change; `Δx` = "change in x" | `ε` | epsilon | a tiny tolerance or error |
+| `η` | eta | learning rate | `θ` | theta | model parameters, or an angle |
+| `λ` | lambda | eigenvalue, arrival rate, Lagrange multiplier | `μ` | mu | mean, or service rate in queueing |
+| `σ` | sigma | standard deviation, or the sigmoid function | `Σ` | capital sigma | sum, or a covariance matrix |
+| `ρ` | rho | utilization (queueing), correlation | `π` | pi | 3.14159…, or a stationary distribution |
+| `φ` | phi | Euler's totient, or the normal CDF | `ω` | omega | angular frequency |
+
+Context decides which meaning applies. `λ` is an arrival rate in Ch. 25 and an
+eigenvalue in Ch. 11, and each chapter says which one it means.
+
+## How to read a formula (the skill nobody teaches)
+
+Most people bounce off mathematics because they try to read a formula the way
+they read prose, left to right, all at once. Read it the way you read an
+unfamiliar function signature instead:
+
+1. **Find the output.** What is on the left of the `=`? That is the return value.
+2. **Name every symbol.** Each letter is a parameter. Which are inputs you supply,
+   which are constants, and which are dummy loop variables (like the `i` in `Σ`)?
+3. **Check the units.** If the left side is "seconds", the right side must
+   come out in seconds too. Unit-checking catches most misread formulas.
+4. **Plug in the simplest numbers.** Set things to 0, 1 or 2 and see if the
+   output makes sense.
+5. **Push it to the extremes.** What happens as an input goes to 0 or to infinity?
+   Extremes show what a formula is really about.
+
+Here is the method on a formula from Ch. 25, the M/M/1 queue's average time in system:
+
+```
+W = 1 / (μ - λ)
+```
+
+| Symbol | Say it as | What it means | Units |
+|---|---|---|---|
+| `W` | "W" | average time a request spends waiting plus being served | seconds |
+| `μ` | "mu" | how many requests the server *can* finish per second | requests/s |
+| `λ` | "lambda" | how many requests *arrive* per second | requests/s |
+
+- **Units:** `1 / (requests/s)` = seconds. ✓
+- **Simple numbers:** `μ = 100`, `λ = 50` → `W = 1/50 s = 20 ms`.
+- **Extremes:** as `λ → 0` (idle server), `W → 1/μ = 10 ms`, just the service
+  time, which makes sense. As `λ → μ` (server at 100% utilization), the denominator
+  goes to 0 and `W → ∞`. The formula is telling you that **queues explode
+  near full utilization**, which is the whole lesson of Ch. 25 in one line.
+
+Every formula in this guide is laid out the same way: the formula, a table
+that names every symbol, then a worked example with real numbers right below it.
+When a formula looks scary, go back to these five steps.
 
 ---
 
@@ -1215,6 +1281,192 @@ P(A ∪ B) = P(A) + P(B) - P(A ∩ B)
 You subtract the overlap so you don't double count it. Forgetting the
 `-P(A ∩ B)` term is the single most common basic probability bug.
 
+### The three axioms everything else is built on
+
+In 1933 Andrey Kolmogorov showed that all of probability theory follows from
+three rules. Every formula in this guide that involves `P(...)`, from Bayes to
+the Poisson distribution, can be derived from these three.
+
+```
+1.  P(A) ≥ 0                                  for every event A
+2.  P(Ω) = 1                                  something in the sample space happens
+3.  P(A ∪ B) = P(A) + P(B)                    when A and B can't both happen (A ∩ B = ∅)
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `Ω` | "omega" | the sample space: every possible outcome |
+| `A ∪ B` | "A union B" | A happens, or B happens, or both |
+| `A ∩ B` | "A intersect B" | A and B both happen |
+| `∅` | "empty set" | an impossible event |
+
+**Example:** the complement rule, `P(not A) = 1 - P(A)`, isn't a separate
+fact you memorize. `A` and `not A` can't both happen, and together they cover
+`Ω`. So by axiom 3, `P(A) + P(not A) = P(Ω)`, and by axiom 2 that equals 1.
+The retry example above (`1 - 0.027`) used exactly this.
+
+### Conditional probability: updating on new information
+
+```
+P(A | B) = P(A ∩ B) / P(B)          (defined when P(B) > 0)
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `P(A \| B)` | "probability of A given B" | the probability of A once you know B happened |
+| `P(A ∩ B)` | "probability of A and B" | both happen together |
+| `P(B)` | "probability of B" | the condition, which becomes your new "whole world" |
+
+Read it as **zooming in**. Once you know `B` happened, every outcome outside
+`B` is gone. `B` becomes the new universe, and you ask what fraction of it
+also lies inside `A`.
+
+**Example:** from logs, 2% of requests are to `/checkout`, and 0.5% of *all*
+requests are `/checkout` requests that failed. What is the failure rate
+*of checkout requests*?
+
+```
+P(fail | checkout) = P(fail ∩ checkout) / P(checkout) = 0.005 / 0.02 = 0.25  -> 25%
+```
+
+A global failure rate that looks fine can hide one endpoint that fails a
+quarter of the time. This is why SLO dashboards slice by route.
+
+### The law of total probability: divide and conquer
+
+If `B₁, B₂, …, Bₙ` split the world into non-overlapping cases that cover
+everything:
+
+```
+P(A) = Σᵢ P(A | Bᵢ) · P(Bᵢ)
+```
+
+| Symbol | Meaning |
+|---|---|
+| `Bᵢ` | the `i`-th case (e.g. "request routed to zone i") |
+| `P(Bᵢ)` | how often case `i` happens (the weights must sum to 1) |
+| `P(A \| Bᵢ)` | how likely `A` is *inside* case `i` |
+| `Σᵢ` | add up over every case `i = 1 … n` |
+
+**Example (networking):** a global load balancer sends 50% of traffic to
+zone 1, 30% to zone 2 and 20% to zone 3. The per-zone packet-loss rates are
+0.1%, 0.2% and 1%. What is the overall loss rate?
+
+```
+P(loss) = 0.001·0.5 + 0.002·0.3 + 0.010·0.2
+        = 0.0005 + 0.0006 + 0.0020
+        = 0.0031   -> 0.31%
+```
+
+Now run it backwards with Bayes (Ch. 16): given that a packet was lost, how
+likely is it that it went through zone 3? `0.0020 / 0.0031 ≈ 65%`. Zone 3
+carries only 20% of traffic but causes 65% of the loss, so that's where to
+look first. Total probability plus Bayes is the maths behind "which
+component is responsible for most of the errors?"
+
+### Random variables and expected value
+
+A **random variable** `X` is a number whose value is decided by chance, such
+as the number of retries, a request's latency, or the bytes in a flow. Its
+**expected value** is the long-run average you'd see over many repetitions:
+
+```
+E[X] = Σₓ x · P(X = x)                 (discrete: weighted sum of outcomes)
+E[X] = ∫ x · f(x) dx                    (continuous: weighted integral, Ch. 12)
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `E[X]` | "the expectation of X" | the probability-weighted average value |
+| `x` | "little x" | one particular value `X` can take |
+| `P(X = x)` | "probability X equals x" | how often that value occurs |
+| `f(x)` | "the density of X at x" | the continuous version of `P(X = x)` (Ch. 14) |
+
+**Example: how many attempts does a flaky call take, on average?** Each
+attempt succeeds independently with probability `p`. The number of attempts
+until the first success follows a *geometric* distribution, and its
+expectation works out to:
+
+```
+E[attempts] = 1·p + 2·(1-p)·p + 3·(1-p)²·p + ...  =  1/p
+```
+
+With `p = 0.7`, that's `1/0.7 ≈ 1.43` attempts per call on average, so a
+retrying client puts about **43% more load** on the backend than a
+non-retrying one. A backend that fails *more* (smaller `p`) gets *more*
+traffic. That feedback loop is how retry storms happen.
+
+**Networking in the wild: the ETX routing metric.** In wireless mesh networks
+(MIT's Roofnet, then the Linux OLSR and B.A.T.M.A.N. routing daemons), a
+link's cost is its *expected transmission count*. If a data frame gets
+through with probability `d_f` and its ACK comes back with probability
+`d_r`, an attempt succeeds with probability `d_f · d_r`, so:
+
+```
+ETX = 1 / (d_f · d_r)
+```
+
+| Path | Calculation | Expected transmissions |
+|---|---|---|
+| 1 hop, a bad link (`d_f = d_r = 0.5`) | `1 / (0.5·0.5)` | **4.0** |
+| 2 hops, two good links (`0.9` each way) | `2 × 1 / (0.9·0.9)` | **2.47** |
+
+Hop-count routing picks the 1-hop path because it has fewer hops. ETX
+routing picks the 2-hop path because, on average, it uses the air about 40%
+less. The difference is just expected value.
+
+### Linearity of expectation: the most useful "free lunch" in probability
+
+```
+E[X + Y] = E[X] + E[Y]         ALWAYS, even if X and Y are dependent
+E[c · X] = c · E[X]            for any constant c
+```
+
+The surprising part is that this works **without independence**. That lets
+you break a hard count into easy indicator pieces and add up their
+expectations.
+
+**Example: expected hash collisions.** Insert `n = 1000` keys into a hash
+table with `m = 10,000` buckets. How many *pairs* of keys share a bucket, on
+average? For each of the `C(n,2)` pairs (Ch. 15), let an indicator be 1 if
+that pair collides. Each pair collides with probability `1/m`. So:
+
+```
+E[colliding pairs] = C(n,2) · (1/m) = (1000·999/2) / 10000 = 499,500 / 10,000 ≈ 50
+```
+
+That's about 50 collisions with the table only 10% full. Linearity of
+expectation answered it in one line, with no need to work out the messy
+joint distribution. The same argument gives the birthday bound in Ch. 24.
+
+**AI in the wild: why dropout rescales.** During training, dropout zeroes
+each neuron's output `h` with probability `1 - q` (so it keeps it with
+probability `q`). The expected output becomes `E[kept h] = q·h + (1-q)·0 = q·h`.
+At inference time nothing is dropped, so the next layer would suddenly see
+inputs `1/q` times larger than it was trained on. "Inverted dropout", the
+default in PyTorch, divides by `q` during training. By linearity,
+`E[h/q · keep] = (1/q)·q·h = h`, so the expected value is the same in
+training and inference.
+
+### Variance of a random variable
+
+```
+Var(X) = E[(X - E[X])²] = E[X²] - (E[X])²
+```
+
+| Symbol | Meaning |
+|---|---|
+| `X - E[X]` | how far one outcome lands from the average |
+| `(…)²` | squared, so misses in either direction count and big misses count more |
+| `E[X²] - (E[X])²` | the shortcut form, easier to compute by hand |
+
+**Example: a single request that fails with probability `p` (a Bernoulli
+variable, 1 = fail, 0 = success).** `E[X] = p`, and since `X² = X` for 0/1
+values, `E[X²] = p`. So `Var(X) = p - p² = p(1-p)`. This is largest at
+`p = 0.5` and tiny near 0 or 1. That's why a rare-error metric (`p = 0.001`)
+needs **huge** sample sizes before you can trust a change in it, which
+Ch. 22 turns into a sample-size formula.
+
 ### Real-life engineering ties
 
 - **SWE:** retry/circuit-breaker design, error budget math (SRE), load
@@ -1344,6 +1596,168 @@ For normally distributed data: ~68% of values fall within 1σ of the mean,
 ~95% within 2σ, ~99.7% within 3σ. This is *why* "3-sigma" is a common
 default anomaly threshold — a point beyond 3σ has < 0.3% chance of
 occurring "naturally," making it a reasonable (if crude) alert trigger.
+
+### Sample vs. population: why some formulas divide by `n - 1`
+
+The variance above divides by `n`. That is correct when your data **is** the
+entire population. Usually it's only a *sample* (the last 1,000 requests,
+not every request ever), and then you should divide by `n - 1`:
+
+```
+population variance:  σ² = (1/N)     · Σᵢ (xᵢ - μ)²
+sample variance:      s² = (1/(n-1)) · Σᵢ (xᵢ - x̄)²
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `σ²`, `μ`, `N` | "sigma squared", "mu", "big N" | the true variance, true mean and size of the *whole* population |
+| `s²`, `x̄`, `n` | "s squared", "x bar", "n" | the same three quantities estimated from a *sample* |
+| `xᵢ` | "x sub i" | the `i`-th observation |
+| `n - 1` | "degrees of freedom" | the number of deviations that are free to vary |
+
+**Why `n - 1` (Bessel's correction)?** The deviations are measured from `x̄`,
+which was computed from the same data. That makes the data look closer to its
+own centre than it is to the true `μ`, so dividing by `n` *systematically
+underestimates* the spread. Another way to see it: once you know `x̄`, the
+deviations must sum to zero, so only `n - 1` of them are free.
+
+**Example:** the same data `[10, 12, 9, 11, 60]` gives
+`1965.2 / 5 = 393.04` with `n`, but `1965.2 / 4 = 491.3` (`s ≈ 22.17`) with
+`n - 1`. NumPy's `np.std` divides by `n` by default (`ddof=0`) and pandas'
+`.std()` divides by `n - 1` (`ddof=1`), so the "same" calculation can disagree
+between two notebooks. Pass `ddof` explicitly.
+
+### z-scores: putting anything on a common ruler
+
+```
+z = (x - μ) / σ
+```
+
+| Symbol | Meaning |
+|---|---|
+| `x` | the observation you want to judge |
+| `μ`, `σ` | the mean and standard deviation of "normal" behaviour |
+| `z` | how many standard deviations `x` sits from the mean (no units) |
+
+**Example:** a host normally sends `μ = 200 MB/hour` of egress traffic with
+`σ = 40 MB`. This hour it sent 380 MB:
+
+```
+z = (380 - 200) / 40 = 4.5
+```
+
+Under a normal model, a 4.5σ event happens about 3 times in a million hours.
+That's worth paging for, since it might be data exfiltration. Dividing by `σ` is
+also why ML pipelines **standardize** features before training. Packet sizes
+(hundreds) and port numbers (thousands) end up on the same scale, so gradient
+descent (Ch. 21) doesn't spend all its effort on whichever feature has the
+biggest raw numbers.
+
+### Covariance and correlation: do two things move together?
+
+```
+Cov(X, Y) = (1/(n-1)) · Σᵢ (xᵢ - x̄)(yᵢ - ȳ)
+
+r = Cov(X, Y) / (s_X · s_Y)                 (Pearson correlation, always in [-1, 1])
+```
+
+| Symbol | Meaning |
+|---|---|
+| `(xᵢ - x̄)(yᵢ - ȳ)` | positive when both are above (or both below) their means at the same time |
+| `Cov(X, Y)` | the average of those products: positive = move together, negative = move opposite |
+| `s_X`, `s_Y` | the sample standard deviations, dividing them out removes units |
+| `r` | `+1` = perfect positive line, `0` = no *linear* relation, `-1` = perfect negative line |
+
+**Example (worked by hand):** five load-test runs, with `x` = payload size
+(KB) and `y` = p50 latency (ms):
+
+```
+x = [1, 2, 3, 4, 5]     x̄ = 3
+y = [2, 4, 5, 4, 5]     ȳ = 4
+
+xᵢ - x̄:            -2  -1   0   1   2
+yᵢ - ȳ:            -2   0   1   0   1
+product:             4   0   0   0   2     sum = 6
+
+Cov = 6 / 4 = 1.5
+s_X² = (4+1+0+1+4)/4 = 2.5      s_Y² = (4+0+1+0+1)/4 = 1.5
+r = 1.5 / sqrt(2.5 · 1.5) = 1.5 / 1.936 ≈ 0.77
+```
+
+That's a strong positive relationship. The best-fit line's slope is
+`Cov/s_X² = 1.5/2.5 = 0.6 ms per KB`, and the intercept is
+`ȳ - 0.6·x̄ = 2.2 ms`. That's linear regression in two lines. Ch. 10 derives
+the same answer from matrices, which scales to thousands of features.
+
+```python
+import numpy as np
+x = np.array([1, 2, 3, 4, 5]); y = np.array([2, 4, 5, 4, 5])
+print(np.cov(x, y)[0, 1], np.corrcoef(x, y)[0, 1])   # 1.5  0.7746
+print(np.polyfit(x, y, 1))                           # [0.6 2.2]  slope, intercept
+```
+
+**Remember:** `r = 0` does *not* mean "unrelated". `y = x²` on `x ∈ [-1, 1]`
+has `r = 0` but is perfectly determined by `x`. Correlation only measures
+*straight-line* relationships. Mutual information (Ch. 23) catches the rest.
+
+### Exponentially weighted moving average (EWMA): statistics with a memory budget
+
+A plain average needs every past sample. An EWMA keeps a **single number**
+and nudges it toward each new observation:
+
+```
+S_new = (1 - α) · S_old + α · x_new
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `S` | "the smoothed value" | the running estimate |
+| `x_new` | | the newest measurement |
+| `α` | "alpha", the smoothing factor (0 < α ≤ 1) | how much to trust the new sample. A large `α` reacts fast, a small `α` is smooth but slow |
+
+Unroll it and you'll see sample `k` steps old gets weight `α(1-α)ᵏ`, which is
+geometric decay (Ch. 6). Its "memory" is roughly `1/α` samples.
+
+**Networking in the wild: TCP's retransmission timer (RFC 6298).** Every TCP
+connection in your kernel runs *two* EWMAs, one on round-trip time and one
+on its variability, to decide how long to wait before retransmitting:
+
+```
+RTTVAR ← (1 - β) · RTTVAR + β · |SRTT - R|       β = 1/4
+SRTT   ← (1 - α) · SRTT   + α · R                α = 1/8
+RTO    =  SRTT + 4 · RTTVAR
+```
+
+| Symbol | Meaning |
+|---|---|
+| `R` | the newest RTT sample, measured from a data segment and its ACK |
+| `SRTT` | smoothed RTT, the EWMA of `R` |
+| `RTTVAR` | the EWMA of the absolute deviation, a cheap stand-in for standard deviation |
+| `RTO` | retransmission timeout = mean + 4 × deviation, a "4-sigma" rule (Ch. 9 above) |
+
+**Worked by hand.** The first sample `R = 100 ms` initializes `SRTT = 100`,
+`RTTVAR = R/2 = 50`, so `RTO = 100 + 4·50 = 300 ms`. Then:
+
+```
+R = 120 ms:  RTTVAR = 0.75·50   + 0.25·|100   - 120| = 37.5   + 5      = 42.5
+             SRTT   = 0.875·100 + 0.125·120          = 102.5
+             RTO    = 102.5 + 4·42.5                 = 272.5 ms
+
+R = 300 ms:  RTTVAR = 0.75·42.5  + 0.25·|102.5 - 300| = 31.875 + 49.375 = 81.25
+             SRTT   = 0.875·102.5 + 0.125·300         = 127.19
+             RTO    = 127.19 + 4·81.25                = 452.19 ms
+```
+
+One slow sample moves the *mean* by only 25 ms, but the *timeout* by 180 ms,
+because the variance term reacts to the surprise. (Real stacks also clamp
+`RTO` to a minimum: 1 s in the RFC, 200 ms on Linux.)
+
+**AI in the wild:** the Adam optimizer (Ch. 21) is two EWMAs, one over
+gradients (`β₁ = 0.9`, memory ≈ 10 steps) and one over squared gradients
+(`β₂ = 0.999`, memory ≈ 1,000 steps). BatchNorm's "running mean" and
+"running var" are EWMAs with momentum 0.1. Model-weight EMA, used to stabilize
+diffusion models and LLM checkpoints, is the same formula applied to every
+parameter.
 
 ### Real-life engineering ties
 
@@ -1489,6 +1903,234 @@ R = np.array([[math.cos(theta), -math.sin(theta)],
 R @ np.array([1, 0])   # -> [0, 1], a 90° rotation
 ```
 
+### Norms: three ways to measure "how big"
+
+```
+‖x‖₁ = |x₁| + |x₂| + ... + |xₙ|               L1 / Manhattan norm
+‖x‖₂ = sqrt(x₁² + x₂² + ... + xₙ²)            L2 / Euclidean norm (the |v| above)
+‖x‖∞ = max(|x₁|, |x₂|, ..., |xₙ|)             L∞ / max norm
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `x ∈ ℝⁿ` | "x in R n" | a vector of `n` real numbers |
+| `xᵢ` | "x sub i" | its `i`-th entry |
+| `‖x‖ₚ` | "the p-norm of x" | a length. The subscript says which way of measuring |
+| `\|xᵢ\|` | "absolute value of x i" | drop the sign |
+
+**Example:** `x = (3, 4)` has `‖x‖₁ = 7`, `‖x‖₂ = 5`, `‖x‖∞ = 4`.
+In a city grid you'd walk 7 blocks (L1), a crow would fly 5 (L2), and the
+longest single leg of the walk is 4 (L∞).
+
+- **AI:** L2 regularization ("weight decay") adds `λ‖w‖₂²` to the loss and
+  shrinks all weights a little. L1 regularization adds `λ‖w‖₁` and drives
+  many weights to exactly zero, so it selects features. Adversarial-robustness
+  papers measure attack budgets in L∞: "no pixel changed by more than 8/255."
+- **Network:** gradient clipping in distributed training, and "max link
+  utilization" in traffic engineering, are both L∞ thinking: you care about
+  the *worst* coordinate, not the total.
+
+### The dot product, geometrically
+
+The algebraic formula (multiply pairwise, then add) hides a geometric fact:
+
+```
+A · B = ‖A‖ · ‖B‖ · cos θ
+```
+
+| Symbol | Meaning |
+|---|---|
+| `‖A‖`, `‖B‖` | the L2 lengths of the two vectors |
+| `θ` | the angle between them |
+| `cos θ` | `1` if they point the same way, `0` if perpendicular, `-1` if opposite |
+
+**Example:** `A = (3, 4)`, `B = (4, 3)`.
+
+```
+A · B = 3·4 + 4·3 = 24
+‖A‖ = ‖B‖ = 5
+cos θ = 24 / (5·5) = 0.96   ->   θ ≈ 16.3°
+```
+
+Rearranged, this *is* cosine similarity (Ch. 7). Why does the algebraic sum
+equal a cosine? Expand `‖A - B‖²` both as a sum of squares and by the law of
+cosines from trigonometry, and the cross term `-2·A·B` has to equal
+`-2‖A‖‖B‖cos θ`.
+
+**Projection, "how much of A lies along B":**
+
+```
+proj_B(A) = (A · B / B · B) · B  =  (24/25) · (4, 3)  =  (3.84, 2.88)
+```
+
+Projection is how PCA (Ch. 20) squashes data onto its principal axes, and
+how the Gram-Schmidt process builds orthogonal bases.
+
+### Matrix × vector = a weighted mix of columns
+
+There are two equally correct ways to read `W·x`, and the second one is the
+more useful:
+
+```
+W·x = x₁·(column 1 of W) + x₂·(column 2 of W) + ... + xₙ·(column n of W)
+```
+
+The vector `x` tells you *how much of each column to mix in*. The set of every
+possible mix is called the **column space** (or **span**). It's every output
+the matrix can ever produce.
+
+**AI in the wild: one neural network layer, by hand.** A dense layer computes
+`h = ReLU(W·x + b)`.
+
+| Symbol | Shape | Meaning |
+|---|---|---|
+| `x` | `n × 1` | input features |
+| `W` | `m × n` | weights. Row `i` is neuron `i`'s "template" |
+| `b` | `m × 1` | biases, one per neuron |
+| `ReLU(z)` | element-wise | `max(0, z)`: keep positives, zero out negatives |
+| `h` | `m × 1` | the layer's output (activations) |
+
+```
+x = [1]     W = [0.5  -1  ]     b = [ 0.1]
+    [2]         [2     0.25]        [-0.5]
+
+W·x = [0.5·1 + (-1)·2 ] = [-1.5]       (each row dotted with x)
+      [2·1   + 0.25·2 ]   [ 2.5]
+
+W·x + b = [-1.4]     ReLU  ->   h = [0.0]
+          [ 2.0]                    [2.0]
+```
+
+Neuron 1's template points away from this input, so it stays silent.
+Neuron 2 matches it and fires. GPT-3 does the same thing with feed-forward
+matrices of 49,152 × 12,288 and repeats it across 96 layers for every token
+it generates. Inference is mostly `W·x`, which is why GPUs (matrix-multiply
+machines) took over AI.
+
+### Networking in the wild: the routing matrix
+
+Put a network's routing into a matrix and many traffic-engineering questions
+become `y = R·d`:
+
+| Symbol | Meaning |
+|---|---|
+| `d` | demand vector: traffic of each flow (Mbps) |
+| `R` | routing matrix: `R[link][flow] = 1` if the flow crosses that link |
+| `y` | link-load vector: total traffic on each link |
+
+Three flows over three links. Flow A uses links 1 and 2, flow B uses links 2
+and 3, and flow C uses only link 3:
+
+```
+        A  B  C
+R = [   1  0  0 ]  link 1          d = [10]  Mbps (A)
+    [   1  1  0 ]  link 2              [20]       (B)
+    [   0  1  1 ]  link 3              [ 5]       (C)
+
+y = R·d = [10, 10+20, 20+5] = [10, 30, 25] Mbps
+```
+
+The **reverse** question is harder and more useful. SNMP gives you
+link loads `y` for free, but you want the per-flow demand `d`. This is **network
+tomography**, solving `R·d = y` for `d`. Here `R` is square and invertible, so
+`d = R⁻¹y` recovers `[10, 20, 5]` exactly. Real networks have far more flows
+than links, so `R` is wide and has no inverse. Operators then use
+least squares (below) plus priors, which is what ISP traffic-matrix
+estimation tools do.
+
+### Counting paths with matrix powers
+
+For a network's adjacency matrix `A` (Ch. 17), there's a remarkable theorem:
+
+```
+(Aᵏ)[i][j] = number of walks of exactly k hops from node i to node j
+```
+
+Four routers: `R1–R2`, `R1–R3`, `R2–R3`, `R3–R4`.
+
+```
+     R1 R2 R3 R4                  A² = [2 1 1 1]
+A = [0  1  1  0]                       [1 2 1 1]
+    [1  0  1  0]                       [1 1 3 0]
+    [1  1  0  1]                       [1 1 0 1]
+    [0  0  1  0]
+```
+
+`A²[R1][R4] = 1`: there's exactly one 2-hop walk (`R1→R3→R4`). The diagonal
+`A²[i][i]` is node `i`'s degree, since every neighbour gives a walk out and
+straight back. `A³[R1][R1] = 2` counts the triangle `R1→R2→R3→R1` in both
+directions. Fraud-ring detection on payment graphs counts triangles with
+exactly this trace-of-`A³` trick.
+
+### Solving `A·x = b`, and the inverse
+
+A system of linear equations is one matrix equation. For a `2 × 2` matrix the
+inverse has a closed form worth knowing by heart:
+
+```
+A = [a b]       A⁻¹ = 1/(ad - bc) · [ d  -b]        x = A⁻¹·b
+    [c d]                           [-c   a]
+```
+
+| Symbol | Meaning |
+|---|---|
+| `ad - bc` | the determinant (Ch. 11). If it's 0, divide-by-zero, no inverse |
+| `A⁻¹` | the matrix that undoes `A`: `A⁻¹·A = I` |
+| `I` | identity, `[[1,0],[0,1]]`, the "do nothing" matrix |
+
+In code you almost never form `A⁻¹` explicitly. `np.linalg.solve(A, b)` is
+faster and more accurate numerically (Ch. 1's floating-point issues compound
+inside an explicit inverse).
+
+### Least squares: fitting a line through noisy data
+
+When there are more equations than unknowns, as with noisy measurements, no `x`
+satisfies them all. **Least squares** picks the `w` that minimizes total
+squared error, and calculus (Ch. 13: set the gradient to zero) gives a closed
+form called the **normal equations**:
+
+```
+minimize  ‖X·w - y‖₂²     ==>     w = (Xᵀ X)⁻¹ Xᵀ y
+```
+
+| Symbol | Shape | Meaning |
+|---|---|---|
+| `X` | `n × p` | design matrix: one row per observation, a column of 1s for the intercept |
+| `y` | `n × 1` | observed outputs |
+| `w` | `p × 1` | the coefficients we want |
+| `Xᵀ` | `p × n` | transpose of `X` |
+
+**Worked example: latency vs. load.** Four measurements of load (thousand
+req/s) and p50 latency (ms). We fit `latency = w₀ + w₁·load`:
+
+```
+load: 1, 2, 3, 4        latency: 12, 15, 19, 22
+
+X = [1 1]     y = [12]       XᵀX = [ 4  10]      Xᵀy = [ 68]
+    [1 2]         [15]             [10  30]            [187]
+    [1 3]         [19]
+    [1 4]         [22]
+
+(XᵀX)⁻¹ = 1/(4·30 - 10·10) · [ 30 -10]  = 1/20 · [ 30 -10]
+                             [-10   4]           [-10   4]
+
+w₀ = (30·68 - 10·187) / 20 = 170 / 20 = 8.5 ms     (latency at zero load)
+w₁ = (-10·68 + 4·187) / 20 =  68 / 20 = 3.4 ms     (per extra 1k req/s)
+```
+
+Forecast: at 6k req/s, latency ≈ `8.5 + 3.4·6 = 28.9 ms`. Be careful with that
+number, because queueing (Ch. 25) bends this line upward near saturation.
+A linear fit is only valid in the range you measured.
+
+```python
+X = np.array([[1, 1], [1, 2], [1, 3], [1, 4]]); y = np.array([12, 15, 19, 22])
+w, *_ = np.linalg.lstsq(X, y, rcond=None)
+print(w)   # [8.5 3.4]
+```
+
+Linear regression, the first model in every ML course, *is* this equation.
+A neural network's last layer, trained with squared error, is solving it too.
+
 ### Real-life engineering ties
 
 - **SWE:** any spreadsheet-like data (rows × columns) is a matrix; game/UI
@@ -1595,7 +2237,7 @@ same idea (eigenvector centrality) is used today to find the most
 an internal service dependency graph.
 
 ```python
-# Toy 3-page web: A links to B, B links to C, C links to A and B
+# Toy 3-page web: A links to B and C, B links to C, C links to A and B
 M = np.array([[0,   0,   0.5],
               [0.5, 0,   0.5],
               [0.5, 1,   0  ]])
@@ -1604,6 +2246,217 @@ dominant = eigvecs[:, np.argmax(eigvals)]
 rank = np.abs(dominant) / np.sum(np.abs(dominant))
 print(rank)   # relative importance of pages A, B, C
 ```
+
+### The eigen-equation, symbol by symbol
+
+```
+A · v = λ · v          (v ≠ 0)
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `A` | "A" | a square `n × n` matrix, a transformation |
+| `v` | "v", the eigenvector | a direction that `A` does not turn |
+| `λ` | "lambda", the eigenvalue | how much `A` stretches that direction. `λ > 1` grows, `0 < λ < 1` shrinks, `λ < 0` flips |
+| `v ≠ 0` | | the zero vector trivially satisfies the equation, so it doesn't count |
+
+### Finding the eigenvectors, by hand
+
+We found `λ = 1` and `λ = 3` for `A = [[2,1],[1,2]]` above. To get each
+eigenvector, plug `λ` back into `(A - λI)·v = 0` and solve:
+
+```
+λ = 3:  A - 3I = [-1  1]   ->  -v₁ + v₂ = 0  ->  v₁ = v₂   ->  v = (1, 1)
+                 [ 1 -1]
+
+λ = 1:  A - 1I = [ 1  1]   ->   v₁ + v₂ = 0  ->  v₁ = -v₂  ->  v = (1, -1)
+                 [ 1  1]
+```
+
+**Check:** `A·(1,1) = (2+1, 1+2) = (3,3) = 3·(1,1)`. ✓
+Geometrically, `A` stretches the diagonal `(1,1)` by 3× and leaves the
+anti-diagonal `(1,-1)` alone. Every other vector is a mix of those two, so
+it gets partly stretched and partly left alone, which turns it.
+
+Two theorems give you free sanity checks:
+
+```
+trace(A) = sum of eigenvalues        2 + 2 = 4 = 1 + 3   ✓
+det(A)   = product of eigenvalues    2·2 - 1·1 = 3 = 1·3 ✓
+```
+
+### Diagonalization: why eigenvalues predict the future
+
+If `A` has `n` independent eigenvectors, stack them as the columns of `P` and
+the eigenvalues on the diagonal of `D`:
+
+```
+A = P · D · P⁻¹          and therefore          Aᵏ = P · Dᵏ · P⁻¹
+```
+
+| Symbol | Meaning |
+|---|---|
+| `P` | columns are the eigenvectors, a change into the "natural axes" |
+| `D` | diagonal matrix of eigenvalues, so `A` is pure stretching in those axes |
+| `Dᵏ` | trivial to compute: raise each diagonal entry to the `k`-th power |
+
+Applying `A` a thousand times is hard. Raising each eigenvalue to the
+thousandth power is easy. For our `A`:
+
+```
+A¹⁰ = P · [1¹⁰   0  ] · P⁻¹ = [ (3¹⁰+1)/2   (3¹⁰-1)/2 ] = [29525  29524]
+          [0    3¹⁰ ]         [ (3¹⁰-1)/2   (3¹⁰+1)/2 ]   [29524  29525]
+```
+
+**The long-run behaviour of *any* repeated linear process is governed by its
+largest eigenvalue.** If `|λ_max| > 1` it blows up, if `< 1` it dies out, and
+if `= 1` it settles into a steady state. That one fact explains three very
+different things:
+
+- **AI, exploding/vanishing gradients in RNNs:** backprop through `T` time steps
+  multiplies by the recurrent weight matrix `T` times, roughly `Wᵀ`. If
+  `|λ_max(W)| = 1.1` and `T = 100`, gradients scale by `1.1¹⁰⁰ ≈ 13,780`. If
+  it's `0.9`, they scale by `0.9¹⁰⁰ ≈ 0.00003`. LSTMs, gradient clipping and
+  orthogonal initialization (all eigenvalues exactly magnitude 1) are each a fix
+  for this.
+- **Network, PageRank and Markov chains:** steady state = the eigenvector for
+  `λ = 1` (below).
+- **Control, feedback-loop stability:** an autoscaler or congestion
+  controller is stable only if its update matrix has every eigenvalue inside
+  the unit circle (Ch. 29).
+
+### The spectral theorem: symmetric matrices are the friendly ones
+
+> **Theorem.** If `A` is real and symmetric (`A = Aᵀ`), then all its
+> eigenvalues are real, and it has a full set of **orthogonal** eigenvectors,
+> so `A = Q·D·Qᵀ` with `Qᵀ = Q⁻¹`.
+
+This matters because the most important matrices in practice are symmetric:
+covariance matrices (PCA, Ch. 20), Hessians (Ch. 13, 21), graph Laplacians
+(below), and kernel matrices. For all of them the eigenvalues are real numbers
+you can sort and interpret. That's why the PCA code in Ch. 20 uses
+`np.linalg.eigh`, the solver specialized for symmetric matrices.
+
+### Power iteration, and PageRank properly
+
+You rarely need *all* eigenvalues, just the dominant one. **Power iteration**
+finds it by repeatedly multiplying and re-normalizing, because the
+largest-eigenvalue component outgrows the rest (that's the diagonalization
+argument above). Google's real PageRank adds a **damping factor**:
+
+```
+PR = (1 - d)/N · 1  +  d · M · PR
+```
+
+| Symbol | Meaning |
+|---|---|
+| `PR` | vector of page scores (sums to 1) |
+| `M` | column-stochastic link matrix: `M[i][j] = 1/outlinks(j)` if `j` links to `i` |
+| `d` | damping, ≈ 0.85: the probability the surfer follows a link instead of jumping to a random page |
+| `N` | number of pages |
+| `1` | a vector of all ones, the "teleport anywhere" term |
+
+Toy web from above, `d = 0.85`, start uniform at `[1/3, 1/3, 1/3]`:
+
+```
+iter 1:  [0.192, 0.333, 0.475]
+iter 2:  [0.252, 0.333, 0.415]
+iter 3:  [0.226, 0.333, 0.440]
+...
+steady:  [0.234, 0.333, 0.433]     <- C ranks highest: both A and B link to it
+```
+
+The teleport term does two jobs. It guarantees a unique answer even when the
+web has dead ends and closed loops (that's the Perron–Frobenius theorem: a
+positive stochastic matrix has a unique dominant eigenvector with `λ = 1`).
+It also makes convergence fast, because the error shrinks by a factor of
+about `d = 0.85` per iteration, so 50 iterations reach about `0.85⁵⁰ ≈ 0.0003`.
+
+### Markov chains: bursty packet loss, modelled
+
+A **Markov chain** is a system that hops between states with fixed
+probabilities. The transition matrix `P[i][j]` is the probability of moving
+from state `i` to `j`, and each row sums to 1. In the long run the fraction
+of time spent in each state is the **stationary distribution** `π`:
+
+```
+π · P = π        (π is a left eigenvector of P with eigenvalue 1)
+Σᵢ πᵢ = 1
+```
+
+**Networking in the wild: the Gilbert–Elliott channel.** Real links don't
+drop packets independently (Ch. 8's coin-flip model). They drop them in
+*bursts*, during Wi-Fi interference or a congested queue. The classic model
+has two states:
+
+```
+                      to Good   to Bad
+P =  from Good   [    0.99      0.01  ]        Good: 0% loss
+     from Bad    [    0.30      0.70  ]        Bad:  50% loss
+```
+
+Solve `π·P = π` for two states. Flow into Bad has to equal flow out of Bad,
+so `π_G · 0.01 = π_B · 0.30`. Combined with `π_G + π_B = 1`:
+
+```
+π_B = 0.01 / (0.01 + 0.30) = 0.032     (the link is "Bad" 3.2% of the time)
+average loss = 0.032 · 50% ≈ 1.6%
+mean burst length = 1 / 0.30 ≈ 3.3 packets in a row in the Bad state
+```
+
+The long-run loss rate is the same 1.6% as an independent-loss model would
+give, but the losses arrive in clumps. That's why forward-error-correction
+schemes (used in video calls and QUIC experiments) **interleave** packets:
+it spreads one burst across many FEC blocks so each block loses only one packet.
+Netem, Linux's network emulator, ships this exact model
+(`tc qdisc ... loss gemodel`).
+
+The same `π·P = π` equation is the language-model view of text too. An n-gram
+model is a Markov chain over words, and the "random surfer" of PageRank is a
+Markov chain over web pages.
+
+### The graph Laplacian: measuring how hard a network is to cut
+
+For a graph with adjacency matrix `A` and degree matrix `D` (node degrees on
+the diagonal), the **Laplacian** is:
+
+```
+L = D - A
+```
+
+Its eigenvalues are all `≥ 0`, and the smallest is always 0. The
+**second-smallest eigenvalue `λ₂`** (the *algebraic connectivity* or *Fiedler
+value*) measures how well-connected the graph is. `λ₂ = 0` exactly when the
+network is already split in two, and a bigger `λ₂` means it takes more link
+cuts to partition it.
+
+Four routers, three topologies:
+
+| Topology | Links | `λ₂` | Read it as |
+|---|---|---|---|
+| Line `R1–R2–R3–R4` | 3 | **0.59** | one cut in the middle splits it |
+| Ring (add `R4–R1`) | 4 | **2.00** | needs two cuts to split |
+| Full mesh | 6 | **4.00** | needs three cuts to isolate any node |
+
+```python
+def fiedler(edges, n=4):
+    A = np.zeros((n, n))
+    for i, j in edges:
+        A[i, j] = A[j, i] = 1
+    L = np.diag(A.sum(axis=1)) - A
+    return np.sort(np.linalg.eigvalsh(L))[1]
+
+print(fiedler([(0,1), (1,2), (2,3)]))          # 0.586  line
+print(fiedler([(0,1), (1,2), (2,3), (3,0)]))   # 2.0    ring
+```
+
+Adding **one** link (line → ring) more than triples `λ₂`. That's a
+quantitative answer to "which single link should we add for the most
+resilience?": try each candidate and pick the largest jump in `λ₂`. The
+eigenvector for `λ₂` (the *Fiedler vector*) has positive entries on one side of
+the network's weakest cut and negative on the other. **Spectral clustering**
+in ML and community detection in social graphs both partition data with that
+sign pattern.
 
 ### Real-life engineering ties
 
@@ -1701,6 +2554,355 @@ cost = 0.01*n**2 + 5*n
 marginal = sp.diff(cost, n)
 print(marginal)             # 0.02*n + 5
 print(marginal.subs(n, 100))  # marginal cost at n=100 requests/sec
+```
+
+### The derivative, symbol by symbol
+
+```
+f'(x) = lim(h→0) [f(x+h) - f(x)] / h        also written  df/dx,  d/dx f(x)
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `f'(x)` | "f prime of x" | the slope of `f` at the point `x` |
+| `h` | "h" | a small step to the right of `x` |
+| `f(x+h) - f(x)` | "rise" | how much the output changed over that step |
+| `… / h` | "rise over run" | the average slope over the step, a *secant* line |
+| `lim(h→0)` | "the limit as h goes to zero" | the value the average slope settles on as the step shrinks, the *tangent* line |
+| `df/dx` | "d f d x" (Leibniz notation) | the same thing, written as "a tiny change in f per tiny change in x" |
+
+**Units check:** if `f` is bytes and `x` is seconds, `f'` is bytes/second.
+A derivative always has units of *output per input*.
+
+### Deriving a rule instead of memorizing it
+
+Here's the power rule for `f(x) = x²`, straight from the definition:
+
+```
+[f(x+h) - f(x)] / h = [(x+h)² - x²] / h
+                    = [x² + 2xh + h² - x²] / h
+                    = [2xh + h²] / h
+                    = 2x + h          ->  as h → 0:   f'(x) = 2x
+```
+
+The `h²` term was "too small to matter", and that's the entire spirit of
+calculus: zoom in far enough and every smooth curve looks like a straight
+line.
+
+Two more rules you'll need, plus the chain rule (Ch. 13 develops it fully):
+
+```
+d/dx [f(x)/g(x)] = [f'(x)·g(x) - f(x)·g'(x)] / g(x)²     quotient rule
+d/dx f(g(x))     = f'(g(x)) · g'(x)                        chain rule
+```
+
+### AI in the wild: the sigmoid's derivative and vanishing gradients
+
+The sigmoid squashes any number into a probability `(0, 1)`. It's the output
+of every logistic regression and every binary classifier:
+
+```
+σ(x) = 1 / (1 + e^(-x))
+```
+
+Differentiate with the chain rule. The outer function is `u⁻¹`, the inner is
+`1 + e^(-x)`:
+
+```
+σ'(x) = -1·(1 + e^(-x))⁻² · (-e^(-x))
+      = e^(-x) / (1 + e^(-x))²
+      = [1/(1 + e^(-x))] · [e^(-x)/(1 + e^(-x))]
+      = σ(x) · (1 - σ(x))
+```
+
+The derivative is built from the function's own output, so backprop gets it
+almost for free. It also has a dark side:
+
+| `x` | `σ(x)` | `σ'(x)` |
+|---|---|---|
+| 0 | 0.5 | **0.25** (the maximum possible) |
+| 4 | 0.982 | 0.018 |
+| -4 | 0.018 | 0.018 |
+
+Each sigmoid layer multiplies the gradient by **at most 0.25**. Through 10
+layers that's `0.25¹⁰ ≈ 0.000001`, so the early layers barely learn. This
+one-line derivative is *the* reason deep networks switched to ReLU, whose
+derivative is exactly 1 for positive inputs (Ch. 21).
+
+### Taylor's theorem: every smooth function is secretly a polynomial
+
+> **Theorem (Taylor).** Near a point `a`, a smooth function equals its
+> derivatives arranged as a polynomial:
+> ```
+> f(x) = f(a) + f'(a)(x-a) + f''(a)/2! · (x-a)² + f'''(a)/3! · (x-a)³ + ...
+> ```
+
+| Symbol | Meaning |
+|---|---|
+| `a` | the point you expand around, where you know everything |
+| `x - a` | how far you've moved from it |
+| `f''(a)` | second derivative: the curvature (how fast the slope changes) |
+| `n!` | factorial, `n·(n-1)·…·1`, which shrinks the higher terms fast |
+
+Keep only the first two terms and you get the **linear approximation**
+`f(x) ≈ f(a) + f'(a)(x-a)`. That's the "zoom in until it's a line" idea as a
+formula.
+
+**Examples you've already relied on without knowing it:**
+
+```
+e^x       ≈ 1 + x + x²/2 + x³/6      at x = 0.1:  1.1051667  (true: 1.1051709)
+ln(1 + x) ≈ x                         at x = 0.01: 0.01       (true: 0.00995)
+```
+
+The second one *derives* Ch. 6's Rule of 72. Money growing at rate `r`
+doubles when `(1+r)ᵗ = 2`, so `t = ln 2 / ln(1+r) ≈ 0.693 / r`. That gives
+"69.3 divided by the percentage rate", and 72 is used instead because it has
+more divisors.
+
+**Where Taylor shows up in AI:** gradient descent (Ch. 21) *is* the
+first-order Taylor approximation. It assumes the loss is locally a plane and
+steps downhill on it. Newton's method and second-order optimizers keep the
+`f''` term and model the loss as a bowl. The GELU activation used in GPT and
+BERT ships with a `tanh`-based approximation that's tuned to match the true
+curve closely and runs faster on GPUs.
+
+### Newton's method: square roots in four steps
+
+To solve `f(x) = 0`, start with a guess, take the tangent line (the
+linear approximation above), and jump to where *it* hits zero:
+
+```
+x_{n+1} = x_n - f(x_n) / f'(x_n)
+```
+
+**Example: compute `√2`**, which is the root of `f(x) = x² - 2` with `f'(x) = 2x`.
+The update simplifies to `x_{n+1} = (x_n + 2/x_n) / 2`:
+
+```
+x₀ = 1
+x₁ = (1 + 2/1) / 2           = 1.5
+x₂ = (1.5 + 2/1.5) / 2       = 1.41666...
+x₃ = (1.41667 + 2/1.41667)/2 = 1.4142157
+x₄                           = 1.41421356237469    (true: 1.41421356237310)
+```
+
+The number of correct digits roughly **doubles** every step (1, 3, 6, 12).
+That's called *quadratic convergence*. Your CPU's square-root and division
+units, the famous Quake III "fast inverse square root" hack, and the
+implied-volatility solvers in finance all finish with Newton steps.
+
+### Optimization: where the derivative is zero
+
+At a smooth minimum or maximum the tangent is flat, so `f'(x) = 0`. The
+second derivative tells you which one you found:
+
+```
+f'(x*) = 0  and  f''(x*) > 0   ->  local minimum  (curves up, like a bowl)
+f'(x*) = 0  and  f''(x*) < 0   ->  local maximum  (curves down, like a hill)
+```
+
+**Example: right-sizing a fleet.** Each server costs $2/hour, and the
+latency penalty to the business falls as you add servers, about `800/n`
+dollars/hour:
+
+```
+C(n)   = 2n + 800/n
+C'(n)  = 2 - 800/n²   = 0   ->   n² = 400   ->   n* = 20 servers
+C''(n) = 1600/n³ > 0                          ->   minimum ✓
+
+C(10) = $100/h     C(20) = $80/h     C(40) = $100/h
+```
+
+At the optimum, the **marginal cost of one more server equals the marginal
+saving from it** (`2 = 800/n²`). Every "find the sweet spot" engineering
+trade-off has this shape: cache size vs. hit rate, batch size vs. latency,
+replication factor vs. durability.
+
+### Networking in the wild: how sensitive is TCP to packet loss?
+
+The Mathis formula approximates steady-state throughput for a loss-based
+TCP (Reno-style) flow:
+
+```
+throughput ≈ (MSS / RTT) · (C / √p)
+```
+
+| Symbol | Meaning | Example |
+|---|---|---|
+| `MSS` | maximum segment size (bytes per packet) | 1460 bytes |
+| `RTT` | round-trip time | 100 ms |
+| `p` | packet-loss probability | 0.0001 (0.01%) |
+| `C` | a constant from the sawtooth geometry (Ch. 25), `√(3/2) ≈ 1.22` | |
+
+```
+throughput = (1460·8 bits / 0.1 s) · (1.22 / √0.0001)
+           = 116,800 · 122.5  ≈ 14.3 Mbit/s
+```
+
+Now ask the calculus question: how sensitive is throughput to loss?
+
+```
+d(throughput)/dp = -½ · throughput / p
+```
+
+so a **1% relative increase in loss costs about 0.5% of throughput**.
+Doubling the loss rate divides throughput by `√2` (−29%, down to
+10.1 Mbit/s). Going to 1% loss cuts it 10× to 1.4 Mbit/s. And because RTT
+sits in the denominator, the same loss rate hurts a transatlantic flow 10×
+more than a metro one. These two derivatives are why loss-based congestion
+control struggles on long, slightly lossy paths, and why Google built BBR,
+which models bandwidth and RTT directly instead of reacting to loss.
+
+### Integrals: the accumulated total
+
+If the derivative answers "how fast right now?", the **integral** answers
+"how much in total?". It adds up a rate over time, or a density over a
+range, into an amount.
+
+```
+∫ₐᵇ f(x) dx  =  lim(n→∞) Σᵢ₌₁ⁿ f(xᵢ) · Δx        where Δx = (b - a)/n
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `∫` | "integral" | a stretched "S" for **S**um |
+| `a`, `b` | "from a to b" | the start and end of the range |
+| `f(x)` | "the integrand" | the rate or height being added up |
+| `dx` | "d x" | an infinitely thin slice of the range. Its units multiply in |
+| `Δx` | "delta x" | the width of one finite slice |
+| `Σ f(xᵢ)·Δx` | Riemann sum | chop the area into `n` rectangles, height × width, and add them up |
+
+**Units check:** if `f` is bytes/second and `x` is seconds, the integral
+is bytes. Integration multiplies units by the units of `dx`, and
+differentiation divides them.
+
+**Watching the rectangles converge**, for `∫₀³ x² dx` using midpoint rectangles:
+
+```
+n = 3 rectangles:    8.75
+n = 6:               8.9375
+n = 30:              8.9975
+n = 300:             8.999975       ->  converges to exactly 9
+```
+
+Same idea as the derivative's shrinking `h`: the "limit" just means "keep
+slicing thinner and see what the sum approaches."
+
+### The Fundamental Theorem of Calculus
+
+The theorem that welded derivatives and integrals into one subject (Newton
+and Leibniz, 1660s–1680s):
+
+> **Theorem (FTC).** If `F' = f` (that is, `F` is an *antiderivative* of `f`), then
+> ```
+> ∫ₐᵇ f(x) dx = F(b) - F(a)
+> ```
+> And in the other direction: `d/dx ∫ₐˣ f(t) dt = f(x)`. Accumulating a rate,
+> then asking how fast the total is growing, gives you back the rate.
+
+Integration and differentiation are inverses, so every derivative rule
+read backwards is an integral rule:
+
+```
+∫ xⁿ dx   = xⁿ⁺¹/(n+1) + C      (n ≠ -1)
+∫ eˣ dx   = eˣ + C
+∫ 1/x dx  = ln|x| + C
+∫ e^(-λt) dt = -e^(-λt)/λ + C
+```
+
+(`C` is the "constant of integration". Constants have zero derivative, so an
+antiderivative is only fixed up to a constant, and it cancels in `F(b) - F(a)`.)
+
+**Example:** `∫₀³ x² dx = [x³/3]₀³ = 27/3 - 0 = 9`. That's the 9 the rectangles
+were crawling toward, found exactly in one line.
+
+### Networking in the wild: rates, totals, and Prometheus
+
+Your monitoring stack is a calculus engine:
+
+| Prometheus function | What it computes | Calculus |
+|---|---|---|
+| `rate(bytes_total[5m])` | bytes/second from an ever-growing counter | derivative of the counter |
+| `increase(bytes_total[1h])` | bytes transferred in the last hour | integral of the rate |
+| `deriv(queue_depth[10m])` | how fast a gauge is changing | derivative, by least-squares slope (Ch. 10) |
+
+**Example 1, exact:** a transfer ramps up linearly, `r(t) = 2t` Gbit/s, for 10
+seconds. Total data:
+
+```
+∫₀¹⁰ 2t dt = [t²]₀¹⁰ = 100 Gbit = 12.5 GB
+```
+
+Its *average* rate is 10 Gbit/s, half the 20 Gbit/s peak. If you capacity-plan a
+link off the average, you'll saturate it at the end of every ramp.
+
+**Example 2, from samples (the trapezoid rule):** you only have
+scraped rates, one every 15 s: `100, 140, 180, 160, 120` Mbit/s. Approximate
+each 15 s slice as a trapezoid (average of its two ends × width):
+
+```
+total ≈ 15 · [ (100+140)/2 + (140+180)/2 + (180+160)/2 + (160+120)/2 ]
+      = 15 · [ 120 + 160 + 170 + 140 ]
+      = 8,850 Mbit  ≈  1,106 MB  in one minute
+```
+
+That's how volume-based billing computes "total GB transferred" from sampled
+rates. (Transit billed on the 95th percentile uses Ch. 9's percentiles
+instead.) A **token-bucket rate limiter** is the same
+integral run live: the bucket holds `∫ refill_rate dt - consumed`, capped at the
+bucket size.
+
+### AI in the wild: probability is integration
+
+For a continuous random variable with density `f(x)` (Ch. 14), probabilities
+*are* areas:
+
+```
+P(a ≤ X ≤ b) = ∫ₐᵇ f(x) dx            ∫₋∞^∞ f(x) dx = 1            E[X] = ∫ x·f(x) dx
+```
+
+**Example: the exponential distribution** (time to next failure, rate `λ`):
+
+```
+f(t) = λ·e^(-λt)        for t ≥ 0
+
+Total probability:  ∫₀^∞ λe^(-λt) dt = [-e^(-λt)]₀^∞ = 0 - (-1) = 1   ✓
+
+P(failure within T) = ∫₀ᵀ λe^(-λt) dt = 1 - e^(-λT)
+```
+
+With MTBF 720 hours (`λ = 1/720`) and `T = 100` h:
+`1 - e^(-100/720) = 1 - e^(-0.139) ≈ 13%`. That's exactly what `expon.cdf` in
+Ch. 14 returns, because the CDF *is* this integral.
+
+**The Gaussian integral, a theorem that explains a constant:**
+
+```
+∫₋∞^∞ e^(-x²) dx = √π
+```
+
+(The proof squares the integral, switches to polar coordinates, and the
+`π` falls out of the circle. It's one of the most elegant tricks in
+mathematics.) This is *why* the normal distribution's formula carries that odd
+`1/√(2π)`: it's the constant needed to make the total area exactly 1.
+
+**ROC AUC is literally an integral.** The "area under the ROC curve" used to
+score every classifier and intrusion detector (Ch. 26) is
+`∫₀¹ TPR d(FPR)`, computed by the trapezoid rule over the curve's points.
+For points `(0,0), (0.1,0.6), (0.3,0.85), (1,1)`:
+
+```
+AUC = 0.1·(0+0.6)/2 + 0.2·(0.6+0.85)/2 + 0.7·(0.85+1)/2
+    = 0.030 + 0.145 + 0.6475 = 0.8225
+```
+
+```python
+from scipy.integrate import quad
+import numpy as np
+print(quad(lambda x: x**2, 0, 3))                       # (9.0, ...)  area under x²
+print(quad(lambda x: np.exp(-x**2), -np.inf, np.inf))   # (1.7724..., ...) = √π
+print(np.trapezoid([0, 0.6, 0.85, 1], [0, 0.1, 0.3, 1]))     # 0.8225  ROC AUC
 ```
 
 ### Real-life engineering ties
@@ -1825,6 +3027,239 @@ To update `w1`, you need `∂L/∂w1`, computed by chaining backwards:
 This is precisely backpropagation — computing derivatives backward through
 a computation graph, one chain-rule link at a time (fully worked out with
 numbers in Ch. 21).
+
+### The gradient, symbol by symbol
+
+```
+∇f(x) = [ ∂f/∂x₁,  ∂f/∂x₂,  ...,  ∂f/∂xₙ ]
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `∇` | "nabla" or "del" | the gradient operator: "take every partial derivative" |
+| `∂` | "partial" | a curly `d` that warns you other variables exist and are being held fixed |
+| `∂f/∂xᵢ` | "partial f partial x i" | the slope of `f` if you nudge only `xᵢ` |
+| `∇f(x)` | "grad f at x" | a vector with one entry per input, the same shape as `x` |
+
+**Example:** for `f(x,y) = x²y + y³` at the point `(1, 2)`:
+
+```
+∇f = (2xy, x² + 3y²) = (2·1·2, 1 + 3·4) = (4, 13)
+```
+
+The output is about 3× more sensitive to `y` than to `x` here. In ML terms,
+`y`'s weight would get a 3× bigger update.
+
+### Why the gradient points uphill (a two-line proof)
+
+The slope in an arbitrary unit direction `u` is the **directional
+derivative**:
+
+```
+D_u f = ∇f · u = ‖∇f‖ · ‖u‖ · cos θ = ‖∇f‖ · cos θ
+```
+
+(This uses the geometric dot product from Ch. 10, with `‖u‖ = 1`.) `cos θ` is
+largest (= 1) when `θ = 0`, that is, when `u` points exactly along `∇f`. So
+**the gradient is the direction of steepest ascent, and its length is
+that steepest slope**. `-∇f` is steepest descent. Perpendicular to `∇f`
+(`cos θ = 0`) the slope is zero, which is the direction of a contour line on
+a map.
+
+**Example:** at `(1, 2)` with `∇f = (4, 13)`, moving in direction
+`u = (0.6, 0.8)` gives slope `4·0.6 + 13·0.8 = 12.8`. Moving along the
+gradient itself gives `‖∇f‖ = √(16 + 169) ≈ 13.6`, which is steeper, as the
+proof promised.
+
+### The Jacobian: derivatives of vector-valued functions
+
+When a function takes a vector in and gives a vector out, as every neural
+network layer does, its derivative is a **matrix**:
+
+```
+       [ ∂y₁/∂x₁   ∂y₁/∂x₂   ...  ∂y₁/∂xₙ ]
+J  =   [ ∂y₂/∂x₁   ∂y₂/∂x₂   ...  ∂y₂/∂xₙ ]        (m outputs × n inputs)
+       [   ...                             ]
+       [ ∂yₘ/∂x₁   ...            ∂yₘ/∂xₙ ]
+```
+
+Row `i` is the gradient of output `i`. The multivariable chain rule becomes
+**matrix multiplication of Jacobians**:
+
+```
+if  y = f(x)  and  L = g(y),  then   ∂L/∂x = Jᵀ · ∂L/∂y
+```
+
+So backpropagation is a sequence of matrix-vector products, running the
+forward pass's matrices in reverse, transposed. That's why a backward pass
+costs about 2× a forward pass and runs on the same GPU matrix units.
+
+### Backprop through a linear layer, by hand
+
+For `y = W·x` (Ch. 10's layer, bias left out for clarity) with loss `L`, and
+writing `δ = ∂L/∂y` (the "error signal" arriving from above), the two
+gradients you need are:
+
+```
+∂L/∂W = δ · xᵀ          (an outer product: same shape as W)
+∂L/∂x = Wᵀ · δ          (sent further back to the previous layer)
+```
+
+| Symbol | Meaning |
+|---|---|
+| `δ` | "delta", how much the loss would change per unit change of each output |
+| `δ · xᵀ` | column × row = a matrix. Entry `[i][j] = δᵢ · xⱼ`: "error at output i × activity of input j" |
+| `Wᵀ · δ` | the same weights, transposed, carry the blame backwards |
+
+Same `W` and `x` as Ch. 10, target `t = (0, 2)`, loss `L = ½‖y - t‖²`:
+
+```
+x = (1, 2)       W = [0.5  -1  ]       y = W·x = (-1.5, 2.5)
+                     [2     0.25]
+
+L = ½·((-1.5-0)² + (2.5-2)²) = ½·(2.25 + 0.25) = 1.25
+δ = y - t = (-1.5, 0.5)                                    (derivative of ½(y-t)²)
+
+∂L/∂W = δ·xᵀ = [-1.5] · [1  2] = [-1.5  -3.0]
+               [ 0.5]            [ 0.5   1.0]
+
+∂L/∂x = Wᵀ·δ = [0.5   2  ] · [-1.5] = [ 0.25 ]
+               [-1    0.25]   [ 0.5]   [ 1.625]
+```
+
+The weight connecting input 2 (the larger input, 2) to output 1 (the larger
+error, -1.5) gets the biggest gradient, -3.0. Learning is assigning blame in
+proportion to *activity × error*. That's the mathematical form of Hebb's
+"neurons that fire together wire together". `loss.backward()` computes
+exactly these two products for every layer.
+
+### The most elegant gradient in deep learning: softmax + cross-entropy
+
+Classifiers (and every LLM's next-token prediction) turn raw scores `z`
+("logits") into probabilities with **softmax**, then score them with
+**cross-entropy** against the true class `c`:
+
+```
+pᵢ = e^(zᵢ) / Σⱼ e^(zⱼ)                L = -ln(p_c)
+```
+
+| Symbol | Meaning |
+|---|---|
+| `zᵢ` | logit for class `i`, any real number |
+| `e^(zᵢ)` | exponentiate to make it positive |
+| `Σⱼ e^(zⱼ)` | normalizer, so the `pᵢ` sum to 1 |
+| `p_c` | the probability the model gave the *correct* class |
+| `-ln(p_c)` | 0 if `p_c = 1`, and grows without bound as `p_c → 0` |
+
+Substitute and simplify: `L = -z_c + ln Σⱼ e^(zⱼ)`. Differentiate with respect
+to `zᵢ`:
+
+```
+∂L/∂zᵢ = -[i = c] + e^(zᵢ)/Σⱼ e^(zⱼ)  =  pᵢ - yᵢ
+```
+
+where `yᵢ` is 1 for the true class and 0 otherwise (one-hot). After all
+those exponentials and logs, **the gradient is just "predicted minus
+actual"**.
+
+**Example:** logits `z = (2.0, 1.0, 0.1)`, true class 0:
+
+```
+p = softmax(z) = (0.659, 0.242, 0.099)
+L = -ln(0.659) = 0.417
+∂L/∂z = p - y = (0.659-1, 0.242, 0.099) = (-0.341, 0.242, 0.099)
+```
+
+Push the correct logit up, push the wrong ones down, each in proportion to
+how wrong it was. Every token of every LLM's pre-training uses this
+gradient, trillions of times over.
+
+### The Hessian: curvature in many dimensions
+
+The matrix of all *second* partial derivatives:
+
+```
+H[i][j] = ∂²f / ∂xᵢ ∂xⱼ
+```
+
+It's symmetric (the order of differentiation doesn't matter for smooth `f`,
+which is Schwarz's theorem), so by the spectral theorem (Ch. 11) its eigenvalues
+are real. They give the **second-derivative test in `n` dimensions**. At a
+point where `∇f = 0`:
+
+| Eigenvalues of `H` | Point is | Shape |
+|---|---|---|
+| all `> 0` | local minimum | a bowl |
+| all `< 0` | local maximum | a dome |
+| mixed signs | **saddle point** | a horse saddle or mountain pass |
+
+**Examples:**
+
+```
+f(x,y) = x² + xy + y²   ->   H = [2 1]   eigenvalues 1, 3  (Ch. 11!)  ->  minimum at (0,0)
+                                 [1 2]
+f(x,y) = x² - y²        ->   H = [2  0]  eigenvalues 2, -2            ->  saddle at (0,0)
+                                 [0 -2]
+```
+
+**Why this matters for deep learning:** in a model with a billion
+parameters, a critical point is a minimum only if *all* billion eigenvalues
+are positive. If signs were coin flips, that would be absurdly unlikely, so
+most points where the gradient vanishes are **saddles, not bad local
+minima** (Dauphin et al., 2014). Plain gradient descent slows to a crawl near
+saddles, and momentum (Ch. 21) helps carry it through. The Hessian's largest
+eigenvalue also sets the maximum stable learning rate, `η < 2/λ_max`, which
+Ch. 21 derives.
+
+Putting it together, the **multivariable Taylor expansion** (Ch. 12, in `n`
+dimensions) is the model behind every optimizer:
+
+```
+f(x + Δ) ≈ f(x)  +  ∇f(x)ᵀ·Δ  +  ½ · Δᵀ·H·Δ
+           value     slope         curvature
+```
+
+Gradient descent uses the first two terms. Newton's method and its
+approximations (L-BFGS, K-FAC, Shampoo) use all three.
+
+### Networking in the wild: splitting traffic by marginal delay
+
+Two backends: a fast one (`μ₁ = 100` req/s) and a slow one (`μ₂ = 50` req/s).
+Total traffic `λ = 90` req/s. Send `x` to the fast one and `90 - x` to the
+slow one. By Little's Law and the M/M/1 formula (Ch. 25), the average number
+of requests in the system is:
+
+```
+N(x) = x/(μ₁ - x) + (λ - x)/(μ₂ - (λ - x))         average delay = N / λ
+```
+
+Set the derivative to zero. `d/dx [x/(μ - x)] = μ/(μ - x)²`, so the optimum
+balances **marginal delays**, not loads:
+
+```
+μ₁/(μ₁ - x)² = μ₂/(μ₂ - λ + x)²    ->   x* ≈ 64.9 req/s to the fast server
+```
+
+| Policy | Split (fast / slow) | Avg delay |
+|---|---|---|
+| Round-robin (equal) | 45 / 45 | **109 ms**, since the slow server is at 90% load |
+| Proportional to capacity | 60 / 30 | 33.3 ms |
+| Gradient-optimal | 64.9 / 25.1 | **31.7 ms** |
+
+Proportional-to-capacity looks "obviously fair", but the derivative says to
+overload the fast server slightly, because its queue grows more slowly. This
+is Gallager's 1977 **minimum-delay routing**: at the optimum, every path in use
+has equal marginal delay `∂D/∂xᵢ`. It's the same "equalize the derivatives"
+condition as the fleet-sizing example in Ch. 12, and the same idea behind
+least-loaded and "power of two choices" load balancing in Envoy and NGINX.
+
+```python
+from scipy.optimize import minimize_scalar
+mu1, mu2, lam = 100, 50, 90
+N = lambda x: x/(mu1-x) + (lam-x)/(mu2-(lam-x))
+best = minimize_scalar(N, bounds=(40.01, 89.99), method="bounded")
+print(best.x, 1000 * N(best.x) / lam)    # ~64.85 req/s, ~31.7 ms
+```
 
 ### Real-life engineering ties
 
@@ -1964,6 +3399,253 @@ from scipy.stats import expon
 # Mean time between failures = 720 hours. P(next failure within 100 hours)?
 expon.cdf(100, scale=720)
 ```
+
+### PMF, PDF, CDF: three ways to describe a distribution
+
+```
+PMF (discrete):    p(x) = P(X = x)                       Σₓ p(x) = 1
+PDF (continuous):  f(x),   P(a ≤ X ≤ b) = ∫ₐᵇ f(x) dx     ∫ f(x) dx = 1
+CDF (both):        F(x) = P(X ≤ x)                       F'(x) = f(x)
+```
+
+| Symbol | Say it as | Meaning |
+|---|---|---|
+| `p(x)` | "probability mass at x" | a real probability, used for countable outcomes (errors, packets, retries) |
+| `f(x)` | "probability density at x" | **not** a probability. It's probability *per unit of x*, and can exceed 1 |
+| `F(x)` | "cumulative distribution" | the fraction of outcomes at or below `x`, always rising from 0 to 1 |
+| `F'(x) = f(x)` | | the Fundamental Theorem of Calculus (Ch. 12): the PDF is the CDF's derivative |
+
+The CDF is the one engineers already use: **a percentile is the inverse
+CDF**. "p99 latency = 250 ms" means `F(250 ms) = 0.99`.
+
+### The normal density, every symbol explained
+
+```
+f(x) = 1/(σ·√(2π)) · e^( -(x - μ)² / (2σ²) )
+```
+
+| Piece | What it does |
+|---|---|
+| `μ` (mu) | the mean: where the peak sits |
+| `σ` (sigma) | the standard deviation: how wide the bell is |
+| `(x - μ)²` | squared distance from the centre. Symmetric, so the curve is too |
+| `/(2σ²)` | measures that distance in units of `σ` |
+| `e^(-…)` | turns distance into a weight: 1 at the centre, falling *very* fast in the tails |
+| `1/(σ√(2π))` | the normalizer that makes the total area exactly 1, using the Gaussian integral `√π` (Ch. 12) |
+
+**Example:** API latency `~ N(μ = 100 ms, σ = 20 ms)`. What fraction of
+requests exceed 140 ms?
+
+```
+z = (140 - 100) / 20 = 2       ->   P(Z > 2) = 1 - Φ(2) ≈ 0.0228   (2.3%)
+```
+
+`Φ` (capital phi) is the standard normal CDF. You look it up in a table or
+call `scipy.stats.norm.cdf(2)`. The `e^(-x²)` shape decides how quickly
+tails die. At 4σ the probability is 0.003%, and at 6σ it's one in a billion.
+Real latency is *not* normal (see heavy tails below), and that difference is
+where outages come from.
+
+### Every distribution's mean and variance at a glance
+
+| Distribution | Parameters | `E[X]` | `Var(X)` | Engineering example |
+|---|---|---|---|---|
+| Bernoulli | `p` | `p` | `p(1-p)` | one request fails or not |
+| Binomial | `n, p` | `np` | `np(1-p)` | errors in `n` requests |
+| Geometric | `p` | `1/p` | `(1-p)/p²` | attempts until first success (Ch. 8) |
+| Poisson | `λ` | `λ` | `λ` | arrivals per second |
+| Uniform | `a, b` | `(a+b)/2` | `(b-a)²/12` | random backoff jitter in `[a, b]` |
+| Exponential | `λ` | `1/λ` | `1/λ²` | time between arrivals or failures |
+| Normal | `μ, σ²` | `μ` | `σ²` | aggregated measurement noise |
+
+Notice the **Poisson's mean equals its variance**. That gives you a free
+diagnostic. If your "requests per second" metric has a variance much larger
+than its mean (*overdispersion*), arrivals aren't independent. That points to
+bursty clients, retry storms, or cron jobs firing on the minute.
+
+### The Poisson limit theorem: where Poisson comes from
+
+> **Theorem.** If `n → ∞` and `p → 0` with `n·p = λ` held fixed, then
+> `Binomial(n, p) → Poisson(λ)`.
+
+Many independent chances, each tiny, give Poisson. That's why it models
+requests (millions of users, each rarely clicking), disk failures (many disks,
+each rarely failing) and radioactive decay alike.
+
+**Example:** 1000 requests at a 0.1% error rate, so `λ = 1000·0.001 = 1`.
+
+```
+Binomial: P(exactly 3) = C(1000,3)·0.001³·0.999⁹⁹⁷ = 0.06128
+Poisson:  P(exactly 3) = 1³·e⁻¹/3!                 = 0.06131
+```
+
+The two agree to three decimal places, and the Poisson version can be worked
+out by hand.
+
+### Memorylessness: the exponential distribution's strange property
+
+```
+P(T > s + t | T > s) = P(T > t)
+```
+
+**Proof in one line**, using `P(T > t) = e^(-λt)` from the CDF:
+
+```
+P(T > s+t | T > s) = P(T > s+t) / P(T > s) = e^(-λ(s+t)) / e^(-λs) = e^(-λt)
+```
+
+If failures are exponential, a server that has run for 1,000 hours is exactly
+as likely to fail in the next hour as a brand-new one. That's why
+time-based replacement of exponentially-failing parts is pointless. It's
+also why "it's been quiet for an hour, so a request must be due" is
+the gambler's fallacy again. Real hardware isn't fully memoryless. Disks
+follow a "bathtub curve" with high infant mortality, a flat middle and a
+wear-out phase, and Backblaze's data shows exactly that shape.
+
+### The Law of Large Numbers and the Central Limit Theorem, stated properly
+
+Let `X₁, …, Xₙ` be independent draws from *any* distribution with mean `μ` and
+standard deviation `σ`, and let `X̄ₙ = (X₁ + … + Xₙ)/n` be their average.
+
+> **Law of Large Numbers.** `X̄ₙ → μ` as `n → ∞`.
+> Averages settle on the true mean.
+
+> **Central Limit Theorem.** For large `n`,
+> ```
+> (X̄ₙ - μ) / (σ / √n)   ≈   N(0, 1)
+> ```
+> Averages are approximately normal, centred on `μ`, with spread `σ/√n`,
+> whatever the shape of the original distribution.
+
+| Symbol | Meaning |
+|---|---|
+| `X̄ₙ` | the sample mean of `n` observations |
+| `σ/√n` | the **standard error**: how much the sample mean itself jitters |
+| `√n` | the price of precision. **4× the data halves the error** |
+| `N(0, 1)` | the standard normal: mean 0, standard deviation 1 |
+
+**Example:** individual request latencies are exponential with mean 50 ms,
+so `σ = 50 ms` as well. That's strongly skewed and nothing like a bell. Now
+average them in batches of 100:
+
+```
+standard error = 50 / √100 = 5 ms
+95% of batch averages fall in  50 ± 1.96·5  =  [40.2, 59.8] ms
+```
+
+A simulation of 100,000 such batches gives a mean of 49.99, a standard
+deviation of 5.01, and 95.0% inside that interval. The skew has disappeared,
+as the theorem promises.
+
+```python
+import numpy as np
+rng = np.random.default_rng(0)
+batch_means = rng.exponential(scale=50, size=(100_000, 100)).mean(axis=1)
+print(batch_means.mean(), batch_means.std())          # ~50.0, ~5.0
+print(np.mean(np.abs(batch_means - 50) < 1.96 * 5))   # ~0.95
+```
+
+The CLT is why A/B tests (Ch. 22) can use normal-based z-tests on
+conversion rates, and why mini-batch gradients in ML are noisy estimates of
+the true gradient whose noise shrinks like `1/√batch_size`. Doubling the batch
+cuts gradient noise by only about 30%, which is why "just use bigger batches"
+has diminishing returns.
+
+### Concentration inequalities: guarantees without assuming normality
+
+The CLT says "approximately, for large `n`". Sometimes you need a
+**guarantee** that holds for any distribution. These three inequalities give
+one:
+
+```
+Markov:      P(X ≥ a)          ≤ E[X] / a                 (X ≥ 0)
+Chebyshev:   P(|X - μ| ≥ kσ)   ≤ 1 / k²
+Hoeffding:   P(|X̄ₙ - μ| ≥ ε)   ≤ 2·e^(-2nε²)               (each Xᵢ in [0, 1])
+```
+
+| Symbol | Meaning |
+|---|---|
+| `a` | a threshold you're worried about |
+| `k` | how many standard deviations out |
+| `ε` | "epsilon", the error tolerance you'll accept on an average |
+| `n` | number of independent samples |
+
+**Markov example:** average queue length is 4. Without knowing anything else,
+`P(queue ≥ 40) ≤ 4/40 = 10%`. It's a crude bound, but it holds for any
+non-negative quantity.
+
+**Chebyshev example:** for *any* distribution, at most `1/9 ≈ 11%` of
+values lie beyond 3σ. The normal distribution puts only 0.3% out there, so a
+"3-sigma alert" on non-normal data can fire about 40× more often than you
+designed for.
+
+**Hoeffding, in AI: how big should an eval set be?** You want the model's
+measured accuracy within `ε = 2` points of the truth, with 95% confidence
+(failure probability `δ = 0.05`). Set `2e^(-2nε²) = δ` and solve:
+
+```
+n ≥ ln(2/δ) / (2ε²) = ln(40) / (2 · 0.02²) = 3.689 / 0.0008 ≈ 4,612 examples
+```
+
+Run it the other way and a 500-question benchmark only pins accuracy to
+`ε = √(ln 40 / 1000) ≈ ±6` points. A leaderboard gap of 3 points on such a
+benchmark is noise. Hoeffding is also the backbone of PAC learning theory,
+the formal answer to "how much data do I need to learn?"
+
+### Heavy tails and the "tail at scale"
+
+Many systems quantities follow a **Pareto (power-law)** distribution, where
+the tail decays polynomially instead of exponentially:
+
+```
+P(X > x) = (x_m / x)^α        for x ≥ x_m
+```
+
+| Symbol | Meaning |
+|---|---|
+| `x_m` | the minimum value (the scale) |
+| `α` | tail index. Smaller is heavier. `α ≤ 2` means infinite variance, `α ≤ 1` means infinite mean |
+
+With `α ≈ 1.16` you get the "80/20 rule": 20% of the flows carry 80% of the
+bytes. Internet flow sizes, file sizes and request costs all look like this.
+In networking these are the "elephant" flows (few, huge) and "mice" flows (many,
+tiny), and datacenter switches schedule them differently.
+
+**Tail latency compounds under fan-out.** A search query fans out to 100
+leaf servers and must wait for the slowest. If each leaf is slow (above its
+p99) independently 1% of the time:
+
+```
+P(query is slow) = 1 - P(all 100 fast) = 1 - 0.99¹⁰⁰ ≈ 63%
+```
+
+**One leaf's p99 becomes the whole service's median.** This is the central
+result of Google's "The Tail at Scale" (Dean & Barroso, 2013). It's why
+hedged requests (send a backup after the p95 has passed) and tied requests
+exist, and why p99.9 matters more than p50 in microservice architectures.
+
+### AI in the wild: sampling text is sampling a distribution
+
+At every step an LLM outputs logits `z`, turns them into a categorical
+distribution with softmax (Ch. 13), and **draws a random sample** from it.
+**Temperature** `T` reshapes that distribution before sampling:
+
+```
+pᵢ = e^(zᵢ / T) / Σⱼ e^(zⱼ / T)
+```
+
+Logits `z = (2.0, 1.0, 0.1)` for three candidate tokens:
+
+| Temperature | p(token 1) | p(token 2) | p(token 3) | Behaviour |
+|---|---|---|---|---|
+| `T = 0.5` | 0.864 | 0.117 | 0.019 | sharp, near-deterministic |
+| `T = 1.0` | 0.659 | 0.242 | 0.099 | the model's raw beliefs |
+| `T = 2.0` | 0.502 | 0.304 | 0.194 | flat, more "creative" and more errors |
+
+As `T → 0` this becomes `argmax` (greedy decoding). As `T → ∞` it becomes
+uniform. **Top-p (nucleus) sampling** truncates to the smallest set of
+tokens whose probabilities sum to `p` (say 0.9), which is just the CDF from
+earlier in this chapter applied to the sorted probabilities.
 
 ### Real-life engineering ties
 
@@ -2206,6 +3888,89 @@ in practice).
 
 ```
 P(spam | word1, word2, ...) ∝ P(spam) · P(word1|spam) · P(word2|spam) · ...
+```
+
+Multiplying hundreds of small probabilities underflows to 0.0 in floating
+point (Ch. 1), so real implementations add **log**-probabilities instead
+(Ch. 5): `log P(spam) + Σ log P(wordᵢ | spam)`. The `∝` ("proportional to")
+means we dropped the denominator `P(words)`. It's the same for both classes,
+so it can't change which one wins.
+
+### Every symbol in Bayes' theorem has a name
+
+```
+              likelihood   prior
+              ┌───┴───┐   ┌─┴─┐
+P(H | E)  =   P(E | H)  · P(H)
+└──┬───┘      ─────────────────
+posterior          P(E)
+                   └─┬─┘
+                  evidence
+```
+
+| Symbol | Name | Meaning in an intrusion-detection example |
+|---|---|---|
+| `H` | hypothesis | "this login is an attacker" |
+| `E` | evidence | "the login came from a new country at 3 a.m." |
+| `P(H)` | **prior** | how common attackers are *before* looking at this login (the base rate) |
+| `P(E \| H)` | **likelihood** | how often attackers' logins look like this |
+| `P(E)` | **evidence** (normalizer) | how often *any* login looks like this, attacker or not |
+| `P(H \| E)` | **posterior** | the updated belief, which is what you actually want |
+
+The formula is "**posterior ∝ likelihood × prior**". Every learning system
+that updates beliefs from data, from spam filters to Kalman filters in GPS to
+Bayesian optimization of hyperparameters, runs this multiplication.
+
+### Bayesian updating in practice: the Beta distribution
+
+How do you estimate a rate (a conversion rate, a link's loss rate, a model's
+accuracy) *and* how uncertain you are about it? Use a **Beta**
+distribution as the belief about the unknown rate `θ`:
+
+```
+prior:      θ ~ Beta(α, β)
+observe:    k successes in n trials
+posterior:  θ ~ Beta(α + k, β + n - k)          mean = (α + k) / (α + β + n)
+```
+
+| Symbol | Meaning |
+|---|---|
+| `θ` | the unknown true rate, between 0 and 1 |
+| `α`, `β` | "pseudo-counts" of prior successes and failures. `Beta(1,1)` is uniform: "no idea" |
+| `k`, `n - k` | the observed successes and failures. You literally just add them on |
+
+This is called a **conjugate prior**: Beta prior × binomial likelihood =
+Beta posterior. A Bayesian update is two additions.
+
+**Example:** a new feature variant, flat prior `Beta(1, 1)`. On day 1 you see
+13 conversions in 100 visitors, so the posterior is `Beta(14, 88)`, with mean
+`14/102 ≈ 13.7%` and a 95% credible interval of about **[7.8%, 21.0%]**. The
+interval is wide because 100 visitors isn't much. After 10,000 visitors it
+would narrow to about ±0.7 points.
+
+**AI in the wild: Thompson sampling.** To choose among several variants (ads,
+recommendation slots, LLM prompts), draw one random sample from each
+variant's Beta posterior and show the one with the highest draw. Uncertain
+variants sometimes produce high draws, so they get explored. Proven variants
+usually win, so they get exploited. This "multi-armed bandit" strategy wastes
+far less traffic than a fixed 50/50 A/B test, and it runs in production
+recommendation and ad systems.
+
+**Networking in the wild:** the same update tracks a link's delivery
+probability from probe results (each probe is a Bernoulli trial), with a
+built-in uncertainty that shrinks as probes accumulate. That's more honest
+than an EWMA (Ch. 9) when probes are sparse.
+
+```python
+from scipy.stats import beta
+post = beta(1 + 13, 1 + 87)            # flat prior + 13 of 100
+print(post.mean(), post.interval(0.95))  # 0.137, (0.078, 0.210)
+
+import numpy as np                       # Thompson sampling: pick the arm with the highest draw
+rng = np.random.default_rng(0)
+arms = {"A": (1 + 120, 1 + 880), "B": (1 + 13, 1 + 87)}   # (α, β) per variant
+draws = {k: rng.beta(a, b) for k, (a, b) in arms.items()}
+print(max(draws, key=draws.get), draws)
 ```
 
 ### Real-life engineering ties
@@ -2822,6 +4587,142 @@ where `r << n,m`, and use `ΔW = B·A`. This is a direct, production-scale
 application of the low-rank idea from SVD above — it's why LoRA fine-tuning
 uses a tiny fraction of the memory/compute of full fine-tuning.
 
+**The arithmetic:** one attention projection in a 7B-class model is
+`4096 × 4096`.
+
+```
+full ΔW:       4096 · 4096          = 16,777,216 trainable numbers
+LoRA, r = 8:   8 · (4096 + 4096)    =     65,536 trainable numbers   (0.39%)
+```
+
+| Symbol | Meaning |
+|---|---|
+| `W` | the frozen pretrained weights (`n × m`) |
+| `ΔW = B·A` | the learned update. `B` is `n × r` and starts at zero, `A` is `r × m` and starts random |
+| `r` | the rank, typically 4–64. It caps how many independent "directions of change" the update can have |
+| `α/r` | a scaling factor applied to `B·A` so that changing `r` doesn't change the learning rate |
+
+Because `B` starts at zero, `ΔW = 0` at step 0 and fine-tuning begins
+*exactly* at the pretrained model. That's a small detail of initialization
+that makes LoRA stable.
+
+### SVD, symbol by symbol, and by hand
+
+```
+A = U · Σ · Vᵀ          (A is m × n)
+```
+
+| Symbol | Shape | Meaning |
+|---|---|---|
+| `V` | `n × n` | orthonormal input directions (the "right singular vectors") |
+| `Σ` | `m × n` | diagonal, with `σ₁ ≥ σ₂ ≥ … ≥ 0`, the stretch along each direction |
+| `U` | `m × m` | orthonormal output directions (the "left singular vectors") |
+| `σᵢ` | scalar | the `i`-th singular value, where `σᵢ² = ` eigenvalues of `AᵀA` |
+
+Read right to left, **every matrix does three things**: rotate (`Vᵀ`),
+stretch along the axes (`Σ`), rotate again (`U`). Any linear map, however
+messy, is a rotation, a stretch and another rotation.
+
+**By hand for `A = [[3, 0], [4, 5]]`:**
+
+```
+AᵀA = [3 4]·[3 0] = [25 20]
+      [0 5] [4 5]   [20 25]
+
+eigenvalues of AᵀA:  (25-λ)² - 400 = 0  ->  λ = 45 or 5
+singular values:     σ₁ = √45 ≈ 6.708,  σ₂ = √5 ≈ 2.236
+```
+
+(Same `[[a,b],[b,a]]` pattern as Ch. 11, with eigenvalues `a ± b`.)
+
+> **Theorem (Eckart–Young, 1936).** The best rank-`k` approximation of `A`,
+> measured by the sum of squared errors (Frobenius norm), is the truncated SVD
+> `Aₖ`, and its error is exactly the energy you dropped:
+> ```
+> ‖A - Aₖ‖²_F = σ²ₖ₊₁ + σ²ₖ₊₂ + ...
+> ```
+
+For our matrix, `‖A‖²_F = 9 + 0 + 16 + 25 = 50 = 45 + 5`. Keeping only
+`σ₁` (rank 1) leaves an error of exactly `σ₂² = 5`, so **one number pair keeps
+90% of the energy**. Real data is far more extreme. The singular values of
+natural images, user–item ratings and LLM weight updates fall off a cliff,
+which is why compression, recommendation and LoRA work at all.
+
+### Attention, the equation behind every transformer
+
+```
+Attention(Q, K, V) = softmax( Q·Kᵀ / √d_k ) · V
+```
+
+| Symbol | Shape | Meaning |
+|---|---|---|
+| `Q` | `n × d_k` | **queries**: for each token, "what am I looking for?" |
+| `K` | `n × d_k` | **keys**: for each token, "what do I contain?" |
+| `V` | `n × d_v` | **values**: for each token, "what do I pass on if selected?" |
+| `Q·Kᵀ` | `n × n` | every query dotted with every key: a table of match scores (Ch. 10) |
+| `√d_k` | scalar | the scaling factor (explained below) |
+| `softmax(…)` | `n × n` | each row becomes weights that sum to 1 (Ch. 13) |
+| `… · V` | `n × d_v` | each token's output is a weighted average of all values |
+
+Attention is a **soft dictionary lookup**. A Python dict returns the one
+value whose key matches exactly. Attention returns a *blend* of all values,
+weighted by how well each key matches.
+
+**A tiny example by hand.** One query `q = (1, 0)`, three tokens with keys
+`(1, 0)`, `(0, 1)`, `(1, 1)` and scalar values `10, 20, 90`, with `d_k = 2`:
+
+```
+scores  = q·kᵢ        = (1, 0, 1)
+scaled  = / √2        = (0.707, 0, 0.707)
+weights = softmax     = (0.401, 0.198, 0.401)
+output  = 0.401·10 + 0.198·20 + 0.401·90  ≈  44.1
+```
+
+The two keys that match the query get twice the weight of the one that
+doesn't.
+
+**Why divide by `√d_k`? The variance argument (Ch. 8 and 14 earning their keep).**
+If the entries of `q` and `k` are independent with mean 0 and variance 1,
+then `q·k = Σᵢ qᵢkᵢ` is a sum of `d_k` terms each with variance 1, so
+`Var(q·k) = d_k` and its standard deviation is `√d_k`. With `d_k = 64`, raw
+scores have a standard deviation of about 8. Softmax of scores like
+`(8, 0, -8)` is `(0.9997, 0.0003, 0.0000)`, which is nearly one-hot. In that
+regime the softmax gradient `p - y` (Ch. 13) is almost zero and learning
+stalls. Dividing by `√d_k = 8` restores a standard deviation of 1, and the
+same scores become `(0.67, 0.24, 0.09)`. The `√d_k` that appears in every
+transformer paper is a probability fact used to fix a calculus problem.
+
+### High-dimensional geometry: why embeddings work
+
+Intuition from 2D and 3D fails badly in 768 dimensions. Draw two random unit
+vectors in `ℝᵈ`. Their cosine similarity has mean 0 and standard deviation
+about `1/√d`:
+
+```
+d = 3:    std ≈ 0.58     random vectors often look "similar"
+d = 768:  std ≈ 0.036    random vectors are almost exactly perpendicular
+```
+
+In high dimensions **almost every pair of random directions is nearly
+orthogonal**, so a space can hold an exponential number of nearly
+independent concepts. That's why a cosine similarity of 0.3 between two
+embeddings is a meaningful signal and not noise. It's also why
+approximate nearest-neighbour indexes (HNSW, IVF-PQ in FAISS and vector databases)
+can prune most of the space quickly.
+
+### Networking in the wild: PCA finds anomalies across a whole network
+
+Stack a backbone network's link loads over time into a matrix: rows are 5-minute
+intervals, columns are links. Normal traffic is driven by a few shared
+forces (time of day, weekly cycle, a handful of big customers), so the
+matrix is close to **low rank**, and a few principal components explain most of
+the variance. Lakhina, Crovella and Diot (SIGCOMM 2004) split each time step into
+the part explained by the top components (the "normal subspace") and the
+**residual**. A DDoS, a routing change or an outage on a few links shows up
+as a residual spike, even when no single link crosses its own alert
+threshold. Network-wide anomaly detection is Eckart–Young applied to
+SNMP counters.
+
 ### Real-life engineering ties
 
 - **AI:** PCA for feature reduction/visualization, SVD for recommendation
@@ -2953,6 +4854,161 @@ mechanism behind Support Vector Machines (maximize margin subject to
 correct-classification constraints) and appears throughout constrained
 resource-allocation problems (e.g., "minimize latency subject to a fixed
 compute budget").
+
+### The learning-rate speed limit: `η < 2/λ_max`
+
+Why does a learning rate that's too large diverge? Take the simplest loss,
+a 1-D bowl with curvature `λ`:
+
+```
+L(w) = ½ · λ · w²       L'(w) = λ·w       (minimum at w = 0)
+
+update:  w_new = w - η·λ·w = (1 - η·λ) · w
+```
+
+| Symbol | Meaning |
+|---|---|
+| `λ` | curvature, the second derivative `L''`. In `n` dimensions, an eigenvalue of the Hessian (Ch. 13) |
+| `η` | learning rate |
+| `1 - ηλ` | the factor the error is multiplied by **every step** |
+
+After `t` steps, `w_t = (1 - ηλ)ᵗ · w₀`. That's a geometric sequence (Ch. 6),
+so it converges if and only if `|1 - ηλ| < 1`, that is, **`0 < η < 2/λ`**.
+With `λ = 10`:
+
+| `η` | factor `1 - ηλ` | What the loss curve does |
+|---|---|---|
+| 0.05 | 0.5 | smooth, fast convergence |
+| 0.15 | -0.5 | converges, overshooting back and forth |
+| 0.19 | -0.9 | barely converges, violent oscillation |
+| 0.25 | -1.5 | **diverges**: the error grows 1.5× per step until you see NaN |
+
+In a real network every Hessian eigenvalue imposes its own limit, and the
+**sharpest direction** (`λ_max`) sets the speed limit for all of them. But the
+flattest direction (`λ_min`) then crawls at a factor of `1 - ηλ_min ≈ 1`.
+The ratio `κ = λ_max/λ_min`, the **condition number**, measures how hard the
+problem is. Plain gradient descent needs on the order of `κ` steps. Feature
+standardization (Ch. 9 z-scores), BatchNorm/LayerNorm, momentum and Adam are
+all, at heart, ways to reduce `κ` or work around it. Researchers have observed
+that training tends to drive `λ_max` up until it hovers right at `2/η`
+("the edge of stability", Cohen et al., 2021), so this formula is a live
+dynamic in real training runs.
+
+### Momentum and Adam, every symbol explained
+
+**Momentum** (the "heavy ball"):
+
+```
+v ← β · v + ∇L(w)
+w ← w - η · v
+```
+
+`v` is a velocity that accumulates past gradients, an EWMA from Ch. 9 with
+`β ≈ 0.9`, so about 10 steps of memory. Along consistent directions,
+steps add up and the effective learning rate is about `η/(1-β) = 10η`.
+Across oscillating directions the opposite signs cancel. That accelerates
+the slow, flat directions without speeding up the sharp ones, which is
+exactly the fix for high `κ`.
+
+**Adam** (Kingma & Ba, 2014), the default optimizer for transformers:
+
+```
+m ← β₁·m + (1-β₁)·g                 1st moment: EWMA of gradients
+v ← β₂·v + (1-β₂)·g²                2nd moment: EWMA of squared gradients
+m̂ = m / (1 - β₁ᵗ)                   bias correction
+v̂ = v / (1 - β₂ᵗ)
+w ← w - η · m̂ / (√v̂ + ε)
+```
+
+| Symbol | Typical value | Meaning |
+|---|---|---|
+| `g` | | the current gradient `∇L(w)` |
+| `m` | starts at 0 | smoothed gradient: *which way* to go (momentum) |
+| `v` | starts at 0 | smoothed squared gradient: *how big* gradients usually are for this parameter |
+| `β₁`, `β₂` | 0.9, 0.999 | memory of about 10 and about 1,000 steps |
+| `t` | 1, 2, 3, … | step count, used only in bias correction |
+| `ε` | 1e-8 | stops division by zero |
+| `m̂/√v̂` | ≈ ±1 | a **unit-less** step: a direction divided by its typical size |
+
+**Why bias correction?** `m` and `v` start at 0, so early on they're
+dragged toward 0. At step 1, `m = 0.1·g`, which is 10× too small. Dividing by
+`1 - 0.9¹ = 0.1` fixes it exactly.
+
+**Worked step 1, gradient `g = 0.5`:**
+
+```
+m = 0.1 · 0.5   = 0.05          m̂ = 0.05    / (1 - 0.9)   = 0.5
+v = 0.001 · 0.25 = 0.00025      v̂ = 0.00025 / (1 - 0.999) = 0.25
+step = η · 0.5 / √0.25 = η · 1.0
+```
+
+Try `g = 0.0005` instead and the step is *still* `η · 1.0`. Adam's step size
+is roughly `η` whatever the gradient's scale. That's why one learning rate
+works across embedding tables, attention weights and layer norms whose
+gradients differ by orders of magnitude, and why `η` in Adam reads directly as
+"the maximum change per parameter per step."
+
+### Lagrange multipliers, worked: how should flows share a network?
+
+A problem from networking that shows what a Lagrange multiplier *means*.
+Two links, each with capacity 10 Mbit/s. Flow 0 crosses both links. Flow 1
+uses only link A, and flow 2 uses only link B:
+
+```
+flow 0:  ──[ link A ]──[ link B ]──
+flow 1:  ──[ link A ]──
+flow 2:              ──[ link B ]──
+```
+
+Frank Kelly (1998) proposed choosing rates `xᵢ` to maximize total
+"utility" `Σ log(xᵢ)`. The `log` gives diminishing returns, so starving any
+flow is very costly. This is **proportional fairness**:
+
+```
+maximize    log x₀ + log x₁ + log x₂
+subject to  x₀ + x₁ ≤ 10      (link A, multiplier λ_A)
+            x₀ + x₂ ≤ 10      (link B, multiplier λ_B)
+```
+
+**The Lagrangian** folds each constraint into the objective, weighted by a
+multiplier:
+
+```
+ℒ = log x₀ + log x₁ + log x₂ - λ_A·(x₀ + x₁ - 10) - λ_B·(x₀ + x₂ - 10)
+```
+
+| Symbol | Meaning |
+|---|---|
+| `ℒ` | the Lagrangian: objective minus "price × overuse" for each constraint |
+| `λ_A`, `λ_B` | Lagrange multipliers, the **price** per unit of bandwidth on each link |
+| `∂ℒ/∂xᵢ = 0` | at the optimum, no flow can gain by changing its rate |
+
+Set each partial derivative to zero:
+
+```
+∂ℒ/∂x₁ = 1/x₁ - λ_A = 0              ->  x₁ = 1/λ_A
+∂ℒ/∂x₂ = 1/x₂ - λ_B = 0              ->  x₂ = 1/λ_B
+∂ℒ/∂x₀ = 1/x₀ - λ_A - λ_B = 0        ->  x₀ = 1/(λ_A + λ_B)
+```
+
+**Flow 0 pays the price of every link it crosses.** By symmetry
+`λ_A = λ_B = λ`, both links are full, so `x₀ + x₁ = 1/(2λ) + 1/λ = 10`, giving
+`λ = 0.15`:
+
+```
+x₀ = 1/0.30 = 3.33 Mbit/s       (the 2-hop flow)
+x₁ = x₂ = 1/0.15 = 6.67 Mbit/s  (the 1-hop flows)
+```
+
+Compare max-min fairness, where everyone gets 5. Proportional fairness gives
+the long flow less, because it uses twice the network resources. Kelly showed
+that TCP-style congestion control, where each flow backs off when it sees loss or
+delay (the "price") on its path, is a **distributed algorithm solving this
+optimization**. The multipliers are the congestion signals, and the links
+compute them without any central coordinator. This is also why long
+multi-hop TCP flows get less throughput than short ones in practice. ML uses
+the identical machinery: the SVM's support vectors are the training points
+whose Lagrange multipliers are non-zero.
 
 ### Real-life engineering ties
 
@@ -3109,6 +5165,132 @@ predicted distributions (Ch. 23 covers KL divergence directly) — this is
 *why* cross-entropy, not raw accuracy, is the loss function, even though
 accuracy is the metric you actually care about: it's differentiable and it
 directly optimizes distributional closeness.
+
+### MLE, derived with calculus: the coin and the bell
+
+**Bernoulli MLE.** You observe `k` failures in `n` independent requests. What
+failure rate `p` makes that most likely?
+
+```
+likelihood:       ℒ(p) = pᵏ · (1-p)ⁿ⁻ᵏ
+log-likelihood:   ℓ(p) = k·ln p + (n-k)·ln(1-p)          (logs turn products into sums, Ch. 5)
+derivative:       ℓ'(p) = k/p - (n-k)/(1-p) = 0
+solve:            k(1-p) = (n-k)p   ->   p̂ = k/n
+```
+
+| Symbol | Meaning |
+|---|---|
+| `ℒ(p)` | likelihood: the probability of the data you saw, as a function of the unknown `p` |
+| `ℓ(p)` | log-likelihood, which has the same maximum but is easier to differentiate |
+| `p̂` | "p hat", the estimate. Hats mean "estimated from data" |
+
+The "obvious" estimate, failures ÷ total, *is* the maximum-likelihood
+estimate. Calculus confirms the intuition.
+
+**Gaussian MLE gives you MSE.** Assume each target is the model's prediction
+plus Gaussian noise: `yᵢ = f(xᵢ; θ) + noise`, with noise `~ N(0, σ²)`. The
+log-likelihood is:
+
+```
+ℓ(θ) = Σᵢ ln[ 1/(σ√(2π)) · e^(-(yᵢ - f(xᵢ;θ))² / (2σ²)) ]
+     = constant  -  (1/(2σ²)) · Σᵢ (yᵢ - f(xᵢ; θ))²
+```
+
+Maximizing `ℓ` is the same as **minimizing the sum of squared errors**. MSE
+loss, least squares (Ch. 10) and linear regression are all MLE under a
+Gaussian-noise assumption. Change the noise assumption and the loss changes
+with it: Laplace noise gives absolute error (MAE), and Bernoulli outputs give
+cross-entropy. **Choosing a loss function is choosing a probability model.**
+
+### The two-proportion z-test, by hand
+
+Here's the A/B test above (control 100/1000, variant 130/1000) done by hand.
+Under the null hypothesis "no difference", both groups share one pooled rate:
+
+```
+p̂_pool = (100 + 130) / (1000 + 1000) = 0.115
+
+SE = √( p̂_pool · (1 - p̂_pool) · (1/n₁ + 1/n₂) )
+   = √( 0.115 · 0.885 · 0.002 ) = √0.0002036 ≈ 0.01427
+
+z = (p̂₂ - p̂₁) / SE = (0.13 - 0.10) / 0.01427 ≈ 2.10
+
+p-value = 2 · P(Z > 2.10) ≈ 0.035
+```
+
+| Symbol | Meaning |
+|---|---|
+| `p̂₁`, `p̂₂` | observed conversion rates in control and variant |
+| `n₁`, `n₂` | sample sizes |
+| `SE` | standard error of the difference, from the Bernoulli variance `p(1-p)` (Ch. 8) and the CLT (Ch. 14) |
+| `z` | how many standard errors apart the two rates are |
+| `2 · P(Z > z)` | two-sided: a difference this large in *either* direction |
+
+`scipy`'s `chi2_contingency` in the code above prints about 0.042, not 0.035,
+because it applies Yates' continuity correction by default. Pass
+`correction=False` and it matches the hand calculation exactly. A 2×2
+chi-square test *is* this z-test, squared (`χ² = z²`).
+
+### Confidence intervals, the formula
+
+```
+p̂ ± z_(α/2) · √( p̂(1 - p̂) / n )
+```
+
+| Symbol | Meaning |
+|---|---|
+| `z_(α/2)` | the critical value: 1.96 for 95%, 2.576 for 99% |
+| `√(p̂(1-p̂)/n)` | standard error of a proportion |
+
+**Example:** variant at 130/1000:
+`0.13 ± 1.96 · √(0.13 · 0.87 / 1000) = 0.13 ± 0.021 = [10.9%, 15.1%]`.
+The `√n` in the denominator is the CLT's law of diminishing returns again:
+to halve the interval's width you need **4×** the traffic.
+
+### How many users does an A/B test need? Power analysis
+
+Before you launch, decide the smallest effect worth detecting, then solve for `n`:
+
+```
+n per group = (z_(α/2) + z_β)² · [ p₁(1-p₁) + p₂(1-p₂) ] / δ²
+```
+
+| Symbol | Meaning | Typical value |
+|---|---|---|
+| `α` | false-positive rate you accept (Type I error) | 0.05, so `z_(α/2) = 1.96` |
+| `1 - β` | **power**: the chance of detecting a real effect | 0.80, so `z_β = 0.84` |
+| `p₁`, `p₂` | baseline rate and the rate you hope to reach | 10% → 11% |
+| `δ` | `p₂ - p₁`, the minimum detectable effect | 0.01 |
+
+```
+n = (1.96 + 0.84)² · (0.10·0.90 + 0.11·0.89) / 0.01²
+  = 7.85 · 0.1879 / 0.0001  ≈  14,750 users per group
+```
+
+Detecting a 1-point lift on a 10% baseline takes about 30,000 users in
+total. Because of `δ²`, detecting **half** that lift takes **4×** as many.
+This is why small companies can't run the same experiments as large ones,
+and why "we ran it for a day and it looked good" usually means
+"underpowered."
+
+### Networking in the wild: the rule of three
+
+You send 3,000 probe packets across a link and **none** are lost. Is the loss
+rate zero? No, but you can bound it. The 95% upper bound `p` is the rate at
+which seeing zero losses still has a 5% chance:
+
+```
+(1 - p)ⁿ = 0.05   ->   n·ln(1 - p) = ln 0.05   ->   n·(-p) ≈ -3.0   ->   p ≈ 3/n
+```
+
+(using `ln(1-p) ≈ -p` from Ch. 12's Taylor expansion, and `-ln 0.05 ≈ 3.0`)
+
+**Zero failures in `n` trials means the true rate is below `3/n` with 95%
+confidence.** For 3,000 clean probes, loss is below 0.1%. If your SLO is
+0.01% loss, 3,000 probes can't verify it. You need 30,000. The same rule
+answers "we ran 500 red-team prompts and the model never leaked the system
+prompt". That only shows the leak rate is below `3/500 = 0.6%`, which is not
+zero.
 
 ### Real-life engineering ties
 
@@ -4319,9 +6501,52 @@ NETWORKING
   Little's Law                      = L (items in system) = λ (arrival rate) · W (time in system)
   M/M/1 average wait                = 1 / (service_rate - arrival_rate)
 
+PROBABILITY DEEPER (Ch. 8, 14)
+  conditional probability           P(A|B) = P(A ∩ B) / P(B)
+  total probability                 P(A) = Σ P(A|Bᵢ)·P(Bᵢ)
+  expectation                       E[X] = Σ x·P(X=x)   or   ∫ x·f(x) dx
+  linearity (always holds)          E[X + Y] = E[X] + E[Y]
+  variance shortcut                 Var(X) = E[X²] - (E[X])²
+  normal density                    f(x) = 1/(σ√(2π)) · e^(-(x-μ)²/(2σ²))
+  standard error (CLT)              σ / √n
+  Hoeffding sample size             n ≥ ln(2/δ) / (2ε²)
+  zero failures in n trials         95% upper bound ≈ 3/n
+  Beta update                       Beta(α, β) + k of n  ->  Beta(α+k, β+n-k)
+
+STATISTICS DEEPER (Ch. 9, 22)
+  z-score                           z = (x - μ) / σ
+  correlation                       r = Cov(X,Y) / (s_X · s_Y)
+  EWMA                              S = (1-α)·S + α·x
+  TCP RTO (RFC 6298)                RTO = SRTT + 4·RTTVAR
+  CI for a proportion               p̂ ± 1.96·√(p̂(1-p̂)/n)
+  A/B sample size per group         (z_(α/2) + z_β)² · [p₁(1-p₁) + p₂(1-p₂)] / δ²
+
+LINEAR ALGEBRA (Ch. 10, 11, 20)
+  dot product, geometric            A·B = ‖A‖‖B‖cos θ
+  dense layer                       h = ReLU(W·x + b)
+  least squares                     w = (XᵀX)⁻¹ Xᵀ y
+  eigen-equation                    A·v = λ·v,  solve det(A - λI) = 0
+  matrix powers                     Aᵏ = P·Dᵏ·P⁻¹
+  PageRank                          PR = (1-d)/N + d·M·PR
+  Markov steady state               π·P = π
+  graph Laplacian                   L = D - A   (λ₂ = algebraic connectivity)
+  SVD                               A = U·Σ·Vᵀ,  ‖A - Aₖ‖²_F = Σ_{i>k} σᵢ²
+  attention                         softmax(Q·Kᵀ / √d_k)·V
+
 CALCULUS / ML
+  derivative                        f'(x) = lim(h→0) [f(x+h) - f(x)] / h
+  sigmoid derivative                σ'(x) = σ(x)·(1 - σ(x))
+  Taylor (2nd order)                f(x+Δ) ≈ f(x) + ∇fᵀΔ + ½ΔᵀHΔ
+  Newton's method                   x_{n+1} = x_n - f(x_n)/f'(x_n)
+  Fundamental Theorem               ∫ₐᵇ f(x) dx = F(b) - F(a)
+  Gaussian integral                 ∫ e^(-x²) dx = √π
   gradient descent update           = w_new = w_old - learning_rate · ∇Loss(w_old)
   chain rule                        = dy/dx = f'(g(x)) · g'(x)
+  linear layer backprop             ∂L/∂W = δ·xᵀ,   ∂L/∂x = Wᵀ·δ
+  softmax + cross-entropy gradient  ∂L/∂z = p - y
+  stable learning rate              η < 2 / λ_max(Hessian)
+  Adam step                         w -= η · m̂ / (√v̂ + ε)
+  Mathis TCP throughput             ≈ (MSS/RTT) · 1.22/√p
 
 CONTROL THEORY
   PID output = Kp·error + Ki·∫error·dt + Kd·(d(error)/dt)

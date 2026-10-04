@@ -46,6 +46,13 @@ Each guide's Markdown is in [`docs/`](docs/); the site is the official, always-c
 
 ## What's new
 
+- **Real-Life Mathematics, in depth** ([`/maths/`](https://frontendlabs.xyz/maths/)).
+  The linear algebra, calculus and probability & statistics chapters now explain
+  every formula symbol by symbol, with a worked example under each one, the
+  theorems behind them (spectral, Taylor, the Fundamental Theorem, CLT, Hoeffding,
+  Eckart–Young) and how AI and networking use them: attention's `√d_k`, Adam,
+  backprop by hand, PageRank, Markov loss models, TCP's RTO and throughput,
+  Kelly's fair-sharing. New: integral calculus and "How to read a formula".
 - **Docker & Kubernetes — The Real-Life Field Guide** ([`/kubernetes/`](https://frontendlabs.xyz/kubernetes/)).
   Beginner to production, built around one cloud system ("Orbit") assembled end to end:
   production Dockerfiles and supply-chain security, Kubernetes core and production workloads,

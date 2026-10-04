@@ -3,6 +3,7 @@ How to use this guide
 Contents
 Role-based learning paths
 Notation cheat sheet
+How to read a formula (the skill nobody teaches)
 1. Number Systems & Bit-Level Math
 2. Modular Arithmetic
 3. Boolean Algebra & Logic
