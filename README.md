@@ -1,210 +1,159 @@
-# frontendlabs.xyz — live field-guide reader
+<div align="center">
 
-A book-style web app for the wiki's real-life field guides. The Markdown in
-[`docs/`](docs/) is the source. A small Go program renders it into a static site
-in `dist/`, and regenerates the affected page **within about a second** whenever
-a guide changes, either in `docs/` or in the original wiki folders.
+# Frontend Labs
+
+**Long-form engineering field guides, read like books.**
+From the kernel to LLMs: operating systems, networking, security, Go, Rust, C and AI,
+with runnable labs in every guide.
+
+[**frontendlabs.xyz**](https://frontendlabs.xyz) · [Guides](#the-guides) · [Run it locally](#run-it-locally) · [Contributing](#contributing)
+
+[![deploy](https://github.com/zonepearl/frontendlabs/actions/workflows/pages.yml/badge.svg)](https://github.com/zonepearl/frontendlabs/actions/workflows/pages.yml)
+[![e2e](https://github.com/zonepearl/frontendlabs/actions/workflows/ci.yml/badge.svg)](https://github.com/zonepearl/frontendlabs/actions/workflows/ci.yml)
+[![content: CC BY-NC-SA 4.0](https://img.shields.io/badge/content-CC%20BY--NC--SA%204.0-blue)](LICENSE-CONTENT)
+[![code: MIT](https://img.shields.io/badge/code-MIT-green)](LICENSE)
+
+</div>
+
+---
+
+## The guides
+
+| | Guide | Topic | Level |
+|---|---|---|---|
+| 🤖 | [AI from Zero to LLMs](https://frontendlabs.xyz/ai/) | AI | Beginner → Expert |
+| 📐 | [Real-Life Mathematics](https://frontendlabs.xyz/maths/) | AI | Beginner → Expert |
+| 🖥️ | [Operating Systems, Linux & Containers](https://frontendlabs.xyz/linux/) | Systems | Beginner → Expert · step 1 |
+| 📈 | [Scale, Load & Performance Testing](https://frontendlabs.xyz/scale-perf/) | Systems | In depth |
+| 🧭 | [The OSI Model, One Click at a Time](https://frontendlabs.xyz/osi/) | Networking | Overview · step 2a |
+| 🌐 | [Networking from Zero (TCP/IP)](https://frontendlabs.xyz/tcp-ip/) | Networking | Beginner → Expert · step 2b |
+| 🔗 | [The HTTPS Request Lifecycle](https://frontendlabs.xyz/https/) | Networking | Intermediate → Expert · step 4 |
+| 📡 | [TCP/IP — The Complete Field Guide (reference)](https://frontendlabs.xyz/tcp-ip-reference/) | Networking | Reference |
+| 🔒 | [Security from Zero](https://frontendlabs.xyz/security-from-zero/) | Security | Beginner → Advanced · step 3a |
+| 🕵️ | [Security Engineering in Depth](https://frontendlabs.xyz/security-in-depth/) | Security | Advanced · step 3b |
+| 🐹 | [Go — The Complete Field Guide](https://frontendlabs.xyz/go/) | Programming | Beginner → Expert · alongside |
+| 🗓️ | [Go 120-Day Engineering Plan](https://frontendlabs.xyz/go-plan/) | Programming | Day by day |
+| 🦀 | [Rust — The Complete Field Guide](https://frontendlabs.xyz/rust/) | Programming | Beginner → Expert · alongside |
+| 🛠️ | [C — The Complete Field Guide](https://frontendlabs.xyz/c/) | Programming | Beginner → Expert |
+| 🟨 | [JavaScript — The Complete Field Guide](https://frontendlabs.xyz/javascript/) | Programming | Beginner → Expert |
+| 🧩 | [Data Structures & Algorithms](https://frontendlabs.xyz/dsa/) | Programming | Beginner → Advanced |
+
+The systems course reads in order: **1 OS → 2 Networking → 3 Security → 4 HTTPS**, with Go and Rust alongside.
+Each guide's Markdown is in [`docs/`](docs/); the site is the official, always-current edition.
+
+## What the site gives readers
+
+- **One page per chapter**, plus a guide overview with full contents and a
+  "read as one page" edition for find-in-page and printing.
+- **Search** across every guide and chapter (`/`), **continue reading** where you left off,
+  and **paper / light / night** themes with adjustable text size and width.
+- **Readable on any screen**, with copy buttons on code, keyboard shortcuts
+  (`t` contents, `n`/`p` chapters, `d` theme), and print-to-PDF.
+- **Search-engine ready**: a canonical URL, description and `<h1>` per chapter,
+  JSON-LD (`Course`, `TechArticle`, `BreadcrumbList`), and a sitemap of every indexable page.
+
+## Run it locally
+
+Requires **Go** (version in [`go.mod`](go.mod)). Node is needed only to rebuild the CSS or run the tests.
 
 ```bash
-make serve        # sync, build a preview into .preview/, serve on http://localhost:8080, regenerate on change
-make build        # production build into dist/  -> deploy dist/ to https://frontendlabs.xyz
-make sync         # copy the latest guides from the wiki into docs/
-make dev          # serve + rebuild on template/CSS edits (needs Node for Tailwind)
-make check        # build, then verify every link and #anchor in dist/ for production
+make serve     # build a preview and serve http://localhost:8080; pages reload as guides change
+make build     # production build into dist/
+make sync      # copy the latest guides from the wiki into docs/
+make check     # build, then verify every link and #anchor
+make test      # check + the full end-to-end suite (what every commit must pass)
 ```
 
-Requirements: Go 1.22+ only. Node is needed **only** to change the CSS
-(`npm install && npm run css`). The compiled stylesheet is committed in
-`web/static/app.css`.
+`serve` watches the wiki and `docs/` and re-renders only what changed, usually within a second.
 
-## Why this stack
+## How it works
 
-| Option | Verdict |
-|---|---|
-| htmx + Tailwind | Needs a server rendering HTML fragments anyway. Partial swaps add nothing to reading long books, and break deep links and the browser's find-in-page. |
-| Vanilla JS + Tailwind (render Markdown in the browser) | Parses up to 1.2 MB of Markdown on every visit, needs a web server even locally (`fetch` is blocked on `file://`), and is invisible to search engines. |
-| **Go static-site generator + Tailwind (chosen)** | Renders once, serves plain HTML. One binary does sync, build, serve, and watch. Uses the same heading anchors as the wiki's builders, so the guides' cross-links keep working. |
-| Astro Starlight / VitePress / Docusaurus / mdBook | Good tools, but they expect front matter or one file per chapter. These guides are single 10k–20k-line books, and the book reader (themes, resume, chapter navigation) would have to be rebuilt anyway. |
-
-The result works from any static host or straight from disk (`dist/index.html`).
-
-## What you get
-
-- **Home page:** an icon card for every guide, grouped by category, with the
-  systems series shown in reading order (OS → networking → security → HTTPS).
-  Each card shows chapters, reading time, and runnable Go programs, plus
-  search across every guide and chapter (`/`) and a "continue reading" strip.
-- **Book reader** for every guide: a title page, a contents sidebar with parts,
-  chapters and reading times, a chapter filter, scroll tracking, a progress bar,
-  paper/light/night themes, font size and column width, resume where you left
-  off, previous/next chapter and guide, coloured cards for "In one sentence" /
-  "Build it in Go" / "Common mistakes" / "Check yourself" sections, copy buttons
-  on code, checklists that remember their state, keyboard shortcuts
-  (`t d w + - n p /`), and print-to-PDF.
-- **Links between guides** (`../v2-https/real-life-guide-v1.md#chapter-25-...`)
-  are rewritten to the app's URLs, and links written for GitHub's anchor style
-  also resolve.
-- **Original editions:** the wiki's own HTML books are published under
-  `/originals/`, and each guide's Markdown under `/docs/`, both linked from the
-  reader's `⋯` menu.
-
-## How regeneration works
-
-```
-wiki/<folder>/*.md ──sync──▶ docs/<folder>/*.md ──render──▶ dist/<slug>/index.html ──SSE──▶ open browser tabs reload
-     (originals)        (mirror, same paths)        (only the changed guide)        (only tabs showing that page)
+```text
+wiki/*.md ──sync──▶ docs/*.md ──build──▶ dist/  ──GitHub Pages──▶ frontendlabs.xyz
+                                          ├── <guide>/              overview + contents
+                                          ├── <guide>/<chapter>/    one page per chapter (indexed)
+                                          └── <guide>/all/          the whole book (noindex)
 ```
 
-- `serve` and `watch` poll file fingerprints (modification time and size)
-  every 700 ms. This is standard-library Go, works the same on macOS and Linux,
-  and needs no file-notification dependency.
-- A changed **wiki original** is copied into `docs/` (written to a temporary
-  file and renamed, so nothing ever reads half a file). A changed file in
-  **`docs/`** re-renders just that document plus the home page and search index.
-  In testing, a guide edit was live in the browser within 0.3 s, and the
-  re-render took about 8 ms.
-- `serve` pushes the changed URLs to open tabs over Server-Sent Events. A tab
-  reloads only if it shows that page, and keeps its scroll position.
-- `watch` does the same without a web server, for a host that only regenerates
-  `dist/` for a separate static server.
-- A rebuild error is logged and the last good page keeps being served.
+A small Go generator renders the Markdown with [goldmark](https://github.com/yuin/goldmark),
+splits each guide into chapter pages, and resolves every link and `#anchor`
+(including links between guides) to the page that holds it. Old one-page links
+such as `/rust/#6-ownership…` redirect to the right chapter. There is no framework
+and no client-side rendering: the output is static HTML that works on any host.
 
-**`docs/` vs the wiki:** `sync` copies wiki → `docs/` whenever a wiki original
-changes. Edit the wiki originals, or run with `-sync=false` if you want to
-edit `docs/` directly and never have it overwritten.
+## Adding a guide
 
-
-## Adding or changing a guide
-
-Everything about presentation is in [`guides.json`](guides.json):
+Add an entry to [`guides.json`](guides.json), then `make sync test`:
 
 ```json
-{"slug": "dsa", "title": "Data Structures & Algorithms", "icon": "🧩",
- "category": "foundations", "step": "", "level": "Beginner → Advanced",
- "summary": "…", "source": "DSA/real-life-ds-algo-guide.md",
- "originals": ["DSA/real-life-ds-algo-guide.html"],
- "pages": [{"slug": "week1", "source": "…/week1.md"}]}
+{
+  "slug": "dsa",
+  "title": "Data Structures & Algorithms",
+  "icon": "🧩",
+  "level": "Beginner → Advanced",
+  "summary": "Plain-language explanations and Go implementations for every core topic.",
+  "source": "DSA/real-life-ds-algo-guide.md",
+  "originals": ["DSA/real-life-ds-algo-guide.html"]
+}
 ```
 
-`source` and `originals` are paths relative to the wiki root, and the same paths
-under `docs/`. `pages` adds extra documents as sub-pages of a guide (used for the
-Go plan's 19 documents). Add an entry, run
-`make sync build`, and the guide appears on the home page.
+List its slug in one of the home page `sections`, and in `path` if it is part of the systems course.
+The build fails if a guide is missing from every section, and the test suite covers new guides automatically.
 
-## Testing: the commit gate
+## Quality gate
 
-Every commit and every deploy runs an end-to-end suite (Playwright, Chromium)
-against a fresh build of the site, served as static files like GitHub Pages.
+Every commit and every deploy must pass an end-to-end suite
+([Playwright](https://playwright.dev), Chromium, desktop and phone):
+
+| Area | Guards |
+|---|---|
+| Home | one card per guide; sections, course path and spotlight follow `guides.json`; search; themes |
+| Layout | nothing scrolls sideways on phones; grids, columns and sticky bars where the design expects them |
+| Style | current asset hashes; stylesheet applied; WCAG contrast in every theme |
+| Content | every page loads cleanly; anchors resolve; Markdown fully rendered; metadata on every chapter page; contents snapshots |
+| Visual | screenshot comparisons of the home page, a guide overview and a chapter |
 
 ```bash
 npm ci && npx playwright install chromium   # once
-make hooks        # once per clone: install the pre-commit hook
-make test         # links + the full suite (what the hook runs, ~20 s)
-make test-ci      # the same without screenshot comparisons (what CI runs)
-npx playwright test --update-snapshots      # accept an intended design or content change
+make hooks                                  # once per clone: run `make test` before every commit
+npx playwright test --update-snapshots      # accept an intended design or content change, then review the diff
 ```
 
-| Spec | What it guards |
-|---|---|
-| `home.spec.ts` | every guide has exactly one card; sections, the course path ribbon, the spotlight and its deep links follow `guides.json`; search; themes |
-| `layout.spec.ts` | no page scrolls sideways on a phone; spotlight columns, one-row path, 3-column cards on desktop and 1 on phones; sticky bars |
-| `style.spec.ts` | assets carry their current `?v=` content hash; the stylesheet is applied; every theme's colours and WCAG text contrast |
-| `content.spec.ts` | all documents load without browser errors or duplicate ids; every contents entry has a target; Markdown rendered fully; copy buttons; previous/next follow the course; **table-of-contents snapshots** |
-| `visual.spec.ts` (`@visual`) | screenshot comparisons of the home page (paper and night) and a guide page, desktop and phone |
+## Contributing
 
-Tests read `guides.json`, so a new guide is covered automatically. Snapshots
-live in `tests/e2e/__snapshots__/` (contents lists, the same on every OS) and
-`tests/e2e/__screenshots__/<platform>/` (screenshots, per OS because fonts
-differ). CI runs on Linux and has no screenshot baselines, so it skips
-`@visual`; the pre-commit hook runs everything. Review the diff of any
-updated snapshot before committing it: that is the change readers will see.
-
-## Repository protection
-
-`main` is protected by rulesets kept as code in `.github/rulesets/`, applied with
-`scripts/github-harden.sh`. They have **no bypass list**: they bind
-administrators, collaborators, bots and AI agents alike.
-
-| Protection | Effect |
-|---|---|
-| Pull requests only | nobody pushes to `main` directly; changes merge through a PR |
-| Required `e2e` check | a PR merges only after `.github/workflows/ci.yml` (build, links, E2E) passed on its latest commit |
-| No force push, no deletion, linear history | history on `main` cannot be rewritten or removed |
-| Immutable tags | published tags cannot be moved or deleted |
-| Secret scanning + push protection | pushes containing credentials are rejected |
-| Dependabot alerts and updates | vulnerable dependencies and pinned actions get update PRs |
-| Actions locked down | GitHub-owned actions only, pinned to SHAs; read-only token by default; workflows cannot approve PRs |
-| Pages environment | deploys only from `main` |
-
-**Day-to-day flow:**
+`main` is protected: changes arrive through pull requests whose `e2e` check passed,
+with no force pushes and no bypass. Workflows use pinned actions and read-only tokens,
+and secret scanning and Dependabot are enabled. See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ```bash
-git switch -c my-change        # the pre-commit hook still runs `make test` locally
-git commit -am "…" && git push -u origin my-change
-# open a pull request on GitHub; merge (squash or rebase) once "e2e" is green
+git switch -c my-change
+make test && git commit -am "Describe the change" && git push -u origin my-change
+# open a pull request; it merges once the e2e check is green
 ```
 
-**Applying or re-applying the settings** (owner only, once):
-create a fine-grained token for this repository with *Administration: read and write*,
-then run `GH_TOKEN=… scripts/github-harden.sh` (dry run) and
-`GH_TOKEN=… scripts/github-harden.sh --apply`, and delete the token.
+<details>
+<summary><b>Project layout</b></summary>
 
-**Agents:** give automation the least access it needs. An SSH key or a token with
-*Contents* and *Pull requests* lets an agent push branches and open PRs; the
-rulesets stop it from changing `main` without a green check. Never give an agent
-*Administration* access, which can edit the rulesets themselves.
-
-## Home page layouts
-
-`site.home_layout` in `guides.json` picks the home page. Change it and rebuild
-(`make build`, or let `make serve` pick it up) to switch:
-
-| Value | Template | What it shows |
-|---|---|---|
-| `"spotlight"` | `web/templates/home-spotlight.html` | AI spotlight first (the `spotlight` block: featured guide, deep links, "coming next"), the course as a path ribbon, then topic `sections` (Systems, Networking, Security, Programming) |
-| `"classic"` (or unset) | `web/templates/home.html` | the original layout: one section per entry in `categories` |
-
-In the spotlight layout, a guide's "Next guide" button follows `path` (the
-course order) when the guide is on it, and its section order otherwise, so
-moving HTTPS into the Networking section does not change the course. The
-build fails if a guide is in no section, so nothing can silently disappear
-from the home page. The classic layout ignores `sections`, `path` and
-`spotlight`, and builds exactly what it did before.
-
-## Layout
-
-```
-guides.json            manifest: guides, icons, categories, series steps
-docs/                  the source Markdown (+ original HTML), mirroring the wiki's paths
-cmd/guides/            CLI: sync | build | serve | watch
-internal/site/
-  manifest.go          guides.json, and doc -> URL mapping
-  sync.go              wiki -> docs copy, change fingerprints
-  markdown.go          goldmark (GFM), wiki-compatible heading IDs, link rewriting
-  book.go              title page, chapters, section cards, contents, reading time, GitHub anchor aliases
-  build.go             pages, home, search index, assets, sitemap/robots/404/CNAME; incremental rebuild
-  originals.go         publishes the original HTML editions with their links fixed
-  serve.go             watcher, live-reload (SSE), static server
-web/templates/         home.html, book.html, partials.html  (html/template)
-web/static/            reader.js, home.js, app.css (Tailwind output), brand/ (logo sizes from FrontEndLabs.png)
-web/styles/input.css   Tailwind v4 source: theme tokens and book typography
-scripts/checklinks.py  verifies every link and anchor in dist/
+```text
+guides.json             guides, home page sections, course path, spotlight
+docs/                   guide Markdown (+ original HTML editions), mirroring the wiki
+cmd/guides/             CLI: sync | build | serve | watch
+internal/site/          generator: markdown, chapter split, links, SEO, home, sitemap, live reload
+web/templates/          home, book (overview / chapter / one page), partials
+web/static/             reader.js, home.js, app.css (Tailwind output), brand assets
+web/styles/input.css    Tailwind v4 source: theme tokens and book typography
+tests/e2e/              Playwright specs and snapshots
+scripts/                link checker, GitHub hardening script
+.github/                workflows, rulesets, Dependabot, CODEOWNERS
 ```
 
-## Original editions
+`site.home_layout` in `guides.json` switches the home page between `"spotlight"` (default) and `"classic"`.
+The wiki's own HTML books are published under `/originals/` with their links rewritten to the site.
 
-The wiki's own HTML books are published under `/originals/`. Their links were
-written for the wiki's folder layout (sibling `.md` files, folders,
-GitHub-style anchors), so the build rewrites every `<a href>` that wouldn't
-resolve under `/originals/` to point at the app's rendered page and anchor
-instead. Example markup inside code blocks is never touched.
+</details>
 
 ## License
 
-- **Guides** (everything in `docs/`, and the pages built from it):
-  [CC BY-NC-SA 4.0](LICENSE-CONTENT). You may share and adapt them for
-  non-commercial use, with credit to frontendlabs.xyz and under the same license.
-- **Code** (the generator: `cmd/`, `internal/`, `web/`, `scripts/`): [MIT](LICENSE).
-
-Code samples inside the guides may also be used under the MIT license, so you
-can copy them into your own projects, commercial or not.
+- **Guides** (`docs/` and the pages built from it): [CC BY-NC-SA 4.0](LICENSE-CONTENT).
+  Share and adapt them for non-commercial use, with credit to frontendlabs.xyz.
+- **Code** (`cmd/`, `internal/`, `web/`, `scripts/`) and **code samples inside the guides**: [MIT](LICENSE).
