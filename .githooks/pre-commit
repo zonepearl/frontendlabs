@@ -1,0 +1,27 @@
+#!/bin/sh
+# Commit gate: the site must build, every link must resolve, and the E2E suite
+# (layout, style, content, screenshots) must pass before a commit is created.
+# Installed with `make hooks`. Skip once, deliberately: git commit --no-verify
+set -e
+cd "$(git rev-parse --show-toplevel)"
+
+# Test what is being committed, not unstaged edits lying around in the tree.
+stash=0
+if ! git diff --quiet; then
+  git stash push --keep-index --include-untracked --quiet -m "pre-commit: unstaged changes"
+  stash=1
+fi
+# Use `if`, not `[ … ] && …`: the trap's last status would otherwise become the
+# hook's exit status and reject a commit whose tests passed.
+restore() { if [ "$stash" = 1 ]; then git stash pop --quiet; fi; }
+trap restore EXIT
+
+echo "pre-commit: running make test (links + E2E)…"
+if ! make --no-print-directory test >/tmp/frontendlabs-precommit.log 2>&1; then
+  tail -40 /tmp/frontendlabs-precommit.log
+  echo
+  echo "pre-commit: tests failed, commit aborted. Full log: /tmp/frontendlabs-precommit.log"
+  echo "Intended design/content change? Accept it with: npx playwright test --update-snapshots"
+  exit 1
+fi
+grep -E "[0-9]+ passed" /tmp/frontendlabs-precommit.log | tail -1

@@ -1,0 +1,10 @@
+Day 22 — Generics (Go 1.18+)
+Day 23 — sync.Pool & Memory Efficiency
+Day 24 — Functional Patterns & Middleware
+Day 25 — Embedding & Composition
+Day 26 — expvar & Runtime Metrics
+Day 27 — Graceful Shutdown
+Day 28 — Profiling
+Day 29 — Testing: httptest & net.Pipe
+Day 30 — Phase 1 Review & Code Audit
+Week 4 Mini Project: In-Memory Metrics Server

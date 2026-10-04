@@ -91,6 +91,34 @@ under `docs/`. `pages` adds extra documents as sub-pages of a guide (used for th
 Go plan's 19 documents). Add an entry, run
 `make sync build`, and the guide appears on the home page.
 
+## Testing: the commit gate
+
+Every commit and every deploy runs an end-to-end suite (Playwright, Chromium)
+against a fresh build of the site, served as static files like GitHub Pages.
+
+```bash
+npm ci && npx playwright install chromium   # once
+make hooks        # once per clone: install the pre-commit hook
+make test         # links + the full suite (what the hook runs, ~20 s)
+make test-ci      # the same without screenshot comparisons (what CI runs)
+npx playwright test --update-snapshots      # accept an intended design or content change
+```
+
+| Spec | What it guards |
+|---|---|
+| `home.spec.ts` | every guide has exactly one card; sections, the course path ribbon, the spotlight and its deep links follow `guides.json`; search; themes |
+| `layout.spec.ts` | no page scrolls sideways on a phone; spotlight columns, one-row path, 3-column cards on desktop and 1 on phones; sticky bars |
+| `style.spec.ts` | assets carry their current `?v=` content hash; the stylesheet is applied; every theme's colours and WCAG text contrast |
+| `content.spec.ts` | all documents load without browser errors or duplicate ids; every contents entry has a target; Markdown rendered fully; copy buttons; previous/next follow the course; **table-of-contents snapshots** |
+| `visual.spec.ts` (`@visual`) | screenshot comparisons of the home page (paper and night) and a guide page, desktop and phone |
+
+Tests read `guides.json`, so a new guide is covered automatically. Snapshots
+live in `tests/e2e/__snapshots__/` (contents lists, the same on every OS) and
+`tests/e2e/__screenshots__/<platform>/` (screenshots, per OS because fonts
+differ). CI runs on Linux and has no screenshot baselines, so it skips
+`@visual`; the pre-commit hook runs everything. Review the diff of any
+updated snapshot before committing it: that is the change readers will see.
+
 ## Home page layouts
 
 `site.home_layout` in `guides.json` picks the home page. Change it and rebuild

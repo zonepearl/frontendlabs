@@ -1,0 +1,28 @@
+Why does this exist?
+1. Arrays
+2. Strings
+3. Linked Lists
+4. Stacks
+5. Queues
+6. Linear Search
+7. Bubble Sort
+8. Binary Search
+9. Recursion
+10. Hash Maps (a.k.a. Dictionaries / Hash Tables)
+11. Trees
+12. Binary Search Trees (BST)
+13. Merge Sort & Quick Sort
+14. Graphs
+15. BFS & DFS (Graph/Tree Traversal)
+16. Dynamic Programming (DP)
+17. Greedy Algorithms
+18. Backtracking
+19. Heaps / Priority Queues
+20. Union-Find (Disjoint Set)
+21. Trie (Prefix Tree)
+22. Dijkstra's Algorithm (Shortest Path)
+23. Topological Sort
+The one-sentence version of everything
+Books
+Blogs & Written Guides
+Video Tutorials

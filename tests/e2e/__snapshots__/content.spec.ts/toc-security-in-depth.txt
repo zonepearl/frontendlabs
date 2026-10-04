@@ -1,0 +1,97 @@
+What you will be able to do at the end
+How this guide is organised
+Contents
+0.1 Who this is for, and what the first guide assumed
+0.2 The advanced learning flow: think in attack paths, assume breach
+0.3 Three routes
+0.4 The advanced lab
+0.5 Ethics, cloud provider policy, and not setting money on fire
+0.6 The running example grows up
+0.7 The series: OS → networking → security → HTTPS
+0.8 The Go labs: security mechanisms you can run
+Chapter 1 — From vulnerabilities to attack paths
+Chapter 2 — Adversary emulation and purple teaming
+Chapter 3 — Assume breach: lateral movement, persistence, and containment by design
+Chapter 4 — Threat modeling at scale
+Chapter 5 — The cloud security model and the identity plane
+Chapter 6 — Cloud IAM in depth: policy evaluation and privilege-escalation paths
+Chapter 7 — Organisation structure and guardrails
+Chapter 8 — Cloud network security
+Chapter 9 — Data security in the cloud: KMS and envelope encryption
+Chapter 10 — Hands-on: attack and defend a cloud account
+Chapter 11 — IaC security
+Chapter 12 — CI/CD as an attack surface
+Chapter 13 — Securing the software factory: provenance and admission
+Chapter 14 — Hands-on: a supply-chain-hardened pipeline
+Chapter 15 — Container internals and isolation
+Chapter 16 — Kubernetes architecture and its trust boundaries
+Chapter 17 — Kubernetes RBAC and identity
+Chapter 18 — Admission control and policy
+Chapter 19 — Kubernetes network security
+Chapter 20 — Runtime security and workload identity
+Chapter 21 — Multi-tenancy and isolation models
+Chapter 22 — Hands-on: attack a cluster, then harden it
+Chapter 23 — Service identity: SPIFFE and SPIRE
+Chapter 24 — Token exchange and delegation
+Chapter 25 — Distributed authorization: RBAC to ABAC to ReBAC/Zanzibar
+Chapter 26 — East-west security: internal APIs, gRPC, and event streams
+Chapter 27 — Multi-tenant data isolation
+Chapter 28 — Resilience as a security property
+Chapter 29 — Hands-on: end-to-end authorization for SecureShop
+Chapter 30 — HTTP request smuggling and desync
+Chapter 31 — Web cache poisoning and cache deception
+Chapter 32 — XXE and the XML attack surface
+Chapter 33 — SSRF mastery
+Chapter 34 — Prototype pollution, DOM clobbering, and mutation XSS
+Chapter 35 — Web race conditions
+Chapter 36 — Server-side template and expression-language injection
+Chapter 37 — Deserialization attacks
+Chapter 38 — File upload and parser attacks
+Chapter 39 — Federated identity attacks: SAML and advanced OAuth/OIDC
+Chapter 40 — Hands-on: chain bugs into account takeover or RCE
+Chapter 40A — API payload security in depth
+Chapter 40B — API rate limiting in depth
+Chapter 40C — WAF: architecture, rules, and bypasses
+Chapter 40D — WAAP: bots, API discovery, and edge enforcement
+Chapter 40E — Implementing the OWASP API Security Top 10 (2023)
+Chapter 41 — Data classification, inventory, and data-flow mapping
+Chapter 42 — Encryption at rest, done properly
+Chapter 43 — Tokenization, FPE, and PCI scope reduction
+Chapter 44 — Key management lifecycle
+Chapter 45 — De-identification and privacy-preserving analytics
+Chapter 46 — The right to erasure across a distributed system
+Chapter 47 — Data residency, sovereignty, and transfer
+Chapter 48 — Database security in depth
+Chapter 49 — Data-access governance and insider risk
+Chapter 50 — Hands-on: build SecureShop's data-protection layer
+Chapter 51 — The detection-engineering lifecycle
+Chapter 52 — Telemetry architecture
+Chapter 53 — Threat hunting and threat intelligence
+Chapter 54 — Detecting the attack paths from Part 1
+Chapter 55 — Incident response for cloud and containers
+Chapter 56 — Ransomware and destructive-attack resilience
+Chapter 57 — Hands-on: build and validate a detection suite
+Chapter 58 — Building an SSDLC / product-security program
+Chapter 59 — Vulnerability management at scale
+Chapter 60 — The offensive program: pentest, red team, bug bounty, VDP
+Chapter 61 — Compliance and assurance without theater
+Chapter 62 — Risk, metrics, and communicating with leadership
+Chapter 63 — Enterprise identity and access
+Chapter 64 — Project 1: cloud-native SecureShop — model, build, attack, defend
+Chapter 65 — Project 2: distributed authorization with proven tenant isolation
+Chapter 66 — Project 3: an advanced web assessment to ATO/RCE
+Chapter 67 — Project 4: emulate an intrusion, detect every stage, run the IR
+Chapter 68 — Project 5: the data-protection and privacy layer, productionised
+Chapter 69 — AI, LLM, and agentic-system security
+Chapter 70 — Mobile application security
+Chapter 71 — Endpoint, Active Directory, Entra ID, and EDR realities
+Chapter 72 — Email security, phishing resilience, and BEC
+Chapter 73 — Secrets management and credential lifecycle
+Chapter 74 — Abuse, fraud, bots, and business-logic defense
+Chapter 75 — Digital forensics and malware triage
+Chapter 76 — IoT, OT, embedded, and physical-world security
+Chapter 77 — Security architecture review: the senior-engineer playbook
+Chapter 78 — Capstone: a board-to-packet security review
+Chapter 79 — Deep specialisation tracks and the research frontier
+Chapter 80 — Staying current at the advanced level, and contributing back
+Continue the series

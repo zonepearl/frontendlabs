@@ -1,0 +1,15 @@
+Target Persona: Software Engineer
+Who This Plan Is For
+The series: OS → networking → security → HTTPS: where this plan fits
+120-Day Overview
+Phase 1: Go Fundamentals (Days 1–30)
+Phase 2: Networking Foundations + L4 (Days 31–60)
+Phase 3: L7 Networking + WAF + API Security (Days 61–90)
+Phase 4: DDoS + Bot Detection + Capstone (Days 91–120)
+Skills Matrix
+Engineering Decision Framework
+Recommended Reading by Phase
+Key Standard Library Packages
+Daily Workflow (~1 hour)
+Weekly Rhythm
+Mindset for a Software Engineer

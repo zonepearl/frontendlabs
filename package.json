@@ -7,6 +7,7 @@
     "css:watch": "tailwindcss -i web/styles/input.css -o web/static/app.css --watch"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/cli": "^4.1.0",
     "tailwindcss": "^4.1.0"
   }

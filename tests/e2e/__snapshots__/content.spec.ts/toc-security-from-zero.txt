@@ -1,0 +1,69 @@
+What you will be able to do at the end
+Contents
+0.1 Who this guide is for
+0.2 The learning flow
+0.3 The roadmap
+0.4 Build your lab (30 minutes)
+0.5 The little bit of maths you need
+0.6 Ethics and the law — read this before Part 2
+0.7 How not to get stuck
+0.8 The series: OS → networking → security → HTTPS
+Chapter 1 — What "security" actually means
+Chapter 2 — Thinking like an attacker
+Chapter 3 — The vocabulary that trips everyone up
+Chapter 4 — Our running example: SecureShop
+Chapter 5 — How text becomes bytes
+Chapter 6 — Base64, hex, and URL encoding: none of them protect anything
+Chapter 7 — Unicode, normalisation, and the bugs they cause
+Chapter 8 — What a hash function is
+Chapter 9 — The real hash functions, and which are broken
+Chapter 10 — Password storage is a completely different problem
+Chapter 11 — HMAC: proving a message wasn't tampered with
+Chapter 12 — The idea, and what "perfect secrecy" costs
+Chapter 13 — Block ciphers and AES
+Chapter 14 — Modes of operation (and why ECB is a meme)
+Chapter 15 — AEAD: encryption and authentication together
+Chapter 16 — Hands-on: symmetric encryption with OpenSSL
+Chapter 17 — The key-distribution problem and the big idea
+Chapter 18 — Diffie–Hellman key exchange
+Chapter 19 — RSA
+Chapter 20 — Elliptic curve cryptography
+Chapter 21 — Digital signatures
+Chapter 22 — Hands-on: keys, signatures, and key exchange with OpenSSL
+Chapter 23 — Why quantum computers break today's public-key crypto
+Chapter 24 — The post-quantum algorithms
+Chapter 25 — Hybrid mode, crypto-agility, and how to migrate
+Chapter 26 — Hands-on: post-quantum with OpenSSL and liboqs
+Chapter 27 — What HTTPS actually guarantees (and what it doesn't)
+Chapter 28 — The TLS 1.3 handshake, step by step
+Chapter 29 — Certificates and how validation works
+Chapter 30 — PKI: certificate authorities, transparency, revocation, ACME
+Chapter 31 — TLS in production
+Chapter 32 — Hands-on: inspecting and testing TLS
+Chapter 33 — What SSH is, and the connection protocol
+Chapter 34 — Keys, agents, and host verification
+Chapter 35 — SSH certificates, hardening, and bastions
+Chapter 36 — Hands-on: SSH keys, tunnels, config, and signing
+Chapter 37 — The network attacker: sniffing, spoofing, MITM
+Chapter 38 — DNS security
+Chapter 39 — Firewalls, segmentation, zero trust, and VPNs
+Chapter 40 — Hands-on: seeing the network
+Chapter 41 — How the web decides what to trust
+Chapter 42 — Injection: when data becomes code
+Chapter 43 — Cross-site scripting (XSS)
+Chapter 44 — Request forgery: CSRF, SSRF, clickjacking
+Chapter 45 — Broken access control
+Chapter 46 — Authentication, sessions, and federated identity
+Chapter 47 — Supply chain and the code you didn't write
+Chapter 48 — Hands-on: testing a web application
+Chapter 49 — Secrets management
+Chapter 50 — Logging, detection, and monitoring
+Chapter 51 — Incident response
+Chapter 52 — Threat modeling and secure design
+Chapter 53 — Project 1: your own CA, plus mutual TLS
+Chapter 54 — Project 2: harden a server end to end
+Chapter 55 — Project 3: break and fix a vulnerable application
+Chapter 56 — Project 4: a post-quantum readiness audit
+Chapter 57 — Honest gaps, and a six-month plan
+Chapter 58 — Specialisations, certifications, and staying current
+Continue the series

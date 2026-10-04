@@ -1,7 +1,7 @@
 GO ?= go
 BIN := bin/guides
 
-.PHONY: all sync build serve watch dev css check clean
+.PHONY: all sync build serve watch dev css check test test-ci hooks clean
 
 all: build
 
@@ -29,5 +29,15 @@ css:                    ## rebuild web/static/app.css with Tailwind (needs Node)
 check: build            ## verify every link and anchor in dist/
 	python3 scripts/checklinks.py dist https://frontendlabs.xyz
 
+test: check             ## the commit gate: links + the full E2E suite (layout, style, content, screenshots)
+	npx playwright test
+
+test-ci: check          ## what CI runs: everything except OS-specific screenshot comparisons
+	npx playwright test --grep-invert @visual
+
+hooks:                  ## install the pre-commit hook that runs `make test`
+	git config core.hooksPath .githooks
+	@echo "pre-commit hook installed: every commit now runs make test (skip once with git commit --no-verify)"
+
 clean:
-	rm -rf dist .preview bin
+	rm -rf dist .preview bin .e2e-dist test-results playwright-report

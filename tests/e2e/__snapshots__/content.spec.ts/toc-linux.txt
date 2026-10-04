@@ -1,0 +1,96 @@
+What you will be able to do at the end
+How this guide is organised
+Contents
+0.1 Who this is for
+0.2 The learning flow
+0.3 Build your lab
+0.4 The little computer science you need
+0.5 How to read a manifest/command you've never seen
+0.6 How not to get stuck
+0.7 The series: OS → networking → security → HTTPS
+0.8 The Go labs: the OS from inside a program
+Chapter 1 — The OS as a resource manager and a liar
+Chapter 2 — Kernel space vs. user space, and the system call
+Chapter 3 — A program's whole life, from ./app to exit code
+Chapter 4 — What a process actually is
+Chapter 5 — Process states and the process lifecycle
+Chapter 6 — fork() and exec() : how new processes are born
+Chapter 7 — Threads: sharing everything except the stack
+Chapter 8 — Scheduling: who gets the CPU, and for how long
+Chapter 9 — Interrupts, context switches, and why they're not free
+Chapter 10 — Virtual memory: every process's private lie
+Chapter 11 — Paging, page faults, and the TLB
+Chapter 12 — The memory hierarchy: registers to disk, and why it exists
+Chapter 13 — Memory allocation and the OOM killer
+Chapter 14 — The I/O stack: from read() to the disk platter
+Chapter 15 — Filesystems: inodes, directories, and journaling
+Chapter 16 — Caching, buffering, and disk scheduling
+Chapter 17 — Race conditions at the OS level
+Chapter 18 — Locks, semaphores, and deadlock
+Chapter 19 — Pipes, sockets, shared memory, and message queues
+Chapter 20 — Signals: the OS's tap on the shoulder
+Chapter 21 — From power button to login prompt
+Chapter 22 — Init systems, kernel modules, and device drivers
+Chapter 23 — Everything is a file (almost)
+Chapter 24 — The Filesystem Hierarchy Standard, and why /etc isn't random
+Chapter 25 — Permissions, ownership, and links
+Chapter 26 — File and directory operations you'll use daily
+Chapter 27 — Text processing: grep , sed , awk , and pipes
+Chapter 28 — Redirection and the pipeline as a design pattern
+Chapter 29 — Finding things: find , locate , which , grep -r
+Chapter 30 — Package management: how software gets onto a Linux box
+Chapter 31 — Watching and controlling processes: ps , top , htop , kill
+Chapter 32 — Job control: foreground, background, and nohup
+Chapter 33 — systemd and services: how "always running" actually works
+Chapter 34 — Logs: journalctl and where output really goes
+Chapter 35 — Users, groups, and sudo
+Chapter 36 — The permission model, beyond chmod 777
+Chapter 37 — How a Linux box sees the network
+Chapter 38 — The tools: ss , curl , dig , tcpdump , and a firewall's basics
+Chapter 39 — Bash scripting fundamentals
+Chapter 40 — Cron, environment variables, and gluing things together
+Chapter 41 — Reading load average, vmstat , and iostat correctly
+Chapter 42 — strace , lsof , and answering "why is this stuck"
+Chapter 43 — Resource limits: ulimit and your first taste of cgroups
+Chapter 44 — What a container actually is (namespaces + cgroups + a filesystem)
+Chapter 45 — Containers vs. virtual machines, honestly compared
+Chapter 46 — Images and layers: why containers start in milliseconds
+Chapter 47 — Running your first containers, and understanding what happened
+Chapter 48 — Writing a good Dockerfile
+Chapter 49 — Volumes and data: what survives a container's death
+Chapter 50 — Container networking: how containers talk to the world
+Chapter 51 — Docker Compose: running more than one container together
+Chapter 52 — Registries and image security basics
+Chapter 53 — Why Kubernetes exists (the problem Docker alone doesn't solve)
+Chapter 54 — The control plane and the node: Kubernetes' architecture
+Chapter 55 — Pods, Deployments, and ReplicaSets
+Chapter 56 — Services and how traffic finds a pod
+Chapter 57 — Configuration: ConfigMaps, Secrets, and environment
+Chapter 58 — Scheduling and scaling
+Chapter 59 -- Reading cluster state and debugging a pod that won't start
+Chapter 60 -- Deployment patterns: rolling updates, health checks, rollbacks
+Chapter 61 -- Helm and packaging Kubernetes applications
+Chapter 62 -- Project 1: build and profile a small program, OS-level
+Chapter 63 -- Project 2: containerize a real application properly
+Chapter 64 -- Project 3: deploy that application to Kubernetes with health checks
+Chapter 65 -- Project 4: diagnose and fix a planted incident, end to end
+Chapter 66 -- Production Linux mental models: fleet, drift, and failure domains
+Chapter 67 -- systemd beyond start/stop: dependencies, timers, sandboxing, and debugging
+Chapter 68 -- Storage operations: LVM, RAID, filesystem growth, backups, and recovery
+Chapter 69 -- Advanced Linux networking: namespaces, routing, nftables, and packet paths
+Chapter 70 -- Observability and performance: perf, flame graphs, eBPF, and OpenTelemetry
+Chapter 71 -- Linux security hardening: SELinux/AppArmor, auditd, capabilities, and least privilege
+Chapter 72 -- Incident response and refactoring on real Linux systems
+Chapter 73 -- Go meets the kernel: system calls, threads, and the runtime
+Chapter 74 -- Processes from Go: exec, exit codes, signals, and PID 1
+Chapter 75 -- CPU limits: GOMAXPROCS, cgroups, and throttling
+Chapter 76 -- Memory limits: the Go heap, GOMEMLIMIT, and the OOM killer
+Chapter 77 -- Files that survive crashes: page cache, fsync, and atomic replacement
+Chapter 78 -- File descriptors and the netpoller: holding thousands of connections
+Chapter 79 -- Reading /proc from Go: build your own ps
+Chapter 80 -- A container runtime in 150 lines of Go
+Chapter 81 -- Profiling Go on Linux: pprof, the execution tracer, and perf
+Chapter 82 -- Capstone: shipping a well-behaved Go service (image, systemd, Kubernetes)
+Chapter 83 -- Honest gaps and a study plan
+Chapter 84 -- Staying current
+Continue the series

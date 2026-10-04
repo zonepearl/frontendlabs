@@ -1,0 +1,8 @@
+Day 68 — WAF Fundamentals & OWASP Top 10
+Day 69 — SQL Injection Detection
+Day 70 — XSS Detection
+Day 71 — Path Traversal & Command Injection
+Day 72 — Request Body Inspection
+Day 73 — WAF Normalization Pipeline
+Day 74 — WAF Rule Scoring & Exceptions
+Week 10 Mini Project: Production WAF Middleware

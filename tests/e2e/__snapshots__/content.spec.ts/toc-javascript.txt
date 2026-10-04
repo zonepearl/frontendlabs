@@ -1,0 +1,59 @@
+How to use this guide
+Table of contents
+1. What JavaScript is, and the engines that run it
+2. Running JS: console, Node, and your first script
+3. Values and types: primitives, coercion, == vs ===
+4. Variables and scope: var / let / const , hoisting, the TDZ
+5. Operators and control flow
+6. Functions in depth: closures, this , call / apply / bind
+7. Objects and prototypes: the prototype chain, classes as sugar
+8. Arrays and iteration: methods, iterators, generators
+9. Strings, template literals, and regular expressions
+10. Error handling: try / catch , custom Error subclasses
+11. Mini project: a CLI todo app (Node)
+12. The call stack, heap, and the event loop model
+13. Callbacks and Promises: what actually happens under the hood
+14. async / await : sugar over promises, and its sharp edges
+15. Timers and scheduling: setTimeout , rAF, requestIdleCallback , MessageChannel
+16. Modules: CommonJS vs ES Modules, bundlers, dynamic import()
+17. Mini project: an async task queue with concurrency limits and retry
+18. The browser's process model: multi-process architecture and site isolation
+19. Browser engines compared: Blink/V8, Gecko/SpiderMonkey, WebKit/JavaScriptCore
+20. The DOM and BOM: window , document , node trees, the CSSOM
+21. The critical rendering path: bytes → DOM → CSSOM → render tree → layout → paint → composite
+22. Compositing and the GPU: layers, rasterization, the 16.6ms frame budget, jank
+23. The event model: capturing, bubbling, delegation, passive listeners
+24. Mini project: finding and fixing jank with the Performance panel
+25. HTTP fundamentals for JS developers
+26. HTTP/1.1 vs HTTP/2 vs HTTP/3 in the browser
+27. fetch and XMLHttpRequest : requests, streaming, aborting
+28. CORS in depth: same-origin policy, preflight, credentials
+29. HTTP caching and the browser cache
+30. WebSockets and Server-Sent Events
+31. Mini project: a resilient fetch client (timeout, retry, cache, dedup)
+32. Rendering models: CSR, SSR, SSG, ISR
+33. Virtual DOM reconciliation vs fine-grained reactivity (signals)
+34. Hydration and partial/progressive/resumable hydration
+35. Core Web Vitals: LCP, INP, CLS — measuring and fixing them
+36. Mini project: a virtual-DOM renderer from scratch (~150 lines)
+37. Why JS is (mostly) single-threaded, and what that really means
+38. Web Workers: postMessage , structured clone, transferable objects
+39. SharedArrayBuffer and Atomics : real shared-memory concurrency
+40. Shared Workers and Service Workers: lifecycle, scope, background sync
+41. Multi-threaded architecture patterns: worker pools, Comlink-style RPC
+42. Mini project: a multi-threaded Mandelbrot renderer (worker pool + SAB)
+43. Cookies in depth: attributes, HttpOnly / Secure / SameSite
+44. localStorage and sessionStorage : API, quotas, pitfalls
+45. IndexedDB: transactional storage for structured, larger data
+46. The Web Crypto API: hashing, AES-GCM, key derivation, asymmetric crypto
+47. What client-side encryption can't protect against: the XSS threat model
+48. Mini project: an encrypted notes app (Web Crypto + IndexedDB)
+49. Inside V8: parsing, Ignition bytecode, TurboFan, hidden classes, inline caches
+50. Garbage collection and memory leaks in real JS apps
+51. Browser security internals: CSP, sandboxing, Spectre, site isolation
+52. Capstone: an offline-first, multi-threaded, end-to-end-encrypted notes PWA
+Appendix A: Event-loop task-ordering cheat sheet
+Appendix B: Storage options comparison table
+Appendix C: Web Crypto API cheat sheet
+Appendix D: Glossary
+Appendix E: Further reading

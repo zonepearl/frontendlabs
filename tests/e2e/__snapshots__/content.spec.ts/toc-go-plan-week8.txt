@@ -1,0 +1,10 @@
+Day 52 — TCP Internals: What Goes Wrong
+Day 53 — Binary Protocol Design
+Day 54 — TLS Certificate Rotation
+Day 55 — SNI Routing
+Day 56 — Connection Multiplexing Concepts
+Day 57 — Error Propagation in Network Code
+Day 58 — Race Conditions in Network Servers
+Day 59 — Benchmark the Full L4 Stack
+Day 60 — Phase 2 Review
+Week 8 Mini Project: Secure TCP Gateway

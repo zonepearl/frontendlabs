@@ -1,0 +1,81 @@
+What you will be able to do at the end
+Contents
+0.1 Who this guide is for
+0.2 The learning flow (use this for every chapter)
+0.3 The roadmap
+0.4 Set up your computer (do this now, ~20 minutes)
+0.5 The tiny bit of maths you actually need
+0.6 How to not get stuck
+Chapter 1 — Programs vs models: the one idea that starts everything
+Chapter 2 — What "data", "features", and "learning" mean here
+Chapter 3 — The family tree: AI, ML, deep learning, LLMs
+Chapter 4 — Our running example: the Help Desk problem
+Chapter 5 — Teaching a computer with IF-THEN rules
+Chapter 6 — Building a rule system (a real historical example)
+Chapter 7 — Why rules broke down (the five walls)
+Chapter 8 — The big switch: from rules to examples
+Chapter 9 — Your first model: is this email spam?
+Chapter 10 — How a model learns: loss and gradient descent
+Chapter 11 — Turning words into numbers: bag-of-words and TF-IDF
+Chapter 12 — Predicting the next word by counting (n-grams)
+Chapter 13 — How do you know if a model is any good?
+Chapter 14 — What a neural network actually is
+Chapter 15 — How neural networks learn: backpropagation, gently
+Chapter 16 — Why "deep" matters
+Chapter 17 — Networks that read sequences (RNNs) and why they struggled
+Chapter 18 — The problem with treating words as symbols
+Chapter 19 — word2vec: meaning from company
+Chapter 20 — GloVe, FastText, and the family
+Chapter 21 — The limit of static vectors, and what came next
+Chapter 22 — The problem: reading a sentence all at once
+Chapter 23 — Attention explained with a highlighter
+Chapter 24 — Self-attention, step by step with real numbers
+Chapter 25 — Multiple heads, position, and the full block
+Chapter 26 — Hands-on: a tiny Transformer you can run
+Chapter 27 — Computers don't see words
+Chapter 28 — How BPE builds a vocabulary (by hand)
+Chapter 29 — Tokens in practice: cost, context, and fairness
+Chapter 30 — Special tokens and chat templates
+Chapter 31 — An LLM is a next-token guesser (that's genuinely it)
+Chapter 32 — Walking through one prediction, end to end
+Chapter 33 — How an LLM is trained (pretraining)
+Chapter 34 — Making it an assistant (SFT and RLHF/DPO)
+Chapter 35 — Why LLMs make things up
+Chapter 36 — From your question to the first word
+Chapter 37 — Choosing the next word: temperature, top-p, and friends
+Chapter 38 — The memory trick that makes it fast (the KV cache)
+Chapter 39 — What it costs, and how to think about it
+Chapter 40 — What you can realistically build
+Chapter 41 — Project 1: train a language model from scratch
+Chapter 42 — Project 2: fine-tune a real model with LoRA
+Chapter 43 — Teaching preferences (a taste of DPO)
+Chapter 44 — Prompting that actually works
+Chapter 45 — The context window: your working-memory budget
+Chapter 46 — Saving tokens and money
+Chapter 47 — Project 3: give the model your own documents (RAG)
+Chapter 48 — Tools, structured output, and agents
+Chapter 49 — Testing your LLM app
+Chapter 50 — What "agentic" actually means (and when you don't need it)
+Chapter 51 — The agent loop, spelled out
+Chapter 52 — Tools: giving the model hands
+Chapter 53 — Memory: how an agent remembers
+Chapter 54 — Multi-agent systems and orchestration
+Chapter 55 — Why agents fail, and how to tell
+Chapter 56 — Why MCP exists (the N×M problem)
+Chapter 57 — How MCP works: hosts, clients, servers, and primitives
+Chapter 58 — Hands-on: build an MCP server and connect it
+Chapter 59 — Why AI security is different
+Chapter 60 — Guardrails: the layered defence
+Chapter 61 — Securing prompts, context, and tools
+Chapter 62 — Build a support agent that can actually do things
+Chapter 63 — What you know now, and the honest gaps
+Chapter 64 — A six-month plan after this guide
+Chapter 65 — Project ideas by level
+Chapter 66 — What model weights actually are
+Chapter 67 — Knowledge distillation: teaching a small model to imitate a big one
+Chapter 68 — Project 5: distill a tiny model and run it in the browser (Bengaluru, next 30 days)
+Chapter 69 — Agent frameworks: LangGraph, CrewAI, and the SDKs
+Chapter 70 — AI governance and compliance
+Chapter 71 — How AdamW actually works
+Chapter 72 — GQA: shrinking the KV cache without losing (much) quality
+Chapter 73 — Quantization: from float32 to int4, the actual algorithm

@@ -1,0 +1,8 @@
+Day 15 — context Package
+Day 16 — io.Reader & io.Writer
+Day 17 — encoding/json
+Day 18 — File I/O & os Package
+Day 19 — Strings & Bytes
+Day 20 — regexp
+Day 21 — time Package
+Week 3 Mini Project: Structured Request Logger Middleware

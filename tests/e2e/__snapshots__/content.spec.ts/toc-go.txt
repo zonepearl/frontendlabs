@@ -1,0 +1,76 @@
+How to use this guide
+The series: OS → networking → security → HTTPS, in Go
+Table of contents
+1. What Go is, and why it exists
+2. The toolchain and workspace
+3. Variables, types, zero values, constants
+4. Control flow: if , switch , for , defer
+5. Functions: multiple returns, variadics, closures
+6. Arrays and slices: the internals that explain the bugs
+7. Maps: internals and idioms
+8. Structs and methods: value vs. pointer receivers, embedding
+9. Interfaces: implicit satisfaction, any , type switches
+10. Error handling: the pattern that shapes all Go code
+11. Packages and modules
+12. Strings, runes, bytes, and Unicode
+13. Terminal project: a system-info CLI and unit converter
+14. Terminal project: a JSON config server
+15. Goroutines: Go's answer to "what is a thread"
+16. Channels: pipelines, select , and the closing convention
+17. The sync package: mutexes, WaitGroup , Once , atomics
+18. context : cancellation, deadlines, and request-scoped values
+19. Testing in Go: table-driven tests and subtests
+20. Benchmarks and a first look at pprof
+21. Generics: type parameters and constraints
+22. I/O: io.Reader / Writer , bufio , and os
+23. encoding/json and reflection, briefly
+24. net/http fundamentals: client, server, middleware
+25. Terminal project: a concurrent URL health-checker (worker pool)
+26. Terminal project: an LRU cache library and CLI cache server
+27. The Go memory model and the garbage collector
+28. The scheduler deep dive: GMP and work-stealing
+29. Concurrency patterns: fan-in/fan-out, pipelines, rate limiting, errgroup
+30. Advanced error handling: errors.Join , custom types, panic boundaries
+31. Advanced generics: constraints, generic algorithms, inference limits
+32. Reflection and unsafe : when, and why rarely
+33. cgo and syscalls, briefly
+34. Networking deep dive: net.Conn , TCP/UDP, framing your own protocol
+35. TLS in Go: crypto/tls , mutual TLS
+36. Structured logging and observability: log/slog , metrics, tracing
+37. Performance tuning: pprof , trace , and benchmark methodology
+38. Terminal project: a TCP chat server with rooms
+39. Terminal project: a rate-limited reverse proxy (mini API gateway)
+40. Building production CLIs: flag , subcommands, config precedence
+41. Capstone: a distributed-style job queue with persistence
+42. Capstone: a streaming log analyzer for multi-GB files
+43. GUI options in Go: Fyne, Gio, Wails, Walk, and "just serve HTML"
+44. Building a Fyne desktop app: a live system-resource monitor
+45. Building a Wails app: a Go backend behind a web-based to-do board
+46. Packaging and distributing GUI apps
+47. Secure coding practices in Go
+48. Auth service: password hashing and JWT issuing/verification
+49. A WAF-style middleware: rate limiting and IP blocklists
+50. mTLS: client-certificate authentication end to end
+51. What's really behind an interface value
+52. What's really behind a slice, a map, and a string
+53. Goroutine stacks and the scheduler, revisited
+54. Designing APIs: the Go proverbs, applied
+55. Dependency injection without a framework: functional options
+56. Capstone: a tiny embedded database engine (Bitcask-style)
+57. Shipping it: cross-compilation, Docker, systemd, graceful shutdown
+58. Debugging Go in production: Delve, pprof, traces, stack dumps, GODEBUG
+59. Refactoring Go codebases: package seams, APIs, and compatibility
+60. Testing beyond tables: fuzzing, httptest, golden files, integration tests
+61. Production database access with database/sql and pgx
+62. Production HTTP APIs: validation, timeouts, middleware, shutdown
+63. Modules and releases: MVS, private modules, versioning, binaries
+64. Professional workflow: linting, vuln checks, CI, and quality gates
+65. Observability in Go services: logs, metrics, traces, health, profiling
+66. Architecture and package boundaries: services, workers, and seams
+67. Running Go in containers and Kubernetes
+Continue the series
+Appendix A — Go proverbs and idioms cheat sheet
+Appendix B — Common pitfalls and how to catch them
+Appendix C — Glossary
+Appendix D — Further reading
+Appendix E — Command cheat sheet

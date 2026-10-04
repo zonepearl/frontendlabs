@@ -1,0 +1,77 @@
+How to use this guide
+Table of contents
+1. What a network is, and why TCP/IP won
+2. The TCP/IP model (and how it maps to OSI)
+3. Encapsulation: the nested-envelope model
+4. End-to-end walkthrough: opening https://example.com
+5. Ethernet, MAC addresses, and frames
+6. ARP: turning IP addresses into MAC addresses
+7. Switches, broadcast domains, and VLANs
+8. MTU, fragmentation triggers, and jumbo frames
+9. Wi-Fi and other link layers
+10. The IPv4 address and header, field by field
+11. Subnetting, CIDR, and VLSM with worked examples
+12. Special-use addresses, private space, and NAT/PAT
+13. Routing: tables, longest-prefix match, and default routes
+14. ICMP: ping, traceroute, and Path MTU Discovery
+15. IP fragmentation and reassembly in detail
+16. IPv6 addressing and notation
+17. Neighbor Discovery, SLAAC, and DHCPv6
+18. Dual-stack, Happy Eyeballs, and transition mechanisms
+19. DHCP, from DISCOVER to lease renewal
+20. DNS: resolution, records, caching, and modern transports
+21. Ports, sockets, and the connection 4-tuple
+22. UDP: the header, and when "unreliable" is the right choice
+23. The TCP header, field by field
+24. The three-way handshake and connection setup
+25. Connection teardown, half-close, and TIME_WAIT
+26. The TCP finite state machine
+27. Sequence numbers, cumulative ACKs, and retransmission
+28. Retransmission timeout (RTO), RTT estimation, and Karn's algorithm
+29. Fast retransmit, fast recovery, and SACK
+30. Flow control: the sliding window, window scaling, and SWS
+31. Congestion control: slow start and congestion avoidance
+32. Reno, NewReno, CUBIC, and BBR
+33. Nagle, delayed ACK, and the interaction bug
+34. Keepalive, and detecting dead peers
+35. Bandwidth-delay product and buffer sizing
+36. Throughput math: loss, latency, and the Mathis equation
+37. Tuning knobs on Linux (sysctl reference)
+38. TLS: handshakes, versions, resumption, termination, and offload
+39. HTTP/1.1 vs HTTP/2 vs HTTP/3 (QUIC)
+40. Load balancing: L4 vs L7, DSR, and connection handling
+41. tcpdump and BPF filters
+42. Reading a Wireshark trace like a detective
+43. Socket statistics: ss , /proc , and connection states
+44. Diagnosing latency, loss, throughput, and bufferbloat
+45. Emulating bad networks with tc / netem
+46. NAT behaviors, STUN, TURN, and ICE
+47. Why VoIP and video use UDP, jitter buffers, and RTP
+48. The packet's path through the Linux kernel
+49. Offloads: checksum, TSO/GSO/GRO, LRO, RSS, and XDP
+50. Anycast, ECMP, and BGP in one page
+51. QoS, DSCP, and traffic shaping
+52. Spoofing, SYN floods, RST injection, and off-path attacks
+53. Firewalls, stateful inspection, and conntrack
+54. DDoS shapes and mitigations
+55. Network namespaces, veth pairs, and bridges
+56. Overlays: VXLAN, and how Kubernetes pods talk
+57. Cloud VPC constructs and their TCP/IP reality
+58. Message framing: where does a request end?
+59. Caching: the highest-leverage HTTP feature
+60. Cookies and state
+61. CORS: the browser's cross-origin rules
+62. WebSockets and Server-Sent Events
+63. Range requests, streaming, and compression
+64. HTTP authentication and authorization on the wire
+65. Proxies: forward, reverse, CONNECT, and interception
+66. What to measure: the four signal families
+67. Device and interface metrics: SNMP and its successors
+68. Flow telemetry: NetFlow, IPFIX, and sFlow
+69. Active probing, synthetic monitoring, and alerting that works
+70. How routing protocols work: the two families
+71. OSPF in depth
+72. BGP in depth: attributes and path selection
+73. BGP operations: peering, scaling, and failures
+74. First-hop redundancy, multicast, and MPLS/VRF in brief
+Further reading

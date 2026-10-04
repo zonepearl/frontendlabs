@@ -1,0 +1,79 @@
+How to use this guide
+Table of contents
+0.1 Setup: rustup, cargo, rust-analyzer, clippy
+0.2 The series: OS → networking → security → HTTPS → Go → C → Rust
+0.3 The Go ↔ C ↔ Rust phrasebook
+0.4 The Rust labs: what you build for each guide in the series
+1. What Rust is, and why it exists
+2. The toolchain: cargo, crates, editions, and what cargo build really does
+3. Variables, mutability, shadowing, and scalar types
+4. Control flow: everything is an expression
+5. Functions, statements, and the unit and never types
+6. Ownership: moves, copies, and drop
+7. Borrowing: shared XOR mutable
+8. Slices and strings: fat pointers and UTF-8
+9. Structs, enums, and pattern matching
+10. Error handling: Result , ? , and panics
+11. Collections: Vec , HashMap , and friends
+12. Modules, crates, and visibility
+13. 🔎 Checkpoint: ownership and borrowing
+14. Terminal project: a word-frequency counter
+15. Terminal project: a /etc/hosts -style config parser with real errors
+16. Traits and generics: shared behavior without inheritance
+17. Trait objects: dyn Trait and dynamic dispatch
+18. The standard traits you will implement every week
+19. Lifetimes: naming how long a borrow is valid
+20. Closures: Fn , FnMut , FnOnce
+21. Iterators: lazy, composable, zero-cost
+22. Smart pointers: Box , Rc , Arc , Cell , RefCell , Weak
+23. Testing: unit, integration, doc tests, and property tests
+24. I/O, files, processes, and application errors
+25. 🔎 Checkpoint: traits and lifetimes
+26. Terminal project: rgrep , a tested grep clone
+27. Terminal project: an LRU cache, and why linked lists are hard in Rust
+28. Threads, and why data races do not compile
+29. Shared state: Mutex , RwLock , atomics, Condvar , channels
+30. Async Rust: futures, poll , and why async exists
+31. Tokio in practice: tasks, select! , timeouts, cancellation, shutdown
+32. Networking with std and Tokio: TCP, UDP, and framing
+33. unsafe Rust: the five superpowers and the contract they carry
+34. FFI: calling C from Rust and Rust from C
+35. Macros: macro_rules! and what derive macros do
+36. Performance: release profiles, benchmarks, profiling, allocations
+37. Project: a thread pool from scratch
+38. Project: a multi-room chat server with Tokio
+39. Syscalls from Rust: std , libc , and nix
+40. Processes, exit codes, and signals
+41. Files that survive crashes: fsync and atomic replacement
+42. Reading /proc : build your own ps
+43. Memory: mmap and a counting global allocator
+44. A container in 100 lines: namespaces with nix
+45. A DNS client from raw bytes
+46. HTTP/1.1 from a bare TcpListener
+47. A production HTTP server with Axum: limits, timeouts, tracing, shutdown
+48. Outbound requests: timeouts, retries, idempotency, and an SSRF guard
+49. TLS and mutual TLS with rustls
+50. A reverse proxy with Hyper, and request-smuggling defenses
+51. What Rust prevents, and what it does not
+52. Cryptography done right: AEAD, password hashing, HMAC, constant-time, zeroize
+53. Parsing untrusted input: newtypes, "parse, don't validate", resource bounds
+54. Fuzzing and property testing
+55. Supply chain: Cargo.lock , cargo audit , cargo deny , build.rs
+56. Project: an auth service with Argon2 and JWTs
+57. Memory layout: size, alignment, niches, repr(C) , fat pointers
+58. Inside Vec , String , Box , and trait objects
+59. How async compiles: state machines, Pin , and a tiny executor
+60. Variance, PhantomData , and drop check
+61. Memory ordering: Relaxed , Acquire / Release , SeqCst , and a spinlock
+62. API design: newtypes, typestate, builders, errors, and semver
+63. Capstone: a Redis-compatible key-value server with persistence
+64. Capstone: one HTTPS request, every layer, every guide, in Rust
+65. Debugging: backtraces, lldb / gdb , tokio-console , Miri
+66. Workspaces, CI quality gates, release builds, and cross-compilation
+67. Running Rust in containers and Kubernetes
+68. How not to write Rust: an anti-pattern catalog
+Appendix A — Compiler-error decoder: the 15 errors you will actually see
+Appendix B — Cargo and tooling cheat sheet
+Appendix C — Glossary
+Appendix D — A 90-day plan
+Appendix E — Further reading and codebases worth reading

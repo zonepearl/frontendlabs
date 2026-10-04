@@ -108,8 +108,12 @@ body.toc-open #toc { transform: none; }
 section.chapter { padding-top: 3.5rem; }
 section.chapter + section.chapter { border-top: 1px solid var(--rule); margin-top: 3rem; }
 
+/* long unbreakable words (paths, "a/b/c/d" lists) break instead of widening the page on phones;
+   tables are left out on purpose: they scroll inside their own wrapper */
+#content :is(p, li, blockquote, dd, dt, h1, h2, h3, h4, h5, h6) { overflow-wrap: break-word; }
+
 /* inline and block code */
-#content code { font-family: var(--font-mono); font-size: .84em; background: var(--code-bg); border-radius: 4px; padding: .1em .35em; }
+#content code { font-family: var(--font-mono); font-size: .84em; background: var(--code-bg); border-radius: 4px; padding: .1em .35em; overflow-wrap: anywhere; } /* long paths and identifiers break instead of widening the page on phones */
 .codewrap { position: relative; margin: 1.4em 0; }
 .codewrap[data-lang]::before { content: attr(data-lang); position: absolute; top: .45rem; left: .8rem; font: 600 10px/1 var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--fg-faint); }
 #content pre { background: var(--code-bg); border: 1px solid var(--rule); border-radius: .7rem; padding: 1.7rem 1.1rem 1rem; overflow-x: auto; line-height: 1.5; font-size: .82em; }
@@ -154,7 +158,7 @@ section.chapter + section.chapter { border-top: 1px solid var(--rule); margin-to
 
 /* chapter navigation (added by reader.js) */
 .chapnav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem; font-family: var(--font-sans); }
-.chapnav a { flex: 1; max-width: 48%; border: 1px solid var(--rule); border-radius: .8rem; padding: .7rem 1rem; text-decoration: none !important; color: var(--fg); }
+.chapnav a { flex: 1; min-width: 0; max-width: 48%; overflow-wrap: anywhere; border: 1px solid var(--rule); border-radius: .8rem; padding: .7rem 1rem; text-decoration: none !important; color: var(--fg); }
 .chapnav a:hover { border-color: var(--accent); }
 .chapnav a.next { text-align: right; margin-left: auto; }
 .chapnav small { display: block; font-size: .72rem; color: var(--fg-faint); }

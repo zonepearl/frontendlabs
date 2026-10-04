@@ -1,0 +1,8 @@
+Day 31 — The OSI Model in Practice
+Day 32 — TCP Fundamentals
+Day 33 — TCP Server Patterns
+Day 34 — UDP
+Day 35 — I/O Patterns for Networking
+Day 36 — Connection Pools
+Day 37 — DNS in Go
+Week 5 Mini Project: TCP Proxy with Traffic Inspector

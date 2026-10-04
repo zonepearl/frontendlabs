@@ -1,0 +1,38 @@
+What you will be able to do at the end
+How to use this guide
+Contents
+Role-based learning paths
+Notation cheat sheet
+1. Number Systems & Bit-Level Math
+2. Modular Arithmetic
+3. Boolean Algebra & Logic
+4. Sets, Relations, and Functions
+5. Exponents & Logarithms
+6. Sequences, Series & Growth Rates
+7. Geometry & Trigonometry Essentials
+8. Basic Probability
+9. Basic Statistics
+10. Linear Algebra I — Vectors & Matrices
+11. Linear Algebra II — Eigenvalues, Eigenvectors, Determinants
+12. Calculus I — Limits, Derivatives, Rates of Change
+13. Calculus II — Gradients, Partial Derivatives, the Chain Rule
+14. Probability Distributions
+15. Combinatorics & Counting
+16. Bayes' Theorem
+17. Graph Theory
+18. Complexity & Asymptotic Analysis
+19. Number Theory Basics
+20. Linear Algebra for AI/ML (SVD, PCA, Tensors)
+21. Optimization & Backpropagation
+22. Statistics for ML & Experimentation
+23. Information Theory
+24. Cryptographic Mathematics
+25. Network & Systems Mathematics
+26. Quantitative Security
+27. Signal Processing Basics
+28. Game Theory & Adversarial Thinking
+29. Control Theory Basics (Feedback Loops, PID)
+Formula cheat sheet
+Practice labs (hands-on, in order of difficulty)
+Further Reading
+Topics Not Covered (and where they'd fit)

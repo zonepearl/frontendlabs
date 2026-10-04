@@ -1,0 +1,21 @@
+How to read this guide
+The series: OS → networking → security → HTTPS
+Table of contents
+Part 1 — The scenario
+Part 2 — The mental model
+Part 3 — Layer 1: Physical
+Part 4 — Layer 2: Data Link
+Part 5 — Layer 3: Network
+Part 6 — Layer 4: Transport
+Part 7 — Layer 5: Session
+Part 8 — Layer 6: Presentation
+Part 9 — Layer 7: Application
+Part 10 — The full replay: a millisecond timeline
+Part 11 — X-ray of one packet
+Part 12 — Inside the server: from the NIC to your handler
+Part 13 — The return trip and the goodbye
+Part 14 — Debugging by layer: the incident playbook
+Part 15 — Architecture decisions by layer: the senior and manager view
+Part 16 — Cheat sheet
+Part 17 — Self-check questions
+Continue the series

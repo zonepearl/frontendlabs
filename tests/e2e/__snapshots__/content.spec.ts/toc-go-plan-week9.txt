@@ -1,0 +1,8 @@
+Day 61 — HTTP/1.1 From Scratch
+Day 62 — net/http Server Configuration
+Day 63 — HTTP Middleware
+Day 64 — HTTP Reverse Proxy
+Day 65 — HTTP/2
+Day 66 — WebSocket
+Day 67 — HTTP Security Headers
+Week 9 Mini Project: HTTP Reverse Proxy with Full Observability

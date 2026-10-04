@@ -1,0 +1,9 @@
+Day 106 — Health Checks & Readiness Probes
+Day 107 — Multi-Stage Graceful Shutdown
+Day 108 — Signal Handling & Operational Controls
+Day 109 — Observability: Traces & Spans
+Day 110 — Chaos Engineering
+Day 111 — Memory & Goroutine Leak Hunting
+Day 112 — Zero-Downtime Deployment via FD Inheritance
+Week 15 Mini Project: Production-Hardened Gateway
+Week 15 Review

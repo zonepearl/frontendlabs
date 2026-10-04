@@ -1,0 +1,9 @@
+Day 99 — Bot Taxonomy & Signal Framework
+Day 100 — HTTP Header Fingerprinting
+Day 101 — TLS Fingerprinting (JA3)
+Day 102 — Session Behavioral Analysis
+Day 103 — IP Reputation & ASN Classification
+Day 104 — Proof-of-Work & Invisible Challenges
+Day 105 — Bot Mitigation Strategies
+Week 14 Mini Project: Bot Detection Engine
+Week 14 Review

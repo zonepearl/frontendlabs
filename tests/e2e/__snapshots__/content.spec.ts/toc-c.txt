@@ -1,0 +1,64 @@
+How to use this guide
+Table of contents
+1. What C is, why it still matters, and which C you're learning
+2. The toolchain: the four-stage pipeline, and your first program
+3. Types and the sizes the standard actually guarantees
+4. Operators, control flow, and the details beginners skip
+5. Functions, the stack, and header files
+6. Arrays, pointers, and the arithmetic that explains everything else
+7. Strings in C: buffers, ownership, and why gets() was removed
+8. Structs, unions, enums, typedef , and the preprocessor
+9. Mini projects: a unit converter and a word-frequency counter
+10. Dynamic memory: the malloc family, ownership, and the bugs it enables
+11. Pointers to pointers, function pointers, pointers to arrays
+12. File I/O: buffering, binary vs. text mode, errno
+13. Multi-file programs: headers, static , translation units, and make
+14. Debugging and sanitizers: gdb/lldb, Valgrind, ASan/UBSan
+15. A minimal test harness for C
+16. Mini projects: a dynamic-array library + CSV parser, and a JSON parser
+17. Bit manipulation and bit-fields
+18. Data structures from scratch: linked lists, stacks/queues, hash tables, trees
+19. Intrusive containers: the Linux kernel's container_of trick
+20. Concurrency: POSIX threads, mutexes/condvars, C11 <threads.h> and atomics
+21. Sockets: a TCP echo server, then a tiny HTTP server
+22. Variadic functions and _Generic
+23. Mini projects: a thread pool, and a select() -based chat server
+24. Building production CLIs: argument parsing, config precedence, exit codes
+25. Capstone: a kilo -style terminal text editor
+26. Capstone: a Unix mini-shell with pipes and redirection
+27. Capstone: a bump/arena allocator
+28. Undefined behavior: the list every C programmer must memorize
+29. Buffer overflows, safe string handling, and CERT C rules
+30. Hardening: compiler flags, canaries, ASLR, _FORTIFY_SOURCE
+31. Fuzzing a real parsing bug with libFuzzer
+32. Static analysis: clang-tidy, cppcheck, the Clang Static Analyzer
+33. SQLite: the amalgamation, the VFS layer, opcode-based execution
+34. Redis: the ae.c event loop, sds dynamic strings, object encoding
+35. curl: the easy/multi handle design and callback-driven I/O
+36. cJSON: recursive-descent parsing and tagged unions
+37. uthash and klib: generics via macros
+38. The C11 memory model: atomics, ordering, lock-free basics
+39. Writing a real allocator: free lists, coalescing, and dlmalloc 's ideas
+40. ABI, linking, and designing a stable C API
+41. Cross-compilation and build systems at scale (CMake/Meson)
+42. Profiling: perf , cache-aware layout, and false sharing
+43. Capstone: a mini Redis-like key-value store with a wire protocol
+44. Memory leaks, in depth: every shape they actually take in production
+45. Writing safe C: a defensive-programming checklist
+46. How NOT to write C: a bad-code/good-code anti-pattern catalog
+47. Two worlds: user-space hardware I/O vs. writing a kernel driver
+48. Talking to hardware from user space: GPIO, I2C, SPI, and serial
+49. Memory-mapped registers: volatile , /dev/mem , and memory barriers
+50. Your first Linux kernel module: hello world, the Makefile, insmod/dmesg
+51. Character device drivers: file_operations , cdev , and copy_to/from_user
+52. Interrupts and kernel concurrency: top/bottom halves, spinlocks vs. mutexes
+53. Debugging drivers: printk /dmesg, an oops backtrace, and QEMU+gdb
+54. Capstone: one sensor, driven two ways
+55. Signals: handling asynchronous events safely
+56. Non-local jumps: setjmp / longjmp and why they're not exceptions
+57. Memory-mapped files: mmap for real files, msync , and shared mappings
+A. C17 → C23: what's new, feature by feature
+B. Undefined-behavior and pitfalls cheat sheet
+C. Compiler-flags cheat sheet
+D. Glossary
+E. Further reading and real codebases worth reading

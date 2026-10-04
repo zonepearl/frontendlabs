@@ -1,0 +1,8 @@
+Day 45 — Load Balancing Algorithms
+Day 46 — Backend Health Checking
+Day 47 — Connection Draining
+Day 48 — TCP Load Balancer (L4)
+Day 49 — Rate Limiting at L4
+Day 50 — Observability at L4
+Day 51 — Resilience Patterns
+Week 7 Mini Project: Production L4 Load Balancer

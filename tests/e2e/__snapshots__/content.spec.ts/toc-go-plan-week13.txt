@@ -1,0 +1,10 @@
+Day 91 — DDoS Taxonomy & Attack Simulation
+Day 92 — Rate Limiting Algorithms Deep Dive
+Day 93 — Per-IP Rate Limiting with CIDR Awareness
+Day 94 — SYN Flood Defense
+Day 95 — Slowloris Detection & Defense
+Day 96 — Traffic Anomaly Detection (Z-Score + EMA)
+Day 97 — IP Blocking & Proof-of-Work Challenges
+Day 98 — UDP Amplification Defense
+Week 13 Mini Project: DDoS Mitigation Layer
+Week 13 Review

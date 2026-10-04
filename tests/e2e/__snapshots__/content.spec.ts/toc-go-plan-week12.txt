@@ -1,0 +1,10 @@
+Day 82 — Middleware Ordering & Pipeline Design
+Day 83 — Threat Intelligence Aggregation
+Day 84 — Structured Logging with slog
+Day 85 — Configuration & Hot Reload
+Day 86 — Integration Testing the Full Chain
+Day 87 — Fuzz Testing
+Day 88 — Load Testing the Security Stack
+Day 89 — Goroutine Leak Audit
+Day 90 — Phase 3 Review & Architecture Diagram
+Week 12 Mini Project: Unified Security Proxy (L4 + L7)

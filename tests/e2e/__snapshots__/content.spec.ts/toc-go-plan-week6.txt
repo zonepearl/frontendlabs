@@ -1,0 +1,8 @@
+Day 38 — TLS Handshake
+Day 39 — TLS Server in Go
+Day 40 — Certificate Generation in Go
+Day 41 — Mutual TLS (mTLS)
+Day 42 — Hashing & HMAC
+Day 43 — Symmetric Encryption (AES-GCM)
+Day 44 — Asymmetric Crypto & Token Signing
+Week 6 Mini Project: mTLS Service Gateway

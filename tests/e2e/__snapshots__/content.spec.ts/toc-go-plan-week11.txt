@@ -1,0 +1,8 @@
+Day 75 — API Authentication Patterns
+Day 76 — Rate Limiting at L7
+Day 77 — Input Validation
+Day 78 — JSON Schema Enforcement
+Day 79 — Sensitive Data Protection
+Day 80 — API Abuse Prevention
+Day 81 — CORS & Preflight
+Week 11 Mini Project: API Security Gateway

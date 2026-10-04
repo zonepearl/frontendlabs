@@ -1,0 +1,35 @@
+What you will be able to do at the end
+How to use this guide
+Contents
+0.1 Who this is for
+0.2 The learning flow
+0.3 The complete flow at a glance
+0.4 How not to get stuck
+0.5 The series: OS → networking → security → HTTPS
+0.6 The Go labs: build the lifecycle yourself
+Chapter 1 — How the Internet Works
+Chapter 2 — DNS: Finding the Address
+Chapter 3 — TCP: Reliable Delivery
+Chapter 4 — TLS & HTTPS: The Encrypted Tunnel
+Chapter 5 — HTTP: The Conversation
+Chapter 6 — OSI Layers: The Network Stack
+Chapter 7 — NAT, VIP, BGP, Anycast & VRRP: Global Traffic Routing
+Chapter 8 — Proxies: The Middlemen
+Chapter 9 — Load Balancers & Rate Limiting
+Chapter 10 — CDN: Content Near You
+Chapter 11 — Browser Rendering: From Bytes to Pixels
+Chapter 12 — Security: Protecting the Entire Lifecycle
+Chapter 13 — Traffic Direction: SLI & SLO
+Chapter 14 — HTTP version negotiation: HTTP/1.1, HTTP/2, HTTP/3, Alt-Svc, and fallbacks
+Chapter 15 — Cache correctness: browser, CDN, proxy, and application caches
+Chapter 16 — Certificate and domain operations: ACME, rotation, CT monitoring, and emergency revocation
+Chapter 17 — Debugging the lifecycle: browser DevTools, curl, OpenSSL, packet capture, and logs
+Chapter 18 — Capstone: diagnose a slow, broken, or unsafe HTTPS request end to end
+Chapter 19 — A production HTTPS server in Go: TLS, timeouts, headers, and shutdown
+Chapter 20 — Reverse proxies in Go: the client's identity, framing, and request smuggling
+Chapter 21 — Resilience between services: rate limits, retries, idempotency, and circuit breakers
+Chapter 22 — Outbound requests: SSRF and safe HTTP clients
+Chapter 23 — SLIs, SLOs, and error budgets for HTTPS services
+Chapter 24 — Streaming over HTTP: Server-Sent Events, WebSockets, and long-lived connections
+Chapter 25 — One HTTPS request, every layer, every guide
+You've completed the series

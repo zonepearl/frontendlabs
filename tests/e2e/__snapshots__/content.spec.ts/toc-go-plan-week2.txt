@@ -1,0 +1,8 @@
+Day 8 — Control Flow & defer
+Day 9 — Packages & Modules
+Day 10 — Testing in Go
+Day 11 — Benchmarks & Examples
+Day 12 — Goroutines (Introduction)
+Day 13 — Channels
+Day 14 — sync Package
+Week 2 Mini Project: Concurrent URL Health Checker

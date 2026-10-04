@@ -24,6 +24,24 @@ jobs:
           go-version-file: go.mod
       - run: go run ./cmd/guides build
       - run: python3 scripts/checklinks.py dist https://frontendlabs.xyz
+      # E2E gate: layout, style and content must pass before anything deploys.
+      # Screenshot comparisons (@visual) are skipped here: their baselines are
+      # macOS renders, and Linux fonts differ. The local pre-commit hook runs them.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --grep-invert @visual
+        env:
+          CI: "1"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

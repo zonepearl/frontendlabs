@@ -1,0 +1,91 @@
+What you will be able to do at the end
+Contents
+0.1 Who this guide is for
+0.2 The learning flow (use this for every chapter)
+0.3 The roadmap
+0.4 Set up your machine (20 minutes)
+0.5 The tiny bit of background you need
+0.6 How to not get stuck
+0.7 The series: OS → networking → security → HTTPS
+0.8 The Go labs: build the network tools yourself
+Chapter 1 — The problem networks solve
+Chapter 2 — Layers: the postal-service idea
+Chapter 3 — The four layers of TCP/IP
+Chapter 4 — Our running example: what happens when you open a website
+Chapter 5 — MAC addresses and Ethernet frames
+Chapter 6 — ARP: finding your neighbour
+Chapter 7 — Switches, and what "broadcast domain" means
+Chapter 8 — Wi-Fi: same idea, different physics
+Chapter 9 — What an IP address actually is
+Chapter 10 — Subnet masks: the part everyone finds hard
+Chapter 11 — Subnetting practice: designing a real network
+Chapter 12 — Private addresses and NAT
+Chapter 13 — Routing: how a packet finds its way
+Chapter 14 — ICMP: what ping and traceroute really do
+Chapter 15 — MTU: the maximum size of a packet
+Chapter 16 — IPv6: why it exists and how it differs
+Chapter 17 — DHCP: how your device gets an address
+Chapter 18 — DNS: turning names into addresses
+Chapter 19 — Ports and sockets: which program gets the data?
+Chapter 20 — UDP: fire and forget
+Chapter 21 — TCP part 1: the three-way handshake
+Chapter 22 — TCP part 2: how it never loses your data
+Chapter 23 — TCP part 3: closing a connection, and the states
+Chapter 24 — Flow control: the sliding window
+Chapter 25 — Congestion control: sharing the road
+Chapter 26 — The 40-millisecond mystery
+Chapter 27 — Latency, bandwidth, and bufferbloat
+Chapter 28 — HTTP: how the web actually talks
+Chapter 29 — TLS: how it gets encrypted
+Chapter 30 — HTTP/2 and HTTP/3
+Chapter 31 — tcpdump : watching packets go by
+Chapter 32 — Wireshark: reading a conversation
+Chapter 33 — ss : what your machine's connections are doing
+Chapter 34 — A troubleshooting method that works
+Chapter 35 — The five classic problems and their fingerprints
+Chapter 36 — Load balancers, CDNs, and anycast
+Chapter 37 — Cloud and container networking
+Chapter 38 — Security basics
+Chapter 39 — How HTTP messages are framed (and how it goes wrong)
+Chapter 40 — Caching: the biggest performance lever there is
+Chapter 41 — Cookies: how the web remembers you
+Chapter 42 — CORS: why the browser blocked your request
+Chapter 43 — WebSockets and Server-Sent Events
+Chapter 44 — Compression, range requests, and proxies
+Chapter 45 — What to measure, and why averages lie
+Chapter 46 — Where the numbers come from: counters, flows, and probes
+Chapter 47 — Alerts that wake you for the right reasons
+Chapter 48 — Two ways to share directions
+Chapter 49 — OSPF: finding your way inside one network
+Chapter 50 — BGP: how the whole internet agrees on directions
+Chapter 51 — When a router dies: VRRP and friends
+Chapter 52 — Host networking internals: namespaces, veth, bridges, conntrack
+Chapter 53 — Firewalls in the real world: host firewalls, cloud security groups, NACLs
+Chapter 54 — VPNs and tunnels: WireGuard, IPsec, GRE, overlays, and MTU traps
+Chapter 55 — DNS operations: authoritative DNS, delegation, split-horizon, outages
+Chapter 56 — TLS and certificate operations: expiry, chains, SNI, rotation
+Chapter 57 — Production load balancing: L4 vs L7, health checks, draining, retries
+Chapter 58 — Kubernetes networking: Services, Ingress, NetworkPolicy, CNI
+Chapter 59 — Network performance engineering: QoS, packet loss, shaping, saturation
+Chapter 60 — Incident response: runbooks, packet evidence, and escalation
+Chapter 61 — Network design/refactoring: migrations, diagrams, IPAM, change safety
+Chapter 62 — Capstone lab: build, break, observe, and repair a production-like network
+Chapter 63 — Honest gaps and a six-month plan
+Chapter 64 — Project ideas by level
+Chapter 65 — The series map: where every topic lives
+Continue the series
+The table to memorise
+Chapter 10, Set A — answers
+Chapter 10, Set B — answers
+Chapter 11 — answers
+Ports worth recognising
+Protocol numbers (in the IP header)
+ICMP types worth knowing
+Address ranges
+If you only do five things
+Books
+Free video courses
+Blogs and sites
+Hands-on practice
+Specifications (for when you want the truth)
+How the facts in this guide were checked

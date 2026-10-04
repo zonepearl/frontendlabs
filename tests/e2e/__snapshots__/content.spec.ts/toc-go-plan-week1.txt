@@ -1,0 +1,8 @@
+Day 1 — Go Toolchain & Your First Program
+Day 2 — Variables, Types & Zero Values
+Day 3 — Functions & Multiple Return Values
+Day 4 — Slices & Maps
+Day 5 — Structs & Methods
+Day 6 — Interfaces
+Day 7 — Error Handling
+Week 1 Mini Project: Configuration HTTP Server
