@@ -3,13 +3,14 @@
     "title": "Frontend Labs — Engineering Field Guides",
     "tagline": "Long-form, hands-on guides from the kernel to the browser. Read them as books, follow the series, run the labs.",
     "base_url": "https://frontendlabs.xyz",
-    "wiki_root": ".."
+    "wiki_root": "..",
+    "home_layout": "spotlight"
   },
   "categories": [
     {
       "id": "series",
       "title": "The systems, networking & security series",
-      "note": "Seven guides designed as one course: OS → networking → security → the HTTPS walkthrough, with Go alongside every step."
+      "note": "Seven guides designed as one course: OS → networking → security → the HTTPS walkthrough, with Go and Rust alongside every step."
     },
     {
       "id": "languages",
@@ -31,6 +32,7 @@
     {
       "slug": "linux",
       "title": "Operating Systems, Linux & Containers",
+      "short": "OS & Linux",
       "icon": "🖥️",
       "category": "series",
       "step": "1",
@@ -45,6 +47,7 @@
     {
       "slug": "osi",
       "title": "The OSI Model, One Click at a Time",
+      "short": "OSI model",
       "icon": "🧭",
       "category": "series",
       "step": "2a",
@@ -58,6 +61,7 @@
     {
       "slug": "tcp-ip",
       "title": "Networking from Zero (TCP/IP)",
+      "short": "TCP/IP",
       "icon": "🌐",
       "category": "series",
       "step": "2b",
@@ -72,6 +76,7 @@
     {
       "slug": "security-from-zero",
       "title": "Security from Zero",
+      "short": "Security from Zero",
       "icon": "🔒",
       "category": "series",
       "step": "3a",
@@ -86,6 +91,7 @@
     {
       "slug": "security-in-depth",
       "title": "Security Engineering in Depth",
+      "short": "Security in Depth",
       "icon": "🕵️",
       "category": "series",
       "step": "3b",
@@ -100,6 +106,7 @@
     {
       "slug": "https",
       "title": "The HTTPS Request Lifecycle",
+      "short": "HTTPS lifecycle",
       "icon": "🔗",
       "category": "series",
       "step": "4",
@@ -114,6 +121,7 @@
     {
       "slug": "go",
       "title": "Go — The Complete Field Guide",
+      "short": "Go",
       "icon": "🐹",
       "category": "languages",
       "step": "Alongside",
@@ -225,6 +233,18 @@
       ]
     },
     {
+      "slug": "rust",
+      "title": "Rust — The Complete Field Guide",
+      "short": "Rust",
+      "icon": "🦀",
+      "category": "languages",
+      "step": "Alongside",
+      "level": "Beginner → Expert",
+      "summary": "Ownership, borrowing, traits, async/Tokio and unsafe, then the series' OS, network, HTTPS and security labs rebuilt in Rust.",
+      "source": "rust-lang/real-life-rust-guide.md",
+      "originals": []
+    },
+    {
       "slug": "javascript",
       "title": "JavaScript — The Complete Field Guide",
       "icon": "🟨",
@@ -251,6 +271,7 @@
     {
       "slug": "maths",
       "title": "Real-Life Mathematics",
+      "tag": "For AI, cryptography and algorithms",
       "icon": "📐",
       "category": "foundations",
       "level": "Beginner → Expert",
@@ -298,5 +319,100 @@
         "scale-perf/real-life-scale-guide.html"
       ]
     }
-  ]
+  ],
+  "sections": [
+    {
+      "id": "ai",
+      "title": "AI",
+      "note": "Machine learning to LLMs and agents, and the mathematics underneath.",
+      "guides": [
+        "ai",
+        "maths"
+      ]
+    },
+    {
+      "id": "systems",
+      "title": "Systems",
+      "note": "The machine every request starts and ends on, and how to measure it under load.",
+      "guides": [
+        "linux",
+        "scale-perf"
+      ]
+    },
+    {
+      "id": "networking",
+      "title": "Networking",
+      "note": "How machines talk: the OSI map, TCP/IP in depth, and one HTTPS request end to end.",
+      "guides": [
+        "osi",
+        "tcp-ip",
+        "https",
+        "tcp-ip-reference"
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "note": "From encoding vs encryption to cloud, Kubernetes and advanced web attacks.",
+      "guides": [
+        "security-from-zero",
+        "security-in-depth"
+      ]
+    },
+    {
+      "id": "programming",
+      "title": "Programming",
+      "note": "The languages the labs are written in, and the algorithms behind them.",
+      "guides": [
+        "go",
+        "go-plan",
+        "rust",
+        "c",
+        "javascript",
+        "dsa"
+      ]
+    }
+  ],
+  "path": [
+    "linux",
+    "osi",
+    "tcp-ip",
+    "security-from-zero",
+    "security-in-depth",
+    "https"
+  ],
+  "spotlight": {
+    "guide": "ai",
+    "eyebrow": "Spotlight · AI",
+    "links": [
+      {
+        "title": "The Transformer",
+        "anchor": "part-6-the-transformer"
+      },
+      {
+        "title": "What an LLM is",
+        "anchor": "part-8-what-an-llm-actually-is"
+      },
+      {
+        "title": "Build your own LLM",
+        "anchor": "part-10-build-your-own-llm"
+      },
+      {
+        "title": "Agents",
+        "anchor": "part-12-agents-llms-that-do-things"
+      },
+      {
+        "title": "MCP",
+        "anchor": "part-13-mcp-the-universal-adapter"
+      },
+      {
+        "title": "Guardrails",
+        "anchor": "part-14-guardrails-making-it-safe"
+      }
+    ],
+    "coming": [
+      "Data science",
+      "Agentic AI in depth"
+    ]
+  }
 }

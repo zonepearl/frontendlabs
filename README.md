@@ -91,6 +91,23 @@ under `docs/`. `pages` adds extra documents as sub-pages of a guide (used for th
 Go plan's 19 documents). Add an entry, run
 `make sync build`, and the guide appears on the home page.
 
+## Home page layouts
+
+`site.home_layout` in `guides.json` picks the home page. Change it and rebuild
+(`make build`, or let `make serve` pick it up) to switch:
+
+| Value | Template | What it shows |
+|---|---|---|
+| `"spotlight"` | `web/templates/home-spotlight.html` | AI spotlight first (the `spotlight` block: featured guide, deep links, "coming next"), the course as a path ribbon, then topic `sections` (Systems, Networking, Security, Programming) |
+| `"classic"` (or unset) | `web/templates/home.html` | the original layout: one section per entry in `categories` |
+
+In the spotlight layout, a guide's "Next guide" button follows `path` (the
+course order) when the guide is on it, and its section order otherwise, so
+moving HTTPS into the Networking section does not change the course. The
+build fails if a guide is in no section, so nothing can silently disappear
+from the home page. The classic layout ignores `sections`, `path` and
+`spotlight`, and builds exactly what it did before.
+
 ## Layout
 
 ```

@@ -14,6 +14,8 @@
 >
 > **This guide runs alongside every step.** Start the series at [step 1: Operating Systems, Linux, and Containers](../os-linux/real-life-os-guide.md).
 >
+> **Languages track:** Go → [C](../c-lang/real-life-c-guide.md) → [Rust](../rust-lang/real-life-rust-guide.md).
+>
 > [The full series map](#the-series-os-networking-security-https-in-go).
 
 ---
@@ -75,6 +77,8 @@ This guide is one of seven, designed to be read as **one course** in this order:
 | 3b | [Security Engineering in Depth](../security/real-life-security-guide-v1.md) | cloud and Kubernetes security, distributed authorization, advanced web attacks, data protection, detection | 10 Go labs + a `govulncheck` exercise ([§0.8](../security/real-life-security-guide-v1.md#0-8-the-go-labs-security-mechanisms-you-can-run)) |
 | 4 | [The HTTPS Request Lifecycle](../v2-https/real-life-guide-v1.md) | one request end to end, then the server side built in Go; Chapter 25 traces one request through every guide | 13 Go labs ([§0.6](../v2-https/real-life-guide-v1.md#0-6-the-go-labs-build-the-lifecycle-yourself), [Ch 25](../v2-https/real-life-guide-v1.md#chapter-25-one-https-request-every-layer-every-guide)) |
 | ∥ | **Go — The Complete Field Guide** ← you are here | the language behind every lab, plus the 120-day plan's multi-week projects | [120-day plan](golang-90-day-plan.md) |
+| L2 | [C — The Complete Field Guide](../c-lang/real-life-c-guide.md) | manual memory, UB, sockets, and the kernel: what Go's runtime hides | mini-projects in every Part |
+| L3 | [Rust — The Complete Field Guide](../rust-lang/real-life-rust-guide.md) | C's control with compiler-checked memory safety; rebuilds this table's labs in Rust | [Rust labs (§0.4)](../rust-lang/real-life-rust-guide.md#0-4-the-rust-labs-what-you-build-for-each-guide-in-the-series) |
 
 **Why this order.** Every network connection is a file descriptor owned by
 a process, so the OS comes first. Networking comes next, because every attack and

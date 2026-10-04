@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -209,23 +210,33 @@ func (b *Builder) buildDoc(d *Doc) error {
 	return b.copyFile(filepath.Join(b.DocsDir, d.Source), filepath.Join(b.OutDir, "docs", d.Source))
 }
 
-// neighbours returns the previous/next guide in the same category (the
-// series order for the systems series).
+// neighbours returns the previous/next guide. In the classic layout that is the
+// guide's category order (the series order for the systems series). In the
+// spotlight layout, guides on the course path follow the path even though the
+// home page shows them in different topic sections; other guides follow their
+// section's order.
 func (b *Builder) neighbours(g *Guide) (prev, next *Guide) {
-	var same []*Guide
-	for _, x := range b.M.Guides {
-		if x.Category == g.Category {
-			same = append(same, x)
+	var order []string
+	switch {
+	case b.M.Spotlit() && slices.Contains(b.M.Path, g.Slug):
+		order = b.M.Path
+	case b.M.Spotlit():
+		if sec := b.M.SectionOf(g.Slug); sec != nil {
+			order = sec.Guides
+		}
+	default:
+		for _, x := range b.M.Guides {
+			if x.Category == g.Category {
+				order = append(order, x.Slug)
+			}
 		}
 	}
-	for i, x := range same {
-		if x == g {
-			if i > 0 {
-				prev = same[i-1]
-			}
-			if i+1 < len(same) {
-				next = same[i+1]
-			}
+	if i := slices.Index(order, g.Slug); i >= 0 {
+		if i > 0 {
+			prev = b.M.Guide(order[i-1])
+		}
+		if i+1 < len(order) {
+			next = b.M.Guide(order[i+1])
 		}
 	}
 	return
@@ -244,44 +255,97 @@ type homeSection struct {
 	Cards []homeCard
 }
 
+// spotView is the spotlight hero: the featured guide, deep links into it, the
+// other guides of its section, and topics that are planned but not written.
+type spotView struct {
+	Eyebrow string
+	Card    homeCard
+	Links   []struct{ Title, URL string }
+	Extras  []homeCard
+	Coming  []string
+}
+
 type homePage struct {
 	Site     *Manifest
-	Sections []homeSection
+	Sections []homeSection // classic: categories. spotlight: topic sections after the spotlight
 	Totals   struct{ Guides, Chapters, Hours, Labs int }
 	PageURL  string
 	Live     bool
 	Built    string
+
+	// Spotlight layout only.
+	Spotlight *spotView
+	Path      []homeCard // the course, in reading order
+	Alongside []homeCard // guides read alongside the course (step "Alongside")
 }
 
 func (b *Builder) buildHome() error {
 	hp := &homePage{Site: b.M, Live: b.Live, Built: time.Now().Format("2 Jan 2006 15:04")}
 	words := 0
-	for _, c := range b.M.Categories {
-		sec := homeSection{Category: c}
-		for _, g := range b.M.Guides {
-			if g.Category != c.ID {
-				continue
-			}
-			card := homeCard{Guide: g, URL: g.Slug + "/"}
-			for _, d := range b.M.Docs() {
-				if d.Guide == g {
-					if m := b.metas[d.Source]; m != nil {
-						card.Chapters += m.Chapters
-						card.Minutes += m.Words / 220
-						card.Labs += m.Labs
-						words += m.Words
-					}
+	cards := map[string]homeCard{}
+	for _, g := range b.M.Guides {
+		card := homeCard{Guide: g, URL: g.Slug + "/"}
+		for _, d := range b.M.Docs() {
+			if d.Guide == g {
+				if m := b.metas[d.Source]; m != nil {
+					card.Chapters += m.Chapters
+					card.Minutes += m.Words / 220
+					card.Labs += m.Labs
+					words += m.Words
 				}
 			}
-			hp.Totals.Guides++
-			hp.Totals.Chapters += card.Chapters
-			hp.Totals.Labs += card.Labs
-			sec.Cards = append(sec.Cards, card)
 		}
-		hp.Sections = append(hp.Sections, sec)
+		cards[g.Slug] = card
+		hp.Totals.Guides++
+		hp.Totals.Chapters += card.Chapters
+		hp.Totals.Labs += card.Labs
 	}
 	hp.Totals.Hours = words / 220 / 60
-	if err := b.render("home.html", "index.html", hp); err != nil {
+
+	page := "home.html"
+	if b.M.Spotlit() {
+		page = "home-spotlight.html"
+		sp := b.M.Spotlight
+		hp.Spotlight = &spotView{Eyebrow: sp.Eyebrow, Card: cards[sp.Guide], Coming: sp.Coming}
+		for _, l := range sp.Links {
+			hp.Spotlight.Links = append(hp.Spotlight.Links, struct{ Title, URL string }{l.Title, sp.Guide + "/#" + l.Anchor})
+		}
+		home := b.M.SectionOf(sp.Guide)
+		for _, sec := range b.M.Sections {
+			if home != nil && sec.ID == home.ID {
+				for _, slug := range sec.Guides {
+					if slug != sp.Guide {
+						hp.Spotlight.Extras = append(hp.Spotlight.Extras, cards[slug])
+					}
+				}
+				continue
+			}
+			hs := homeSection{Category: Category{ID: sec.ID, Title: sec.Title, Note: sec.Note}}
+			for _, slug := range sec.Guides {
+				hs.Cards = append(hs.Cards, cards[slug])
+			}
+			hp.Sections = append(hp.Sections, hs)
+		}
+		for _, slug := range b.M.Path {
+			hp.Path = append(hp.Path, cards[slug])
+		}
+		for _, g := range b.M.Guides {
+			if g.Step == "Alongside" {
+				hp.Alongside = append(hp.Alongside, cards[g.Slug])
+			}
+		}
+	} else {
+		for _, c := range b.M.Categories {
+			sec := homeSection{Category: c}
+			for _, g := range b.M.Guides {
+				if g.Category == c.ID {
+					sec.Cards = append(sec.Cards, cards[g.Slug])
+				}
+			}
+			hp.Sections = append(hp.Sections, sec)
+		}
+	}
+	if err := b.render(page, "index.html", hp); err != nil {
 		return err
 	}
 	return b.writeSearchIndex()

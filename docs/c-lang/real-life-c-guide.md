@@ -11,6 +11,14 @@
 
 ---
 
+> **The series:** 1 OS → 2 Networking → 3 Security → 4 HTTPS walkthrough, with Go alongside. Then the languages track: Go → **C** → Rust.
+>
+> **You are here: languages track, step 2: C.** ← Previous: [Go — The Complete Field Guide](../Golang/real-life-golang-guide.md). Next: [Rust — The Complete Field Guide](../rust-lang/real-life-rust-guide.md) →
+>
+> New to the series? Start at [step 1: Operating Systems, Linux, and Containers](../os-linux/real-life-os-guide.md).
+
+---
+
 ## How to use this guide
 
 - **Beginner (Part I):** the toolchain, types, control flow, functions,

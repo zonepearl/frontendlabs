@@ -1,0 +1,162 @@
+{{/* Spotlight home layout: AI first, the course path as a ribbon, then topic
+     sections. Selected by "site.home_layout": "spotlight" in guides.json;
+     "classic" uses home.html instead. Element ids used by home.js are kept:
+     search, results, theme, continue, continue-list. */ -}}
+{{define "spot-card"}}
+<a href="{{.URL}}" data-guide="{{.Slug}}"
+   class="group relative flex flex-col rounded-2xl border border-rule bg-card p-5 no-underline shadow-sm transition hover:-translate-y-0.5 hover:border-accent hover:shadow-lg">
+  <div class="flex items-start gap-4">
+    <span class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-accent-soft text-3xl transition group-hover:scale-105" aria-hidden="true">{{.Icon}}</span>
+    <div class="min-w-0">
+      {{if .Step}}<span class="mb-1 inline-block rounded-md bg-surface px-1.5 py-0.5 text-[11px] font-bold tracking-wide text-accent uppercase">{{if eq .Step "Alongside"}}Alongside{{else}}Step {{.Step}}{{end}}</span>{{end}}
+      <h3 class="text-base leading-snug font-bold text-ink">{{.Title}}</h3>
+      {{if .Tag}}<p class="mt-0.5 text-xs font-semibold text-accent">{{.Tag}}</p>{{end}}
+    </div>
+  </div>
+  <p class="mt-3 text-sm leading-relaxed text-muted">{{.Summary}}</p>
+  <div class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4 text-xs font-semibold text-faint">
+    <span>{{.Level}}</span>
+    {{if .Chapters}}<span>· {{.Chapters}} chapters</span>{{end}}
+    {{if .Minutes}}<span>· {{minutes .Minutes}}</span>{{end}}
+    {{if .Labs}}<span class="text-accent">· {{.Labs}} Go programs</span>{{end}}
+  </div>
+  <span class="resume-badge absolute top-4 right-4 hidden rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-white">In progress</span>
+</a>
+{{end -}}
+<!DOCTYPE html>
+<html lang="en" data-theme="paper">
+<head>
+{{template "head" .}}
+<title>{{.Site.Site.Title}}</title>
+<meta name="description" content="{{.Site.Site.Tagline}}">
+<meta property="og:title" content="{{.Site.Site.Title}}">
+<meta property="og:description" content="{{.Site.Site.Tagline}}">
+</head>
+<body class="min-h-screen bg-surface font-sans text-ink antialiased">
+
+<header class="sticky top-0 z-30 border-b border-rule bg-surface/90 backdrop-blur">
+  <div class="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
+    {{template "brand" .}}
+    <div class="relative ml-auto w-full max-w-md">
+      <input id="search" type="search" autocomplete="off" placeholder="Search guides and chapters…  ( / )"
+             class="w-full rounded-xl border border-rule bg-card px-4 py-2 text-sm text-ink shadow-sm outline-none placeholder:text-faint focus:border-accent focus:ring-2 focus:ring-accent/20">
+      <div id="results" class="absolute right-0 left-0 mt-2 hidden max-h-[70vh] overflow-y-auto rounded-xl border border-rule bg-card p-1 shadow-xl"></div>
+    </div>
+    <button id="theme" class="rounded-lg border border-rule px-3 py-1.5 text-sm text-muted hover:text-ink" title="Theme (d)">Theme</button>
+  </div>
+</header>
+
+<main class="mx-auto max-w-6xl px-4 pb-24">
+  <section class="pt-10 pb-6">
+    <p class="text-xs font-bold tracking-[.14em] text-accent uppercase">Engineering field guides</p>
+    <h1 class="mt-2 max-w-3xl text-3xl font-extrabold tracking-tight sm:text-4xl">From the kernel to LLMs: field guides you read like books.</h1>
+    <p class="mt-3 max-w-2xl text-base text-muted sm:text-lg">{{.Site.Site.Tagline}}</p>
+    <dl class="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-sm text-muted">
+      <div><dt class="inline font-bold text-ink">{{.Totals.Guides}}</dt> <dd class="inline">guides</dd></div>
+      <div><dt class="inline font-bold text-ink">{{.Totals.Chapters}}</dt> <dd class="inline">chapters</dd></div>
+      <div><dt class="inline font-bold text-ink">{{.Totals.Hours}} h</dt> <dd class="inline">of reading</dd></div>
+      <div><dt class="inline font-bold text-ink">{{.Totals.Labs}}</dt> <dd class="inline">runnable Go programs</dd></div>
+    </dl>
+  </section>
+
+  <nav aria-label="Sections" class="sticky top-16 z-20 -mx-4 mb-8 overflow-x-auto border-y border-rule bg-surface/90 px-4 py-2 backdrop-blur">
+    <ul class="flex gap-2 text-sm font-semibold whitespace-nowrap">
+      <li><a href="#ai" class="inline-block rounded-full bg-accent px-3 py-1 text-white no-underline">✨ AI</a></li>
+      <li><a href="#path" class="inline-block rounded-full border border-rule px-3 py-1 text-muted no-underline hover:border-accent hover:text-ink">Learning path</a></li>
+      {{range .Sections}}<li><a href="#{{.ID}}" class="inline-block rounded-full border border-rule px-3 py-1 text-muted no-underline hover:border-accent hover:text-ink">{{.Title}}</a></li>{{end}}
+    </ul>
+  </nav>
+
+  {{with .Spotlight}}
+  <section id="ai" class="mb-12 scroll-mt-32" aria-labelledby="ai-title">
+    <div class="rounded-3xl border border-accent/40 bg-linear-to-br from-accent-soft via-card to-card p-5 shadow-sm sm:p-8">
+      <p class="text-xs font-bold tracking-[.14em] text-accent uppercase">{{.Eyebrow}}</p>
+      <div class="mt-4 grid gap-6 lg:grid-cols-5">
+        <div data-guide="{{.Card.Slug}}"
+             class="relative flex flex-col rounded-2xl border border-rule bg-card p-6 shadow-md lg:col-span-3">
+          <div class="flex items-start gap-5">
+            <span class="grid h-20 w-20 shrink-0 place-items-center rounded-3xl bg-accent-soft text-5xl" aria-hidden="true">{{.Card.Icon}}</span>
+            <div class="min-w-0">
+              <span class="mb-1 inline-block rounded-md bg-accent px-1.5 py-0.5 text-[11px] font-bold tracking-wide text-white uppercase">Featured</span>
+              <h2 id="ai-title" class="text-2xl leading-tight font-extrabold"><a href="{{.Card.URL}}" class="text-ink no-underline hover:text-accent">{{.Card.Title}}</a></h2>
+              <p class="mt-1 text-xs font-semibold text-faint">{{.Card.Level}}{{if .Card.Chapters}} · {{.Card.Chapters}} chapters{{end}}{{if .Card.Minutes}} · {{minutes .Card.Minutes}}{{end}}</p>
+            </div>
+          </div>
+          <p class="mt-4 text-base leading-relaxed text-muted">{{.Card.Summary}}</p>
+          {{if .Links}}
+          <h3 class="mt-5 text-xs font-bold tracking-wider text-faint uppercase">Jump straight in</h3>
+          <ul class="mt-2 flex flex-wrap gap-2">
+            {{range .Links}}<li><a href="{{.URL}}" class="inline-block rounded-full border border-rule bg-surface px-3 py-1 text-sm font-semibold text-ink no-underline hover:border-accent hover:text-accent">{{.Title}}</a></li>{{end}}
+          </ul>
+          {{end}}
+          <div class="mt-auto pt-6">
+            <a href="{{.Card.URL}}" class="inline-flex items-center gap-1 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white no-underline transition hover:gap-2">Start reading <span aria-hidden="true">→</span></a>
+          </div>
+          <span class="resume-badge absolute top-4 right-4 hidden rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-white">In progress</span>
+        </div>
+
+        <div class="flex flex-col gap-4 lg:col-span-2">
+          {{range .Extras}}{{template "spot-card" .}}{{end}}
+          {{if .Coming}}
+          <div class="rounded-2xl border border-dashed border-rule p-4 text-sm text-muted">
+            <span class="font-bold text-ink">Coming next:</span>
+            {{range $i, $c := .Coming}}{{if $i}} · {{end}}{{$c}}{{end}}
+          </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+  </section>
+  {{end}}
+
+  <section id="continue" class="mb-10 hidden">
+    <h2 class="mb-3 text-sm font-bold tracking-wider text-faint uppercase">Continue reading</h2>
+    <div id="continue-list" class="flex flex-wrap gap-3"></div>
+  </section>
+
+  <section id="path" class="mb-14 scroll-mt-32" aria-labelledby="path-title">
+    <span id="series" class="block scroll-mt-32" aria-hidden="true"></span>
+    <div class="mb-4">
+      <h2 id="path-title" class="text-xl font-bold">The engineering path</h2>
+      <p class="mt-1 text-sm text-muted">One course in reading order. Each guide's “Next guide” button follows this path, whichever section shows it below.</p>
+    </div>
+    <ol class="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      {{range $i, $g := .Path}}
+      <li>
+        <a href="{{$g.URL}}" class="flex h-full items-center gap-2 rounded-xl border border-rule bg-card px-3 py-2 text-sm no-underline shadow-sm transition hover:border-accent">
+          <span class="rounded-md bg-accent-soft px-1.5 py-0.5 text-[11px] font-bold text-accent">{{$g.Step}}</span>
+          <span aria-hidden="true">{{$g.Icon}}</span>
+          <span class="font-semibold text-ink">{{if $g.Short}}{{$g.Short}}{{else}}{{$g.Title}}{{end}}</span>
+        </a>
+      </li>
+      {{end}}
+    </ol>
+    {{if .Alongside}}
+    <p class="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
+      <span class="font-semibold">Alongside every step:</span>
+      {{range .Alongside}}<a href="{{.URL}}" class="inline-flex items-center gap-1 rounded-full border border-rule px-3 py-1 font-semibold text-ink no-underline hover:border-accent hover:text-accent"><span aria-hidden="true">{{.Icon}}</span> {{if .Short}}{{.Short}}{{else}}{{.Title}}{{end}}</a>{{end}}
+    </p>
+    {{end}}
+  </section>
+
+  {{range .Sections}}
+  <section class="mb-14 scroll-mt-32" id="{{.ID}}">
+    <div class="mb-5 border-b border-rule pb-3">
+      <h2 class="text-xl font-bold">{{.Title}}</h2>
+      <p class="mt-1 text-sm text-muted">{{.Note}}</p>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {{range .Cards}}{{template "spot-card" .}}{{end}}
+    </div>
+  </section>
+  {{end}}
+</main>
+
+<footer class="border-t border-rule py-8 text-center text-xs text-faint">
+  Generated from Markdown in <code>docs/</code> · {{.Built}} · keyboard: <kbd>/</kbd> search, <kbd>d</kbd> theme
+</footer>
+
+<script src="assets/home.js" defer></script>
+{{template "live" .}}
+</body>
+</html>
