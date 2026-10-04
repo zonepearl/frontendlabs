@@ -1,22 +1,23 @@
-# GitHub Pages: build dist/ from the committed docs/, check links and the E2E
-# suite, publish. Runs only for main, which the main-branch ruleset protects
-# (changes arrive through pull requests that passed the "e2e" check in ci.yml).
-name: pages
+# Pull-request gate. The "e2e" check is required by the main-branch ruleset
+# (.github/rulesets/main-branch.json): nothing merges into main unless the site
+# builds, every link resolves, and the E2E suite passes.
+name: ci
 on:
-  push:
+  pull_request:
     branches: [main]
   workflow_dispatch:
 
-# Least privilege by default; only the deploy job gets Pages and OIDC rights.
+# Least privilege: this workflow only reads the code.
 permissions:
   contents: read
 
 concurrency:
-  group: pages
+  group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  e2e:
+    name: e2e
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -29,15 +30,13 @@ jobs:
           go-version-file: go.mod
       - run: go run ./cmd/guides build
       - run: python3 scripts/checklinks.py dist https://frontendlabs.xyz
-      # E2E gate: layout, style and content must pass before anything deploys.
-      # Screenshot comparisons (@visual) are skipped here: their baselines are
-      # macOS renders, and Linux fonts differ. The local pre-commit hook runs them.
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # Screenshot comparisons (@visual) use macOS baselines; the pre-commit hook runs them.
       - run: npx playwright test --grep-invert @visual
         env:
           CI: "1"
@@ -47,18 +46,3 @@ jobs:
           name: playwright-traces
           path: test-results/
           retention-days: 7
-      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
-        with:
-          path: dist
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

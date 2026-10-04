@@ -119,6 +119,41 @@ differ). CI runs on Linux and has no screenshot baselines, so it skips
 `@visual`; the pre-commit hook runs everything. Review the diff of any
 updated snapshot before committing it: that is the change readers will see.
 
+## Repository protection
+
+`main` is protected by rulesets kept as code in `.github/rulesets/`, applied with
+`scripts/github-harden.sh`. They have **no bypass list**: they bind
+administrators, collaborators, bots and AI agents alike.
+
+| Protection | Effect |
+|---|---|
+| Pull requests only | nobody pushes to `main` directly; changes merge through a PR |
+| Required `e2e` check | a PR merges only after `.github/workflows/ci.yml` (build, links, E2E) passed on its latest commit |
+| No force push, no deletion, linear history | history on `main` cannot be rewritten or removed |
+| Immutable tags | published tags cannot be moved or deleted |
+| Secret scanning + push protection | pushes containing credentials are rejected |
+| Dependabot alerts and updates | vulnerable dependencies and pinned actions get update PRs |
+| Actions locked down | GitHub-owned actions only, pinned to SHAs; read-only token by default; workflows cannot approve PRs |
+| Pages environment | deploys only from `main` |
+
+**Day-to-day flow:**
+
+```bash
+git switch -c my-change        # the pre-commit hook still runs `make test` locally
+git commit -am "…" && git push -u origin my-change
+# open a pull request on GitHub; merge (squash or rebase) once "e2e" is green
+```
+
+**Applying or re-applying the settings** (owner only, once):
+create a fine-grained token for this repository with *Administration: read and write*,
+then run `GH_TOKEN=… scripts/github-harden.sh` (dry run) and
+`GH_TOKEN=… scripts/github-harden.sh --apply`, and delete the token.
+
+**Agents:** give automation the least access it needs. An SSH key or a token with
+*Contents* and *Pull requests* lets an agent push branches and open PRs; the
+rulesets stop it from changing `main` without a green check. Never give an agent
+*Administration* access, which can edit the rulesets themselves.
+
 ## Home page layouts
 
 `site.home_layout` in `guides.json` picks the home page. Change it and rebuild

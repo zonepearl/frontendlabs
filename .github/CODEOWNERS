@@ -1,0 +1,9 @@
+# Every change is owned by the maintainer. Security-sensitive paths are listed
+# explicitly so the ownership is visible in reviews. To make the owner's review
+# mandatory once there is a second maintainer, set required_approving_review_count
+# to 1 and require_code_owner_review to true in .github/rulesets/main-branch.json.
+*                    @zonepearl
+/.github/            @zonepearl
+/.githooks/          @zonepearl
+/scripts/            @zonepearl
+/guides.json         @zonepearl
