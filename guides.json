@@ -250,10 +250,20 @@
       "icon": "🟨",
       "category": "languages",
       "level": "Beginner → Expert",
-      "summary": "The language from beginner to expert, how browser engines render a page, HTTP from the browser, and Web Workers.",
+      "summary": "The language from beginner to expert, how browser engines render a page, HTTP from the browser and Web Workers; then LLMs in the browser, agents and actionable UIs, OWASP security, open-source internals, Playwright E2E, and a live animated Browser Lab.",
       "source": "JS/real-life-JS-guide.md",
       "originals": [
         "JS/real-life-JS-guide.html"
+      ],
+      "pages": [
+        {
+          "slug": "support-desk",
+          "source": "JS/projects/support-desk/SOURCE.md"
+        },
+        {
+          "slug": "browser-lab",
+          "source": "JS/projects/browser-lab/SOURCE.md"
+        }
       ]
     },
     {

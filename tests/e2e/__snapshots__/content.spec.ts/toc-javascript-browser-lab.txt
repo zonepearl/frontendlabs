@@ -1,0 +1,29 @@
+Run it
+Test it
+Files
+package.json
+server.mjs
+scripts/cert.mjs
+public/index.html
+public/css/lab.css
+public/js/lib/dom.js
+public/js/lib/errors.js
+public/js/lib/loop-model.js
+public/js/lib/missions.js
+public/js/lib/primes.js
+public/js/lib/vitals.js
+public/js/main.js
+public/js/stations/debug.js
+public/js/stations/engine.js
+public/js/stations/eventloop.js
+public/js/stations/network.js
+public/js/stations/overview.js
+public/js/stations/render.js
+public/js/stations/storage.js
+public/js/stations/threads.js
+public/js/stations/vitals.js
+public/js/workers/counter.js
+public/js/workers/echo.js
+public/js/workers/primes.js
+playwright.config.js
+tests/lab.spec.js

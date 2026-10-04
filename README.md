@@ -3,8 +3,9 @@
 # Frontend Labs
 
 **Long-form engineering field guides, read like books.**
-From the kernel to LLMs: operating systems, Docker & Kubernetes, networking, security,
-Go, Rust, Python, C and AI, with runnable labs in every guide.
+From the kernel to the browser to LLMs: operating systems, Docker & Kubernetes, networking,
+security, Go, Rust, Python, C, JavaScript, data structures, mathematics and AI,
+with runnable labs in every guide.
 
 [**frontendlabs.xyz**](https://frontendlabs.xyz) · [Guides](#the-guides) · [What's new](#whats-new) · [Run it locally](#run-it-locally) · [Contributing](#contributing)
 
@@ -37,15 +38,27 @@ Go, Rust, Python, C and AI, with runnable labs in every guide.
 | 🦀 | [Rust — The Complete Field Guide](https://frontendlabs.xyz/rust/) | Programming | Beginner → Expert · alongside |
 | 🐍 | [Python — The Complete Field Guide](https://frontendlabs.xyz/python/) | Programming | Beginner → Expert · alongside |
 | 🛠️ | [C — The Complete Field Guide](https://frontendlabs.xyz/c/) | Programming | Beginner → Expert |
-| 🟨 | [JavaScript — The Complete Field Guide](https://frontendlabs.xyz/javascript/) | Programming | Beginner → Expert |
+| 🟨 | [JavaScript — The Complete Field Guide](https://frontendlabs.xyz/javascript/) | Programming | Beginner → Expert · 2 tested projects |
 | 🧩 | [Data Structures & Algorithms](https://frontendlabs.xyz/dsa/) | Programming | Beginner → Advanced |
 
+**18 guides and more than 1,300 chapters**, all free to read.
 The systems course reads in order: **1 OS → 2 Networking → 3 Security → 4 HTTPS**, with Go, Rust and Python alongside.
 **Docker & Kubernetes** picks up after step 1 and takes containers to production.
 Each guide's Markdown is in [`docs/`](docs/); the site is the official, always-current edition.
 
 ## What's new
 
+- **JavaScript — The Complete Field Guide, Parts X–XV** ([`/javascript/`](https://frontendlabs.xyz/javascript/)),
+  chapters 53–84. Modern JavaScript in depth (Proxy/Reflect, Web Streams,
+  ES2023–ES2026, Temporal, `using`, 16 puzzles). JavaScript and AI: WebGPU,
+  Transformers.js and WebLLM in the browser, built-in AI, streaming chat UIs,
+  the agent tool loop, WebMCP, actionable UI and edge functions. The OWASP
+  Top 10:2025 and LLM Top 10 implemented in JavaScript, plus sessions, CSRF,
+  PKCE and passkeys. Preact, Signals, Zustand and Hono read from source.
+  Playwright E2E in depth. Two complete, tested projects ship with it:
+  **Support Desk** (an agentic app, [`/javascript/support-desk/`](https://frontendlabs.xyz/javascript/support-desk/))
+  and **Browser Lab** (a live animated tour of the browser and V8,
+  [`/javascript/browser-lab/`](https://frontendlabs.xyz/javascript/browser-lab/)).
 - **Real-Life Mathematics, in depth** ([`/maths/`](https://frontendlabs.xyz/maths/)).
   The linear algebra, calculus and probability & statistics chapters now explain
   every formula symbol by symbol, with a worked example under each one, the
@@ -134,6 +147,16 @@ Add an entry to [`guides.json`](guides.json), then `make sync test`:
 }
 ```
 
+Companion documents (a day-by-day plan, a project's full source) go in `pages`; each one
+becomes a sub-page of the guide, and links to its Markdown file resolve to it:
+
+```json
+"pages": [
+  { "slug": "support-desk", "source": "JS/projects/support-desk/SOURCE.md" },
+  { "slug": "browser-lab",  "source": "JS/projects/browser-lab/SOURCE.md" }
+]
+```
+
 List its slug in one of the home page `sections`, and in `path` if it is part of the systems course.
 The build fails if a guide is missing from every section, and the test suite covers new guides automatically.
 
@@ -147,7 +170,7 @@ Every commit and every deploy must pass an end-to-end suite
 | Home | one card per guide; sections, course path and spotlight follow `guides.json`; search; themes |
 | Layout | nothing scrolls sideways on phones; grids, columns and sticky bars where the design expects them |
 | Style | current asset hashes; stylesheet applied; WCAG contrast in every theme |
-| Content | every page loads cleanly; anchors resolve; Markdown fully rendered; metadata on every chapter page; contents snapshots |
+| Content | every page loads cleanly; anchors resolve; Markdown fully rendered; metadata on every chapter page; contents snapshots for every guide and sub-page |
 | Visual | screenshot comparisons of the home page, a guide overview and a chapter |
 
 ```bash
