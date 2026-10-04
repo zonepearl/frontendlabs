@@ -1,0 +1,8 @@
+Guiding Principles
+Phase 1 — Foundation (Days 1–30)
+Phase 2 — Intermediate Operations (Days 31–60)
+Phase 3 — Production Readiness (Days 61–90)
+Recommended Books
+Weekly Rhythm
+Tools to Install on Day 1
+Success Metrics at Day 90

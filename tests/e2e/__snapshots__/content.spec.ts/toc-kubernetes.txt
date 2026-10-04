@@ -1,0 +1,52 @@
+How to use this guide
+The system we build: "Orbit"
+Prerequisites and tooling
+Table of contents
+0. Lab environment: a Linux VM on your Mac
+1. What a container actually is
+2. Docker architecture and core CLI
+3. Images and Dockerfiles from first principles
+4. Production-grade Dockerfiles
+5. Docker networking
+6. Docker storage: volumes, bind mounts, tmpfs
+7. Docker Compose: the whole system on your laptop
+8. Docker security and the software supply chain
+9. Debugging containers
+10. Registries, tagging, and multi-arch builds
+11. Part I capstone: Orbit under Compose, fully working
+12. Kubernetes architecture: the control loop
+13. Pods: the unit of everything
+14. Deployments, ReplicaSets, and rollouts
+15. Services, DNS, and the networking model
+16. Configuration: ConfigMaps, Secrets, and the Downward API
+17. Storage: Volumes, PVs, PVCs, StorageClasses
+18. StatefulSets, DaemonSets, Jobs, and CronJobs
+19. Namespaces, labels, and organizing a cluster
+20. Part II capstone: Orbit from raw manifests
+21. Health checks: probes done right
+22. Self-healing and auto-recovery
+23. Resources, QoS, and right-sizing
+24. Scheduling: placement for resilience
+25. Traffic in: Gateway API, TLS, and cert-manager
+26. Packaging: Kustomize and Helm
+27. Autoscaling: pods, sizes, and nodes
+28. Observability strategy
+29. Instrumenting Orbit with OpenTelemetry
+30. Deploying the observability stack
+31. Metrics, dashboards, and alerting
+32. SLOs and burn-rate alerting
+33. The Kubernetes debugging playbook
+34. Securing the cluster and the workloads
+35. CI: build, test, scan, sign, publish
+36. GitOps with Argo CD
+37. Progressive delivery: canary with automatic rollback
+38. Database migrations in a continuously deployed system
+39. Backup and disaster recovery
+40. Chaos engineering
+41. Cost and capacity
+42. Going to the cloud: Orbit on EKS
+43. Capstone: assemble and verify the whole system
+44. Production-readiness checklist
+45. Cheat sheets
+46. Pitfalls that cause real outages
+47. Further reading: the real-life references

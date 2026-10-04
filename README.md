@@ -24,6 +24,7 @@ with runnable labs in every guide.
 | 🤖 | [AI from Zero to LLMs](https://frontendlabs.xyz/ai/) | AI | Beginner → Expert |
 | 📐 | [Real-Life Mathematics](https://frontendlabs.xyz/maths/) | AI | Beginner → Expert |
 | 🖥️ | [Operating Systems, Linux & Containers](https://frontendlabs.xyz/linux/) | Systems | Beginner → Expert · step 1 |
+| ☸️ | [Docker & Kubernetes — The Real-Life Field Guide](https://frontendlabs.xyz/kubernetes/) | Systems | Beginner → Production · after step 1 |
 | 📈 | [Scale, Load & Performance Testing](https://frontendlabs.xyz/scale-perf/) | Systems | In depth |
 | 🧭 | [The OSI Model, One Click at a Time](https://frontendlabs.xyz/osi/) | Networking | Overview · step 2a |
 | 🌐 | [Networking from Zero (TCP/IP)](https://frontendlabs.xyz/tcp-ip/) | Networking | Beginner → Expert · step 2b |
