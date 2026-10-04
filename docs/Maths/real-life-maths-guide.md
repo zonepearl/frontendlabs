@@ -1,5 +1,7 @@
 # Real-Life Mathematics — A Practical Guide for Software / AI / Network / Security Engineers
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/maths/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > From "why does `0.1 + 0.2 != 0.3`" to deriving backpropagation, breaking down
 > why RSA-2048 is safe, and computing how many /24s fit in a /16.
 >

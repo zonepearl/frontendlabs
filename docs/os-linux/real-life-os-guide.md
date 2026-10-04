@@ -1,5 +1,7 @@
 # Operating Systems, Linux, and Containers — A Practical Guide
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/linux/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 A go-to reference for understanding what's actually happening under your
 application: what the operating system is doing for you, how to work Linux
 confidently from the command line, and how Docker and Kubernetes turn "a

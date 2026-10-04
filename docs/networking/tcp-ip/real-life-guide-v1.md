@@ -1,5 +1,7 @@
 # Networking from Zero — A Beginner's Guide to TCP/IP (v1)
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/tcp-ip/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > **You do not need to know anything about networking to read this.** You need to
 > be able to open a terminal and type commands. Everything else is explained the
 > first time it appears.

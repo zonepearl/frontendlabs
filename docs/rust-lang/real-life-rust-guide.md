@@ -1,5 +1,7 @@
 # Rust — The Complete Field Guide (Beginner → Expert)
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/rust/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > A practical, example-driven path through Rust: what the language actually
 > gives you, why it is shaped the way it is, and how to use it to build real
 > CLIs, network services, systems tools, and security-sensitive code.

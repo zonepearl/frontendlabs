@@ -1,5 +1,7 @@
 # TCP/IP — The Complete Field Guide (Beginner → Expert)
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/tcp-ip-reference/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > A practical, example-driven reference for the TCP/IP protocol suite: how packets
 > are built, addressed, routed, delivered reliably, and debugged in the real world.
 >

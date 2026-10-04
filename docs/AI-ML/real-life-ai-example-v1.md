@@ -1,5 +1,7 @@
 # AI from Zero to LLMs — A Beginner's Guide (v1)
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/ai/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > **You do not need to know anything about AI, machine learning, or advanced
 > maths to read this.** You need to be able to read code loosely and be willing
 > to run a few commands. Everything else is explained when it first appears.
