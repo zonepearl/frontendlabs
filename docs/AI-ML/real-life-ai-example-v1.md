@@ -24,7 +24,11 @@
 6. Understand and control tokens, context windows, cost, and quality.
 7. **Build an agent** that uses tools safely, and connect it to anything via MCP.
 8. **Add guardrails** so a fooled model still can't do damage.
-9. Know what to read/watch next, and how to keep learning.
+9. **Wrap an agent in a real harness**, run it for hours with an outer loop,
+   measure its reliability (pass^k), and deploy it to production.
+10. Use **decision models** for an agent's small, fast choices, and explain
+    what **world models** (JEPA) are and why they matter.
+11. Know what to read/watch next, and how to keep learning.
 
 ---
 
@@ -32,7 +36,7 @@
 
 *This guide has two layers. **Parts 1–16 are the core path** — read them in
 order, since each one assumes the last, and they take you from "what is a
-model" to a working, guarded agent. **Parts 17–19 are optional deep-dives** —
+model" to a working, guarded agent. **Parts 17–21 are optional deep-dives** —
 each stands alone, can be read in any order, and isn't required reading to
 say you've finished the guide; dip into whichever one matches something
 you're curious about, whenever you want it. The **Appendices** are reference
@@ -154,6 +158,18 @@ than read front to back.*
 71. How AdamW actually works
 72. GQA: shrinking the KV cache without losing (much) quality
 73. **Quantization: from float32 to int4, the actual algorithm**
+
+**Part 20 — Agents in the real world: harnesses, loops, and production** *(deep-dive — optional, but where the industry is in 2026)*
+74. **The harness: everything around the loop**
+75. **Loops that run for hours: long-horizon agents** (Ralph loops, progress files, verifiers)
+76. Evaluating agents: "works once" vs "works every time" (pass^k)
+77. **Deploying agents to production** (durable execution, sandboxes, rollouts)
+78. Agent interop: AGENTS.md, Skills, MCP, and A2A
+79. **Project 6: an overnight agent that opens real pull requests**
+
+**Part 21 — Beyond next-token prediction: decision models and world models** *(deep-dive — optional)*
+80. **System One models: Jev and "LLM writes, model decides, code acts"**
+81. **JEPA and world models: predicting meaning, not tokens**
 
 **Appendices**
 - A. Glossary (plain language)
@@ -10272,10 +10288,12 @@ part is a checkpoint, not a chore: an honest look at what you know, what's
 still missing, and where to go next. It's worth pausing here before reading
 on.
 
-Three more parts follow this one (17–19), and they are **optional
+Five more parts follow this one (17–21), and they are **optional
 deep-dives**, not a continuation of the core arc: model compression, agent
-frameworks and governance, and the internals behind a few things you used
-without deriving. Read whichever one matches something you actually need,
+frameworks and governance, the internals behind a few things you used
+without deriving, agents in production (harnesses, long-running loops,
+evals, deployment), and the newest model designs beyond next-token
+prediction (decision models and world models). Read whichever one matches something you actually need,
 in any order, or skip them entirely — nothing past this point is required to
 say you've finished the guide.
 
@@ -10307,6 +10325,8 @@ That is genuinely more than most people working *near* AI understand.
 | Agent **frameworks** (Parts 12–15 teach the raw loop, not LangGraph/CrewAI/SDKs) | Each framework's own concepts docs — read them *after* building the loop yourself |
 | Formal AI red-teaming and offensive testing | OWASP LLM Top 10; PortSwigger LLM labs; Gandalf/Lakera exercises |
 | Compliance and governance (EU AI Act, model cards, audits) | Your regulator's guidance; NIST AI Risk Management Framework |
+| Agents in production: harnesses, hours-long loops, reliability evals, deployment | **Part 20** of this guide, then the Anthropic Engineering blog and your agent platform's docs |
+| Decision models, calibration, and world models (JEPA) | **Part 21** of this guide, then the V-JEPA 2 and LeJEPA papers |
 
 ---
 
@@ -10329,6 +10349,7 @@ MONTH 4 : GO DEEPER IN ONE DIRECTION
     (a) Training      -- reproduce GPT-2; learn FSDP; read torchtitan
     (b) Serving       -- vLLM internals; quantization; benchmark a deployment
     (c) Applications  -- agents, evals, multi-step systems, production ops
+                         (start with Part 20 of this guide)
     (d) Research      -- read 2 papers/week with a reading group; reimplement one
   Deliverable: a blog post teaching what you learned
 
@@ -10385,6 +10406,12 @@ people who know more.
     your own eval set.
 15. An agent with tools, sandboxing, human-in-the-loop approval, full tracing,
     and a red-team suite.
+16. A long-running outer-loop agent (Chapter 79's shape) for a different job,
+    such as fixing flaky tests or burning down lint debt, with pass^k measured
+    on 20 historical tasks before it's switched on.
+17. Compare three decision approaches (a local LLM's yes/no probabilities, a
+    fine-tuned small classifier, a hosted decision model) on the same 300
+    labelled cases: calibration, escalation rate, latency, cost.
 
 ---
 
@@ -12146,8 +12173,3031 @@ containing the outlier pays the cost.
 
 ---
 
+# Part 20 — Agents in the real world: harnesses, loops, and production
+
+**Optional deep-dive, but this is where the industry is in 2026.** Part 12
+built the agent loop in 40 lines, and Part 15 wrapped it in guardrails. That
+is the right foundation, but it is not what runs inside a real coding agent,
+an overnight migration bot, or a customer-support system handling 50,000
+conversations a day. Since 2025, most of the progress in *useful* agents has
+come from outside the model: from the **harness** around the loop, from
+**loops that span hours and many context windows**, from **evaluating
+reliability instead of best-case ability**, and from treating agents as
+**production services** with durable state, sandboxes, rollouts, and
+on-call. This part covers those four, then the open standards tying agents
+together, then a project that uses all of it.
+
+Read Part 12 and Chapter 62 first. Parts 13–14 help but aren't required.
+
+```
+   Part 12:  the loop              while not done: think -> act -> observe
+   Ch 74:    the harness           everything that wraps that loop
+   Ch 75:    the outer loops       how agents keep going for hours
+   Ch 76:    evals                 "works once" vs "works every time"
+   Ch 77:    production            durable, sandboxed, observable, rolled out
+   Ch 78:    interop               AGENTS.md, Skills, MCP, A2A
+   Ch 79:    project               an overnight agent that opens real PRs
+```
+
+## Chapter 74 — The harness: everything around the loop
+
+### In one sentence
+
+A **harness** is all the code wrapped around the model in an agent: what goes
+into its context, which tools it gets, what it is allowed to do, what happens
+to tool output, how memory survives a full context window, and how work is
+checked. The same model can be useless or excellent depending on the harness.
+
+### The problem
+
+Here is a puzzle that came up again and again in 2025–26. Take one model.
+Put it in a plain Chapter 51 loop with `bash` and `edit_file` tools, and ask
+it to fix a real bug in a large codebase. It flails: it reads the wrong files,
+floods its context with a 40,000-line log, forgets the goal by step 30,
+"fixes" the bug by deleting the failing test, and declares victory.
+
+Now put **the same model** inside a mature coding agent (Claude Code, Codex,
+Cursor's agent, goose, and so on) and it often fixes the bug cleanly. Public
+leaderboards like SWE-bench showed the effect repeatedly: changing only the
+scaffolding around one model moved its score by many points, sometimes more
+than upgrading to the next model generation.
+
+The weights were identical. What changed was everything *around* them. This
+discipline now has a name: **harness engineering**. One-line summary:
+
+> **Agent = model + harness.** If you are not training the model, the harness
+> is the only part you control, so that is where your engineering hours go.
+
+### A real-world cautionary tale
+
+In July 2025, Replit's AI coding agent deleted the **production database**
+of SaaStr founder Jason Lemkin's project during an explicit "code freeze",
+then gave a misleading account of what it had done. The model had
+been *told* not to touch anything. Telling the model was the only protection
+it had.
+
+Replit's fixes, announced by its CEO, were all **harness** fixes, not model fixes:
+automatically separating development and production databases, a
+"planning-only" mode in which the agent cannot execute, and stronger
+backup/rollback. That is the whole lesson of this chapter in one incident:
+**instructions are suggestions; the harness is the law.**
+
+### The idea, in plain language
+
+Think of the model as a brilliant contractor who has just arrived, has
+amnesia every morning, and will do whatever the notes on the desk say.
+The harness is the **site office**:
+
+- the **briefing pack** they read on arrival (system prompt, project rules)
+- the **toolbox**, and which tools need a supervisor's signature
+- the **inspector** who checks work before it counts (tests, linters, verifiers)
+- the **notebook** that survives overnight (progress files, memory, git)
+- the **fences** around the site (sandbox, permissions, network rules)
+- the **clock and the budget** (step, time, and cost limits)
+
+The contractor's skill matters. But a great contractor on a site with no
+plans, no inspector, and no fences will still wreck things.
+
+### The anatomy of a harness
+
+```
+   +----------------------------------------------------------------------+
+   |                              HARNESS                                 |
+   |                                                                      |
+   |  CONTEXT ASSEMBLY           every call: system prompt + project rules|
+   |   (what goes IN)            (AGENTS.md) + skill index + memory +     |
+   |                             recent messages + compacted summary      |
+   |                                                                      |
+   |  TOOLS                      few, sharp, well-described (Ch 52);      |
+   |                             loaded on demand, not all at once        |
+   |                                                                      |
+   |  PERMISSIONS + HOOKS        allow / ask / deny decided by CODE;      |
+   |   (what may come OUT)       pre-tool hooks (block, classify),        |
+   |                             post-tool hooks (lint, test, format)     |
+   |                                                                      |
+   |  RESULT SHAPING             truncate, summarise, spill big outputs   |
+   |                             to files the agent can read on demand    |
+   |                                                                      |
+   |  CONTEXT MANAGEMENT         compaction, sub-agents with fresh        |
+   |                             contexts, external memory (files, git)   |
+   |                                                                      |
+   |  VERIFICATION               tests, type-checkers, screenshots,       |
+   |                             a second model as reviewer               |
+   |                                                                      |
+   |  SANDBOX + LIMITS           container/microVM, no prod secrets,      |
+   |                             step / time / cost caps, kill switch     |
+   |                                                                      |
+   |               +-------------------------------------+                |
+   |               |  THE LOOP (Chapter 51)              |                |
+   |               |  think -> act -> observe -> repeat  |                |
+   |               +-------------------------------------+                |
+   +----------------------------------------------------------------------+
+```
+
+Each layer below solves one specific failure from Chapter 55's catalogue.
+
+#### 1. Context assembly: the model only knows what you send
+
+Every model call is stateless (Chapter 51). So the first job of a harness is
+deciding *what goes into the window*, every single step. A mature harness
+assembles, in order:
+
+1. **A system prompt** describing the agent's role, its tools, and how to
+   behave (tone, when to ask, when to stop).
+2. **Project rules**, loaded from a file in the repo or workspace, such as
+   `AGENTS.md` or `CLAUDE.md` (Chapter 78): "run `make test` before
+   committing", "never edit generated files in `gen/`", "we use pnpm, not npm".
+3. **An index of skills**: one line per available playbook, *not* the full
+   text. The agent loads a skill's full instructions only when it needs it.
+   This is called **progressive disclosure**, and it is how a harness can
+   offer 100 capabilities without spending 100 pages of context on them.
+4. **Relevant memory** (Chapter 53).
+5. **The conversation so far**, possibly with older parts replaced by a
+   summary (compaction, below).
+
+Ordering also matters for cost. Put the stable parts (system prompt, rules,
+tool definitions) **first** and keep them byte-for-byte identical across
+calls, so the provider's **prompt cache** can reuse them (Chapter 46). A
+harness that puts a timestamp at the top of the system prompt can make every
+call several times more expensive.
+
+#### 2. Tools: fewer, sharper, and loaded on demand
+
+Chapter 52's rules still apply. Harnesses add two lessons:
+
+- **Tool count hurts.** Every tool definition costs context on every call and
+  gives the model one more wrong choice. Mature harnesses ship a small core
+  (read, search, edit, run) and discover the rest on demand: a "tool search"
+  tool, MCP servers loaded per task, or skills that bring their own scripts.
+- **Bash is the universal tool**, and the most dangerous. A coding agent with
+  a shell can do nearly anything, which is why permissions exist.
+
+#### 3. Permissions and hooks: code decides, not the model
+
+This is Chapter 60's "action guardrail" grown up. Every tool call passes
+through a **policy** before it executes:
+
+| Decision | Example | Who decides |
+|---|---|---|
+| **allow** | `ls`, `git status`, reading files in the project | config: always safe |
+| **ask** | `git push`, `npm publish`, any network call, editing CI files | a human clicks approve |
+| **deny** | `rm -rf /`, reading `~/.ssh`, `DROP TABLE` | config: never, whatever the model says |
+
+**Hooks** are your own code that runs at fixed points in the loop:
+
+- **pre-tool hooks** can block or modify a call: a regex for secrets, a cheap
+  classifier asking "is this command destructive?" (Chapter 80 shows a
+  purpose-built model for exactly this), or a check that the file being edited
+  isn't generated.
+- **post-tool hooks** run after a tool and append their output to the result:
+  auto-format after every edit, run the type-checker, run the relevant tests.
+  The model then *sees* "3 type errors" as part of the observation and fixes
+  them on the next step. This is one of the cheapest, highest-leverage tricks
+  in harness engineering: **move verification into the loop, so mistakes are
+  caught one step after they're made instead of fifty.**
+- **stop hooks** run when the model says it's done, and can refuse: "tests
+  are still failing, keep going."
+
+#### 4. Result shaping: don't let one tool flood the window
+
+A test run prints 40,000 lines. A file is 2 MB. Chapter 51 truncated at 4,000
+characters, but truncation throws information away. Harnesses do better:
+**spill** the full output to a file, put the first part plus a pointer into
+the context ("full output saved to `.spill/c17.json`, read it if you need
+more"), and let the agent grep that file if it actually needs line 31,402.
+
+#### 5. Context management: the window *will* fill
+
+Long tasks exceed any context window. Even before the hard limit, quality
+drops as the window fills with stale material, an effect practitioners call
+**context rot**: models attend less reliably to details buried in a huge
+context (Chapter 45's "lost in the middle" is one part of it). Harnesses
+use three tools against it:
+
+- **Compaction**: when the window passes, say, 75% full, ask the model to
+  summarise the older middle of the conversation (goal, decisions, files
+  touched, what's verified, what's left), and replace those messages with the
+  summary. Keep the most recent turns verbatim.
+- **Sub-agents**: hand a self-contained job ("find every call site of
+  `parse_date` and report back") to a fresh agent with its own clean context.
+  Only its short report comes back. The main context never sees the 60 files
+  it read. This is the main *practical* reason multi-agent setups exist
+  (Chapter 54): not role-play, but **context isolation**.
+- **External memory**: write durable state to files (a progress log, a task
+  list, git commits). Files outlive every context window. Chapter 75 builds
+  long-running agents almost entirely on this idea.
+
+#### 6. Verification: the agent's claim is not the evidence
+
+Models are optimistic narrators. "I've fixed the bug and all tests pass" is a
+*claim*. The harness should check it: run the tests itself, take a screenshot
+of the UI, diff the output against expectations, or ask a second model to
+review the change. **Make "done" something the harness measures, not
+something the model announces.**
+
+#### 7. Sandbox and limits
+
+Everything from Chapter 61 still holds: run in a container or microVM, no
+production credentials, egress allowlist, step/time/cost caps, a kill switch.
+Chapter 77 covers the production version.
+
+### Build a minimal harness (~150 lines)
+
+This wraps the Chapter 51 loop with context assembly, skills, a permission
+policy, pre/post hooks, result spilling, and compaction. `client.chat(...)`
+is the same provider-agnostic stand-in used throughout Part 12.
+
+```python
+"""harness.py -- the Chapter 51 loop, wrapped in a minimal harness.
+
+Everything in this file except run() is harness. run() is still the same
+think -> act -> observe loop; the harness decides what goes INTO each model
+call, what is ALLOWED to come out of it, and what happens when the context
+fills up.
+"""
+import fnmatch
+import json
+import os
+import time
+
+
+def estimate_tokens(messages):
+    # ~4 characters per token for English (Chapter 29). Good enough for a
+    # budget check; use the provider's token counter when you have one.
+    return sum(len(json.dumps(m)) for m in messages) // 4
+
+
+class Harness:
+    def __init__(self, client, model, tools, tool_impls, *,
+                 system_prompt, project_rules="", skills=None,
+                 policy=None, pre_hooks=(), post_hooks=(),
+                 approve=lambda name, args: False,
+                 context_limit=100_000, compact_at=0.75, keep_recent=6,
+                 max_steps=50, max_cost_usd=2.00,
+                 cost_fn=lambda response: 0.0,
+                 trace=lambda event: print(json.dumps(event)),
+                 spill_dir="./.harness_spill"):
+        self.client, self.model = client, model
+        self.tools, self.tool_impls = tools, tool_impls
+        self.system_prompt, self.project_rules = system_prompt, project_rules
+        self.skills = skills or {}          # name -> (description, full_text)
+        self.policy = policy or {}          # tool -> {"deny": [...], "ask": [...]}
+        self.pre_hooks, self.post_hooks = pre_hooks, post_hooks
+        self.approve = approve
+        self.context_limit, self.compact_at = context_limit, compact_at
+        self.keep_recent = keep_recent
+        self.max_steps, self.max_cost_usd = max_steps, max_cost_usd
+        self.cost_fn, self.trace = cost_fn, trace
+        self.spill_dir = spill_dir
+
+    # ---- 1. CONTEXT ASSEMBLY: what the model sees on every call ------------
+    def build_system(self):
+        parts = [self.system_prompt]
+        if self.project_rules:                       # e.g. the repo's AGENTS.md
+            parts.append("## Project rules\n" + self.project_rules)
+        if self.skills:                              # progressive disclosure:
+            index = "\n".join(f"- {name}: {desc}"    # names + one line only;
+                              for name, (desc, _) in self.skills.items())
+            parts.append("## Skills (call load_skill to read one)\n" + index)
+        return "\n\n".join(parts)
+
+    # ---- 2. PERMISSIONS: allow / ask / deny, decided by code ---------------
+    def decide(self, name, args):
+        if name not in self.tool_impls and name != "load_skill":
+            return "deny", f"unknown tool {name}"
+        rules = self.policy.get(name, {})
+        text = json.dumps(args, sort_keys=True)
+        for pattern in rules.get("deny", []):
+            if fnmatch.fnmatch(text, f"*{pattern}*"):
+                return "deny", f"matches deny rule {pattern!r}"
+        for pattern in rules.get("ask", []):
+            if fnmatch.fnmatch(text, f"*{pattern}*"):
+                return ("allow", "approved by human") if self.approve(name, args) \
+                    else ("deny", "human declined")
+        for hook in self.pre_hooks:                  # e.g. a classifier, a linter
+            verdict = hook(name, args)
+            if verdict:
+                return verdict
+        return "allow", ""
+
+    # ---- 3. TOOL RESULTS: never let one result flood the context ----------
+    def shape_result(self, call_id, result, limit=4000):
+        text = json.dumps(result)
+        if len(text) <= limit:
+            return text
+        os.makedirs(self.spill_dir, exist_ok=True)
+        path = os.path.join(self.spill_dir, f"{call_id}.json")
+        with open(path, "w") as f:
+            f.write(text)
+        return (text[:limit] + f"\n...[truncated {len(text) - limit} chars; "
+                f"full output saved to {path} -- read it with a file tool "
+                f"if you need more]")
+
+    # ---- 4. COMPACTION: summarise the old middle, keep the recent tail ----
+    def maybe_compact(self, messages):
+        if estimate_tokens(messages) < self.compact_at * self.context_limit:
+            return messages
+        head, middle, tail = messages[:2], messages[2:-self.keep_recent], \
+            messages[-self.keep_recent:]
+        while tail and tail[0].get("role") == "tool":   # never orphan a result
+            middle.append(tail.pop(0))
+        if not middle:
+            return messages
+        summary = self.client.chat(model=self.model, messages=[
+            {"role": "system", "content":
+                "Summarise this agent transcript for the agent itself. Keep: "
+                "the goal, decisions made and why, files/IDs touched, what "
+                "was verified, what is still unfinished, and any errors. "
+                "Drop: raw tool output already acted on."},
+            {"role": "user", "content": json.dumps(middle)},
+        ]).message["content"]
+        self.trace({"event": "compact", "dropped_messages": len(middle),
+                    "tokens_before": estimate_tokens(messages)})
+        return head + [{"role": "user", "content":
+                        "[Summary of earlier work]\n" + summary}] + tail
+
+    # ---- 5. THE LOOP (unchanged in spirit from Chapter 51) -----------------
+    def run(self, task):
+        messages = [{"role": "system", "content": self.build_system()},
+                    {"role": "user", "content": task}]
+        spent = 0.0
+        for step in range(self.max_steps):
+            messages = self.maybe_compact(messages)
+            t0 = time.time()
+            response = self.client.chat(model=self.model, messages=messages,
+                                        tools=self.tools)
+            spent += self.cost_fn(response)
+            messages.append(response.message)
+            if not response.tool_calls:
+                self.trace({"event": "done", "step": step, "cost_usd": spent})
+                return response.message["content"]
+            if spent > self.max_cost_usd:
+                self.trace({"event": "budget_stop", "cost_usd": spent})
+                return "Stopped: cost limit reached."
+            for call in response.tool_calls:
+                name = call.function.name
+                args = json.loads(call.function.arguments or "{}")
+                decision, reason = self.decide(name, args)
+                if decision == "deny":
+                    result = {"error": f"blocked by harness: {reason}"}
+                elif name == "load_skill":
+                    skill = self.skills.get(args.get("name"))
+                    result = {"skill": skill[1]} if skill else {"error": "no such skill"}
+                else:
+                    try:
+                        result = self.tool_impls[name](**args)
+                    except Exception as e:           # errors are observations
+                        result = {"error": f"{type(e).__name__}: {e}"}
+                    for hook in self.post_hooks:     # e.g. run tests after an edit
+                        result = hook(name, args, result)
+                self.trace({"event": "tool", "step": step, "tool": name,
+                            "decision": decision, "reason": reason,
+                            "ms": int((time.time() - t0) * 1000),
+                            "context_tokens": estimate_tokens(messages),
+                            "cost_usd": round(spent, 4)})
+                messages.append({"role": "tool", "tool_call_id": call.id,
+                                 "content": self.shape_result(call.id, result)})
+        return "Stopped: step limit reached."
+```
+
+Using it for a coding task:
+
+```python
+import subprocess
+
+def bash(command):
+    p = subprocess.run(command, shell=True, capture_output=True, text=True,
+                       timeout=120, cwd="/workspace")       # inside a sandbox!
+    return {"exit_code": p.returncode, "output": (p.stdout + p.stderr)}
+
+def run_tests_after_edit(name, args, result):                # a POST-hook
+    if name == "edit_file":
+        code, out = subprocess.getstatusoutput("cd /workspace && make test -s")
+        result = {**result, "tests": "PASS" if code == 0 else out[-1500:]}
+    return result
+
+harness = Harness(
+    client, model, TOOLS, {"bash": bash, "edit_file": edit_file, "read_file": read_file},
+    system_prompt="You are a careful software engineer working in /workspace.",
+    project_rules=open("/workspace/AGENTS.md").read(),
+    skills={"db-migration": ("How we write and test DB migrations",
+                             open("skills/db-migration/SKILL.md").read())},
+    policy={"bash": {"deny": ["rm -rf /", "~/.ssh", "curl * | sh", "DROP TABLE"],
+                     "ask":  ["git push", "npm publish", "kubectl"]}},
+    post_hooks=[run_tests_after_edit],
+    approve=lambda name, args: input(f"Allow {name} {args}? [y/N] ") == "y",
+)
+print(harness.run("The /export endpoint returns 500 for users with no orders. Fix it."))
+```
+
+Read the trace it prints. You'll see every decision the *harness* made
+(allowed, asked, denied, compacted) separately from what the *model* asked
+for. That separation is the point.
+
+### How real harnesses compare
+
+You don't need to build your own coding agent; dozens exist. But knowing the
+anatomy lets you read any of them quickly:
+
+| Concern | What mature coding agents typically do |
+|---|---|
+| Project rules | Read `AGENTS.md` / `CLAUDE.md` style files from the repo, often hierarchically (repo root, then sub-folder) |
+| Permissions | allow/ask/deny rules in a settings file, plus "modes" (plan-only, accept-edits, full auto inside a sandbox) |
+| Hooks | User scripts on events such as pre-tool, post-tool, session start, and stop |
+| Context | Automatic compaction near the limit; sub-agents for search and review |
+| Extensibility | MCP servers for tools (Part 13); Skills folders for playbooks (Chapter 78) |
+| Headless mode | A non-interactive CLI flag (e.g. `claude -p`, `codex exec`) so the same harness runs in CI and cron (Chapters 75, 79) |
+| SDK | The harness exposed as a library (e.g. the Claude Agent SDK) so you can build your *own* agents on the same plumbing (Chapter 69) |
+
+### Worked example: the same bug, two harnesses
+
+The bug: `/export` crashes for users with no orders. Here is what typically
+happens in each setup.
+
+```
+   BARE LOOP (Chapter 51 + bash)            HARNESSED (this chapter)
+   ------------------------------           ------------------------------
+   step 1  cat app/export.py                context already has AGENTS.md:
+   step 2  cat app/*.py  (60 KB!)             "tests: make test; app code in
+   step 3  runs full test suite,               app/, never edit migrations/"
+           40k lines into context           step 1  grep -n "def export" app/
+   step 9  context 80% full of logs         step 2  read the 40 relevant lines
+   step 14 "fixes" by wrapping in           step 3  edit: handle empty orders
+           try/except: pass                  -> post-hook runs tests:
+   step 15 deletes the failing test             "1 failed: test_export_empty
+   step 16 "Done! All tests pass."               expects [] got None"
+                                            step 4  edit: return [] not None
+                                             -> post-hook: "PASS (212 tests)"
+                                            step 5  stop-hook re-runs suite: OK
+   cost: high, result: wrong                cost: low, result: right
+```
+
+Same model. The harnessed version wins on context hygiene (it never read 60
+KB or dumped 40,000 log lines into the window), fast feedback (the post-hook
+caught the `None` one step after the mistake), and verification (a stop hook,
+not the model, decided it was done). A "never delete or skip tests" deny rule
+on test files would have blocked the bare loop's cheat outright.
+
+### Practice (60 min)
+
+1. Take your Chapter 51 agent and port it onto the `Harness` class above.
+2. Add a **deny** rule and try to make the agent break it with a cleverly
+   worded task. It shouldn't be able to: the rule is in code, not the prompt.
+3. Add a **post-hook** that runs a linter after every file edit. Introduce a
+   lint error in a task and watch the agent fix it on the next step.
+4. Give the agent a task that needs a big file. Set `context_limit=8000` and
+   watch compaction fire. Then read the summary it wrote. Was anything
+   important lost? (This is how you tune compaction prompts.)
+5. Move a timestamp into the system prompt and measure the difference in
+   cached vs uncached tokens on your provider's dashboard.
+
+### Common confusions
+
+- **"Isn't the harness just the system prompt?"** No. The prompt is one input
+  to one part (context assembly). Permissions, hooks, sandboxing, and
+  verification are code that runs *regardless* of what the model does.
+- **"A better model makes the harness unnecessary."** Better models need
+  *less hand-holding* in the prompt, but they still need permissions, a
+  sandbox, a budget, and verification. Many harness features exist because
+  the model is capable, not because it's weak. Capable agents can do more
+  damage.
+- **"Harness = framework."** Overlapping, not identical. A framework
+  (LangGraph, Chapter 69) gives you building blocks for control flow and
+  state; a harness is a complete, opinionated runtime for one kind of agent
+  (often built *with* a framework or SDK).
+- **"Compaction is lossless."** It isn't. Every summary drops detail. That's
+  why long-running agents also write state to files (Chapter 75) and don't
+  rely on compaction alone.
+
+### Check yourself
+
+1. Name five components of a harness besides the loop itself.
+2. Why should a permission rule live in code rather than in the system prompt?
+3. What does a post-tool hook do, and why is "run the tests after every edit"
+   such a high-leverage example?
+4. Why does putting a timestamp at the top of your system prompt cost money?
+5. Give the *practical* reason sub-agents help on long tasks.
+
+### Further reading
+
+- **Article:** "Effective harnesses for long-running agents" — Anthropic
+  Engineering (Nov 2025). The initializer + incremental-agent design that
+  Chapter 75 builds on.
+- **Article:** "Effective context engineering for AI agents" — Anthropic
+  Engineering. Compaction, sub-agents, and note-taking, explained by the
+  people who build one harness.
+- **Article:** Addy Osmani, "Agent Harness Engineering" (2026), and Phil
+  Schmid, "The importance of Agent Harness in 2026". Two practitioner
+  overviews.
+- **Research:** Chroma, "Context Rot" (2025): measured quality drop as
+  input length grows, across many models.
+- **Code:** read the hooks and permissions documentation for whichever coding
+  agent you use. You'll recognise every layer in this chapter.
+
+---
+
+## Chapter 75 — Loops that run for hours: long-horizon agents
+
+### In one sentence
+
+To make an agent work for hours or days, you **stop trying to keep one
+conversation alive**. Instead you run many short sessions in an outer loop,
+each starting with a fresh context and picking up from **state stored in
+files**, with the harness (not the model) checking whether each step really
+worked.
+
+### The problem
+
+The length of tasks agents can complete has grown fast. METR's
+measurements (2025) found the length of task, in human working time, that
+frontier agents complete at 50% reliability had been **doubling roughly
+every seven months** for several years. Teams naturally started asking agents
+for whole features, migrations, even entire programs.
+
+But any single conversation hits three walls:
+
+1. **The context window fills.** Even with compaction, after a few rounds of
+   summarising-the-summary the agent loses track of details it needs.
+2. **Errors compound.** If each step is 98% reliable, 200 steps in a row
+   succeed only 2% of the time (0.98^200 ≈ 0.018).
+3. **The agent stops early or lies about being done.** Long tasks give a
+   model many chances to decide "that's probably good enough."
+
+The breakthrough was not a bigger window. It was a change of shape.
+
+### The idea: the relay team with a shared notebook
+
+Picture a relay team of engineers on short shifts. Nobody remembers the
+previous shift, but the team keeps:
+
+- a **task board** listing every feature and whether it's verified done
+- a **logbook** where each shift writes what it did and what it learned
+- the **code itself**, with a clean commit after every completed piece
+
+Each new engineer reads the logbook and the board, picks **one** unfinished
+item, does it, proves it works, commits, writes three lines in the logbook,
+and leaves. Nobody needs a long memory. **The notebook is the memory.**
+
+That's the core design of every successful long-running agent setup of
+2025–26.
+
+### The four loops (they nest)
+
+It helps to name the loops, because "agent loop" now means four different
+things:
+
+```
+   LOOP 4: SCHEDULE / EVENT     cron, webhook, queue message, "every night at 2am"
+     |
+     +-- LOOP 3: OUTER (relay)  fresh session per task; state in files + git
+           |
+           +-- LOOP 2: AGENT    think -> act -> observe (Chapter 51), inside
+                 |              one context window, with a harness (Ch 74)
+                 |
+                 +-- LOOP 1: REASONING   the model's own internal "thinking"
+                                         before each response
+```
+
+#### Loop 1 — reasoning inside the model (test-time compute)
+
+Chapter 34 mentioned reasoning models trained with RL on verifiable rewards.
+What they do at inference time is itself a loop: before answering, the model
+generates a long hidden or summarised chain of thought: trying approaches,
+checking them, backtracking. Spending more tokens here (**test-time
+compute**) reliably improves results on maths, code, and planning. This is
+the other big scaling axis besides model size and training data.
+
+For agent builders, two practical consequences:
+
+- Most APIs now expose a **thinking budget** or **effort** setting. More
+  thinking means better decisions per step but slower, more expensive steps.
+  For agents, a moderate budget on *planning* steps and a low one on routine
+  tool calls is often the best trade.
+- Interleaved thinking (reasoning *between* tool calls) means the model can
+  reflect on a tool result before choosing its next action. That's Loop 1
+  inside Loop 2.
+
+#### Loop 2 — the agent loop
+
+Chapters 51 and 74. One context window, many tool calls, a harness around it.
+
+#### Loop 3 — the outer loop (the relay)
+
+This is the new one. In its simplest, famous form it's a shell one-liner.
+In mid-2025 developer Geoffrey Huntley described what he named the **Ralph
+loop** (after Ralph Wiggum from *The Simpsons*, who is not clever but never
+stops trying):
+
+```bash
+while :; do cat PROMPT.md | claude -p ; done
+```
+
+That's it: the same prompt, fed to a headless coding agent, forever. Each
+iteration starts with an **empty context**. `PROMPT.md` tells the agent to
+read the spec and the plan, pick the most important unfinished item, do it,
+test it, commit, and update the plan. The codebase **converges** on the spec
+over many iterations, even though no single session understands the whole
+thing.
+
+Why does something so dumb work?
+
+- **Fresh context every time** means no context rot and no compounding
+  confusion. A bad session's mistakes don't poison the next one's reasoning;
+  they're only visible as code and notes, which the next session can judge.
+- **One task per session** keeps each run short and inside the model's
+  reliable range. You turn a 200-step task into 40 five-step tasks.
+- **Files and git are the memory**, and they're precise, inspectable, and
+  version-controlled. You can read them over breakfast.
+
+Ralph spread quickly (official plugins for coding agents, a Thoughtworks
+Technology Radar entry). Its weaknesses are just as instructive: with no
+verifier it can loop forever on an impossible item, "complete" things by
+weakening tests, or burn money overnight. The production version adds
+exactly the pieces from Chapter 74: **verification by the harness, attempt
+limits, budgets, and a kill switch.**
+
+Anthropic's engineering team published a more structured version for
+building large apps over many sessions (Nov 2025):
+
+1. An **initializer** session runs once: it writes a detailed **feature
+   list** as JSON (hundreds of end-to-end features, all marked
+   `"passes": false`), an `init.sh` that boots the dev environment, a
+   progress log file, and an initial git commit.
+2. Every later **coding** session follows a fixed routine: check the working
+   directory, read the progress log and recent git history, run `init.sh`
+   and a quick smoke test (to catch anything the previous shift broke), pick
+   **one** failing feature, implement it, test it **end to end** (for web
+   apps, driving a real browser), flip it to passing only when verified,
+   commit, and update the log.
+
+Two details made the difference in their reports. The feature list was JSON,
+which models are less tempted to casually rewrite than prose. And sessions
+were told explicitly that it was **unacceptable to remove or edit tests** to
+make them pass.
+
+Scaled up, the same idea runs many agents in parallel. In early 2026
+Anthropic described a team of 16 parallel agents that, over roughly 2,000
+sessions and about $20,000 of API usage, wrote a C compiler in Rust capable of
+building the Linux kernel. The harness design was the bulk of the work:
+high-quality tests as the oracle, task locking so agents didn't collide,
+and logs written for agents rather than humans. Cursor reported similar
+lessons from long-running agents building large codebases: flat groups of
+equal agents coordinating through shared files got stuck, while a
+**planner / worker** hierarchy with clear ownership scaled much further.
+
+#### Loop 4 — schedules and events
+
+Finally, something has to *start* the outer loop: a cron schedule ("every
+night, upgrade one dependency"), a webhook ("new issue labelled `agent`"),
+a queue message, or an alert ("error rate up, investigate"). Chapter 77
+covers running these in production; Chapter 79 builds one.
+
+### The verify loop: generator plus checker
+
+Underneath all four loops is one pattern worth naming on its own:
+
+```
+   GENERATE  -->  VERIFY  --(fail: feed the evidence back)-->  GENERATE ...
+                    |
+                    +--(pass)--> commit / accept
+```
+
+The verifier can be:
+
+| Verifier | Strength | Example |
+|---|---|---|
+| **Deterministic check** | Best: objective and cheap | tests pass, it compiles, the JSON validates, the SQL runs |
+| **Execution in a real environment** | Strong | drive the UI in a browser, run the migration on a copy of the DB |
+| **A second model (critic)** | Good for things code can't check | "does this PR description match the diff?" |
+| **A human** | Strongest, but slow and costly | approve the PR in the morning |
+
+**Long-running agents work in exactly the domains where good verifiers
+exist**, which is why coding went first: tests, compilers, and type-checkers
+are free, fast verifiers. If your domain has no verifier, building one is
+step one. An agent without a checker isn't long-running; it's long-wandering.
+
+### Build an outer loop (~100 lines)
+
+This is a Ralph loop with the production pieces added: one task per fresh
+session, the **harness** runs the verifier, verified work is committed by the
+harness, broken attempts are thrown away, each task gets a limited number of
+attempts, and there are time/iteration budgets and a `STOP` file kill switch.
+
+```python
+"""outer_loop.py -- run a headless agent over and over, one task per fresh context.
+
+State lives in FILES, not in any context window:
+  features.json   the task list: [{"id", "desc", "verify", "passes", "attempts"}]
+  progress.md     an append-only log every iteration reads first
+  git history     the record of what actually changed
+The agent is told what to do; the HARNESS decides whether it was done.
+Add features.json, progress.md and STOP to .gitignore: the harness's own
+state must survive the `git reset` that throws away a failed attempt.
+"""
+import json
+import pathlib
+import subprocess
+import sys
+import time
+
+AGENT_CMD = sys.argv[1:] or ["claude", "-p"]   # any headless agent CLI: claude -p, codex exec, ...
+MAX_ITERATIONS = 40
+MAX_HOURS = 8
+MAX_ATTEMPTS_PER_TASK = 3
+MAX_FAILS_IN_A_ROW = 5          # no progress for this long -> stop and page a human
+AGENT_TIMEOUT_S = 30 * 60
+
+FEATURES = pathlib.Path("features.json")
+PROGRESS = pathlib.Path("progress.md")
+STOP_FILE = pathlib.Path("STOP")   # `touch STOP` is the kill switch
+
+
+def sh(cmd, timeout=None):
+    p = subprocess.run(cmd, shell=isinstance(cmd, str), capture_output=True,
+                       text=True, timeout=timeout)
+    return p.returncode, (p.stdout + p.stderr)[-3000:]
+
+
+def log(line):
+    with PROGRESS.open("a") as f:
+        f.write(f"- {time.strftime('%Y-%m-%d %H:%M')} {line}\n")
+
+
+def next_task(features):
+    for f in features:
+        if not f["passes"] and f.get("attempts", 0) < MAX_ATTEMPTS_PER_TASK:
+            return f
+    return None
+
+
+def prompt_for(task):
+    return f"""You are one shift in a relay of engineers. You have no memory of earlier shifts.
+1. Read progress.md and `git log --oneline -20` to see where things stand.
+2. Work ONLY on this task: [{task['id']}] {task['desc']}
+3. Verify it yourself with: {task['verify']}
+4. Leave the repo clean: commit your work with a message starting "{task['id']}:".
+5. Append 1-3 lines to progress.md, each starting with "[{task['id']}]":
+   what you did, what you learned, what is left.
+Do not edit features.json. Do not work on any other task."""
+
+
+def main():
+    started, fails_in_a_row = time.time(), 0
+    for i in range(MAX_ITERATIONS):
+        features = json.loads(FEATURES.read_text())
+        task = next_task(features)
+        if task is None:
+            done = sum(f["passes"] for f in features)
+            log(f"loop finished: {done}/{len(features)} tasks pass")
+            return 0 if done == len(features) else 2
+        if STOP_FILE.exists():
+            log("STOP file found; halting"); return 3
+        if time.time() - started > MAX_HOURS * 3600:
+            log("time budget exhausted"); return 4
+
+        start = sh("git rev-parse HEAD")[1].strip()
+        try:                                       # 1. fresh context, one task
+            sh(AGENT_CMD + [prompt_for(task)], timeout=AGENT_TIMEOUT_S)
+        except subprocess.TimeoutExpired:
+            log(f"[{task['id']}] agent timed out")
+
+        code, output = sh(task["verify"], timeout=600)   # 2. the HARNESS verifies
+        task["attempts"] = task.get("attempts", 0) + 1
+        if code == 0:
+            task["passes"], fails_in_a_row = True, 0
+            # checkpoint verified work, so a later failed attempt can't take it away
+            sh(f"git add -A && git commit -q -m '{task['id']}: verified by harness'")
+            log(f"[{task['id']}] PASS on attempt {task['attempts']}")
+        else:
+            fails_in_a_row += 1
+            # roll back everything this attempt did, committed or not
+            # (ignored state files like progress.md are left alone)
+            sh(f"git reset -q --hard {start} && git clean -fdq")
+            last = output.strip().splitlines()[-1][:200] if output.strip() else "no output"
+            log(f"[{task['id']}] FAIL attempt {task['attempts']}: {last}")
+        FEATURES.write_text(json.dumps(features, indent=2))
+
+        if fails_in_a_row >= MAX_FAILS_IN_A_ROW:
+            log("no progress; stopping for a human"); return 5
+    log("iteration budget exhausted"); return 6
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+A `features.json` for a real migration (moving a codebase from one HTTP
+library to another) might look like:
+
+```json
+[
+  {"id": "M1", "desc": "Replace requests in app/clients/billing.py with httpx; keep retries",
+   "verify": "pytest tests/clients/test_billing.py -q", "passes": false},
+  {"id": "M2", "desc": "Replace requests in app/clients/shipping.py with httpx",
+   "verify": "pytest tests/clients/test_shipping.py -q", "passes": false},
+  {"id": "M9", "desc": "Remove requests from pyproject.toml; whole suite green",
+   "verify": "! grep -rq 'import requests' app/ && pytest -q", "passes": false}
+]
+```
+
+Run it inside a sandbox (Chapter 77), never on your laptop's real home
+directory:
+
+```bash
+python outer_loop.py claude -p      # or: codex exec, or any headless agent CLI
+```
+
+Headless agents can't stop to ask for permission, so configure the agent's
+own permission allowlist (in its settings file) to let it edit files and run
+exactly the commands it needs (`pytest`, `git add`, `git commit`) and deny
+everything else, such as `git push` and network tools. The sandbox is the
+second fence in case that list is wrong.
+
+Things this design gets right, each learned the hard way:
+
+| Line | Failure it prevents |
+|---|---|
+| fresh `AGENT_CMD` per task | context rot, compounding confusion |
+| harness runs `task["verify"]` | the agent claiming success it didn't achieve |
+| harness commits on PASS | a later failed attempt destroying earlier verified work |
+| `git reset --hard` to the attempt's start on FAIL | broken changes (even ones the agent committed) contaminating the next attempt |
+| `MAX_ATTEMPTS_PER_TASK` | looping forever on an impossible item |
+| `MAX_FAILS_IN_A_ROW` | burning a whole night when something global is broken (e.g. the dev DB is down) |
+| `STOP` file, `MAX_HOURS` | runaway cost; a human can halt it without killing processes |
+| "Do not edit features.json" | the agent marking its own homework |
+
+(When this loop was tested with fake agents while writing this chapter, it
+went through three bugs. The first version threw away the loop's *own*
+state files along with a failed attempt. The second let a later failed
+attempt wipe out an earlier passing one. The third used `git stash` to
+discard failures, which can't undo work the agent had already *committed*.
+All three are fixed in the code above. Test your harness with a fake agent,
+including one that misbehaves, before you point it at a real one.)
+
+### When **not** to build a long-running agent
+
+- **No verifier.** If you can't automatically check a step, you'll find out
+  what went wrong in the morning, across 40 commits.
+- **Irreversible actions.** Outer loops are for work that can be reviewed and
+  rolled back: code on a branch, drafts, reports. Not payments, not emails to
+  customers, not production changes. Those need a human at the gate.
+- **The task isn't decomposable.** If you can't write the task board, the
+  agent can't either. Try a single-session agent with a human in the loop.
+
+### Practice (90 min)
+
+1. Create a tiny repo with three functions that have failing tests. Write a
+   `features.json` with one entry per function, plus one impossible task.
+2. First run the loop with a **fake agent** (a script that does nothing),
+   then with one that randomly succeeds. Confirm the harness logic: verified
+   tasks are committed, the impossible task stops after 3 attempts, `touch
+   STOP` halts it.
+3. Now run it with a real headless agent, inside a container. Read
+   `progress.md` and `git log` afterwards. Do the progress notes actually
+   help the next session? Rewrite `prompt_for()` to improve them.
+4. Remove the "do not edit tests" rule and give it a hard task. Does it
+   cheat? Add a verifier step that fails if any file under `tests/` changed.
+
+### Common confusions
+
+- **"Why not just use a model with a 10-million-token window?"** Bigger
+  windows help, but quality still degrades with length, and errors still
+  compound across steps. Fresh contexts plus external state is more robust
+  than one gigantic context, and it's cheaper.
+- **"The outer loop is just retrying."** Retrying repeats the same attempt.
+  The outer loop makes **progress**: each session starts from a better
+  codebase and better notes than the last.
+- **"Reasoning models make outer loops unnecessary."** They make each step
+  smarter (Loop 1). They don't stop the context window filling up or let the
+  agent verify itself. The loops are complementary.
+- **"More parallel agents = faster."** Only when the tasks are genuinely
+  independent and there's coordination: locks, ownership, a planner.
+  Otherwise agents duplicate work and overwrite each other.
+
+### Check yourself
+
+1. Name the four nested loops, inner to outer.
+2. Why does a Ralph loop start each iteration with an empty context?
+3. Why must the *harness*, not the agent, run the verifier and update the
+   task list?
+4. Using 0.98^200, explain why a single 200-step session is fragile, and how
+   the outer loop changes the maths.
+5. Name two situations where you should *not* use a long-running agent.
+
+### Further reading
+
+- **Article:** Geoffrey Huntley, "Ralph Wiggum as a 'software engineer'"
+  (ghuntley.com, 2025). The original.
+- **Article:** "Effective harnesses for long-running agents" — Anthropic
+  Engineering (Nov 2025). The initializer / feature-list / progress-file design.
+- **Article:** "Building a C compiler with a team of parallel Claudes" —
+  Anthropic Engineering (2026). What breaks when you scale to 16 agents.
+- **Research:** METR, "Measuring AI Ability to Complete Long Tasks"
+  (arXiv:2503.14499, 2025). The time-horizon doubling result.
+- **Radar:** Thoughtworks Technology Radar, "Ralph loop" entry. An industry
+  view of where the technique fits and its risks.
+
+---
+## Chapter 76 — Evaluating agents: "works once" vs "works every time"
+
+### In one sentence
+
+An agent eval runs **realistic tasks in a realistic environment, many times
+each**, and grades the **final state** (did the refund actually happen,
+exactly once?) plus the **trajectory** (did it stay safe and within budget?),
+because the number that matters in production is how often it works *every
+time*, not whether it *can* work.
+
+### The problem
+
+Chapter 49 built an eval set for an LLM app, and Chapter 55 added trajectory
+tests. Agents add three complications:
+
+1. **Agents act on an environment.** The answer text can be perfect while
+   the database is wrong ("I've refunded your order!" with no refund issued,
+   or two refunds). You have to check the world, not the words.
+2. **Agents are non-deterministic over many steps.** A 30-step trajectory has
+   30 chances to diverge. Running each task once tells you almost nothing.
+3. **Success is often partial or multi-path.** There are many valid ways to
+   fix a bug or answer a research question.
+
+A real example of why this matters: when the τ-bench benchmark (Sierra, 2024)
+simulated customer-service conversations against real policies and
+databases, strong models of the time solved under half of the retail tasks
+on a single try, and when each task was repeated **8 times**, the share solved
+correctly on *every* try fell **below 25%**. A demo shows you the one good run.
+Your customers get all eight.
+
+### pass@k vs pass^k: the most important idea in this chapter
+
+Run each task `n` times. Let `c` be the number of successful runs.
+
+- **pass@k** = probability that *at least one* of k attempts succeeds.
+  Useful when a verifier can pick the good attempt (e.g. generate 5 patches,
+  keep the one whose tests pass). It's the number research papers like.
+- **pass^k** ("pass-hat-k", from τ-bench) = probability that *all* k
+  attempts succeed. This is the **reliability** number: if 4 customers ask
+  the same thing, do all 4 get it right?
+
+```python
+from math import comb
+
+
+def pass_at_k(n, c, k):
+    """P(at least ONE of k tries succeeds), estimated from n tries with c successes.
+    Unbiased estimator from the Codex paper (Chen et al., 2021)."""
+    if n - c < k:
+        return 1.0
+    return 1.0 - comb(n - c, k) / comb(n, k)
+
+
+def pass_hat_k(n, c, k):
+    """P(ALL k tries succeed) -- 'pass^k' from tau-bench (Yao et al., 2024).
+    This is the reliability number: will it work every time a customer asks?"""
+    return comb(c, k) / comb(n, k)
+
+
+# Results of running each task n=8 times (c = number of successful runs)
+results = {"refund_simple": 8, "refund_partial": 7, "address_change": 6,
+           "cancel_after_ship": 4, "multi_order_lookup": 5}
+n = 8
+print(f"{'task':20s} {'pass@1':>7s} {'pass@4':>7s} {'pass^4':>7s}")
+for task, c in results.items():
+    print(f"{task:20s} {pass_at_k(n, c, 1):7.2f} {pass_at_k(n, c, 4):7.2f} "
+          f"{pass_hat_k(n, c, 4):7.2f}")
+avg = lambda f, k: sum(f(n, c, k) for c in results.values()) / len(results)
+print(f"{'AVERAGE':20s} {avg(pass_at_k, 1):7.2f} {avg(pass_at_k, 4):7.2f} "
+      f"{avg(pass_hat_k, 4):7.2f}")
+```
+
+Output:
+
+```
+task                  pass@1  pass@4  pass^4
+refund_simple           1.00    1.00    1.00
+refund_partial          0.88    1.00    0.50
+address_change          0.75    1.00    0.21
+cancel_after_ship       0.50    0.99    0.01
+multi_order_lookup      0.62    1.00    0.07
+AVERAGE                 0.75    1.00    0.36
+```
+
+Read that bottom line twice. The same agent is "100%" (pass@4), "75%"
+(pass@1), or "36%" (pass^4), depending on which question you ask. **Report the
+one that matches how the agent is used.** A support agent that talks to
+customers directly needs high pass^k. A coding agent whose output goes
+through tests and code review can live with lower pass^k, because the
+verifier filters out the bad runs.
+
+### What to grade
+
+Grade in layers, from cheapest and most objective to most expensive:
+
+| Grader | Checks | Example |
+|---|---|---|
+| **State check** (code) | The environment ended up right | `refunds.count(order="ORD-9931") == 1 and amount == 25` |
+| **Trajectory rules** (code) | Safety and efficiency of the path | never called `issue_refund` before `verify_identity`; ≤ 12 steps; ≤ $0.20 |
+| **Outcome tests** (code) | For coding: the hidden tests | SWE-bench style: held-out tests the agent never saw must pass |
+| **LLM judge** (model) | Things code can't check | was the reply polite, accurate to policy, and complete? (rubric, Chapter 49) |
+| **Human review** | Calibration of everything above | weekly sample of 50 transcripts |
+
+Grade the **outcome, not the path**, wherever possible. Agents find valid
+paths you didn't anticipate, and a test that asserts "must call tool A then
+B then C" fails good agents for being creative. Use trajectory checks for
+**rules** (never do X, always do Y before Z, stay under budget), not for the
+exact route.
+
+### Build environments, not just datasets
+
+An agent eval is a small **simulation of production**: a fresh copy of
+the world for every run.
+
+```
+   for each task, for each of n trials:
+       env   = fresh sandbox: seeded DB, fake payment API, mock email, files
+       user  = scripted or SIMULATED user (an LLM playing the customer,
+               with a hidden goal and persona -- this is how tau-bench works)
+       run the agent in its real harness against env + user
+       grade: final env state + trajectory + transcript (judge)
+   report: pass^k per task, cost and latency distributions, failure clusters
+```
+
+Two things in that sketch matter more than they look:
+
+- **A fresh environment per trial.** If trial 3 sees the refund trial 2
+  issued, your results are garbage. Containers or database snapshots make
+  this cheap.
+- **The real harness.** Evaluate the whole system (prompts, tools, hooks,
+  compaction) not the model in isolation. A harness change can matter as
+  much as a model change (Chapter 74), so it needs the same eval.
+
+### Public benchmarks: useful, but not your eval
+
+| Benchmark | What it measures |
+|---|---|
+| **SWE-bench / SWE-bench Verified** | Fix real GitHub issues in Python repos; graded by hidden tests. "Verified" is a 500-task human-validated subset. |
+| **Terminal-Bench** | Complete real tasks in a terminal: build, debug, configure. |
+| **τ-bench / τ²-bench** | Tool-using customer-service conversations against policies and a database; introduced pass^k. |
+| **OSWorld, WebArena** | Operate real desktop apps / websites (computer-use agents). |
+| **GAIA, BrowseComp** | Multi-step research and web browsing to find hard facts. |
+
+Use them to shortlist models. Don't use them to decide whether *your* agent
+is ready: they aren't your tools, your policies, or your users, and popular
+benchmarks leak into training data over time (**contamination**). Your own
+50-task eval beats any leaderboard for that decision.
+
+### Evals in the development loop
+
+The teams that ship good agents treat evals like tests in CI:
+
+1. **Start small and early.** Anthropic's write-up of their multi-agent
+   research system noted that in early development, changes have big effects,
+   so even ~20 realistic queries were enough to see whether a prompt change
+   helped. Don't wait for 1,000.
+2. **Every production failure becomes an eval task.** A customer complaint
+   on Tuesday is a regression test by Wednesday.
+3. **Run the suite on every change** to prompt, tools, harness, or model
+   version, and compare against the last good run: pass^k, cost per task,
+   p95 latency, steps per task.
+4. **Read transcripts.** Aggregate scores tell you *that* something broke;
+   transcripts tell you *why*. Cluster failures ("12 of 19 failures: called
+   `cancel_order` on shipped orders") and fix the biggest cluster first.
+5. **Calibrate the judge.** Label 50 transcripts yourself, compare with the
+   LLM judge, and fix the rubric until they agree. Swap answer order to catch
+   position bias (Chapter 49).
+
+### Online evals: grading in production
+
+Offline evals cover what you thought of. Production shows you everything
+else. Online evaluation means continuously grading **real** traffic:
+
+- run cheap automatic checks on every conversation (policy violations,
+  groundedness, "did the user have to repeat themselves", tool error rate)
+- run an LLM judge on a **sample** (say 2%) and alert when scores drop
+- track **outcome signals** the business already has: refund reversals,
+  escalations to humans, reopened tickets, thumbs-down
+- route a sample of flagged conversations to human reviewers, and feed
+  confirmed failures back into the offline suite (step 2 above)
+
+### Worked example: the support agent from Chapter 62
+
+Suppose you change the system prompt to make the agent "more proactive". The
+offline run, 40 tasks × 5 trials each:
+
+```
+                         old prompt     new prompt
+   pass^5 (overall)          0.71          0.64     <-- worse
+   avg steps                 5.2           4.1      <-- "better"
+   cost / task             $0.031        $0.024     <-- "better"
+   forbidden-tool rate       0.0%          1.5%     <-- RED FLAG
+```
+
+Cheaper and faster, but less reliable, and it now sometimes calls
+`issue_refund` before verifying the order is eligible. The trajectory rule
+caught a safety regression that the "average quality" score would have
+hidden. Ship the old prompt; add the three failing transcripts as new tasks.
+
+### Practice (60 min)
+
+1. Take your Chapter 62 agent (or any agent). Write 10 tasks, each with a
+   **state check** and at least one **trajectory rule**.
+2. Build a fresh environment per trial: a SQLite file copied from a seed
+   file is enough.
+3. Run each task 5 times. Compute pass@1, pass@5, and pass^5 with the code
+   above. Which tasks have a big gap between pass@1 and pass^5? Read those
+   transcripts.
+4. Write a simulated user: a second model given a hidden goal ("you want a
+   refund for the damaged item, but you lost the order number"). Run 5
+   conversations and see where your agent breaks.
+
+### Common confusions
+
+- **"Temperature 0 makes it deterministic, so one run is enough."** Not
+  reliably: providers don't guarantee bit-identical outputs, tool results and
+  timing vary, and simulated users vary. Run multiple trials.
+- **"High benchmark score = ready to ship."** Benchmarks measure generic
+  ability. Readiness is pass^k on *your* tasks, with *your* tools, against
+  *your* rules.
+- **"Grade the final message."** Grade the **world**. The message can say
+  "done" while the database says otherwise.
+- **"We'll add evals once it works."** You can't know it works without them.
+  Twenty tasks on day one beats two hundred in month three.
+
+### Check yourself
+
+1. Define pass@k and pass^k. Which one matters for a customer-facing agent,
+   and why?
+2. Why grade the final environment state rather than the agent's final
+   message?
+3. Why should trajectory checks encode rules rather than an exact sequence of
+   tools?
+4. What is a simulated user, and what does it let you test?
+5. Name two online-eval signals you could collect without any LLM judge.
+
+### Further reading
+
+- **Paper:** Yao et al., "τ-bench: A Benchmark for Tool-Agent-User
+  Interaction in Real-World Domains" (arXiv:2406.12045). pass^k and simulated users.
+- **Paper:** Jimenez et al., "SWE-bench" (arXiv:2310.06770), and OpenAI's
+  "Introducing SWE-bench Verified" (2024).
+- **Paper:** Chen et al., "Evaluating Large Language Models Trained on Code"
+  (arXiv:2107.03374). The unbiased pass@k estimator.
+- **Article:** "How we built our multi-agent research system" — Anthropic
+  Engineering (June 2025). The evaluation section is excellent and practical.
+- **Article:** Hamel Husain, "Your AI Product Needs Evals". On reading
+  transcripts and building evals from failures.
+
+---
+
+## Chapter 77 — Deploying agents to production
+
+### In one sentence
+
+A production agent is a **long-running, stateful, side-effecting service**:
+it needs durable execution so it survives crashes and deploys, sandboxes so
+its actions are contained, idempotent tools so retries don't repeat side
+effects, budgets and rate limits so it can't run away, tracing so you can
+see what it did, and a rollout process so a prompt change can't take down
+the business.
+
+### The problem
+
+A demo agent runs in one Python process for 30 seconds. A production agent:
+
+- runs for **minutes to hours**: a research task, a migration, an insurance
+  claim waiting on a document upload
+- **waits for humans**: "approve this refund" may take until tomorrow
+- **performs side effects**: refunds, emails, tickets, commits, deployments
+- runs **thousands of instances at once**, all calling rate-limited model
+  APIs and tools
+- is **updated constantly** (prompts, tools, models) while instances are
+  mid-task
+
+Every one of those breaks the `while` loop from Chapter 51. Here is the
+production version of the same idea.
+
+### A real-world reference point
+
+In February 2024, Klarna announced that its AI assistant was handling about
+two-thirds of its customer-service chats in its first month, the work of
+roughly 700 human agents. In May 2025, its CEO said the company was
+**recruiting human agents again**, because cost had been "a too predominant
+evaluation factor" and the result was lower quality. Separately, in
+February 2024 a Canadian tribunal ruled (*Moffatt v. Air Canada*) that Air
+Canada was **liable for what its website chatbot told a customer** about
+bereavement fares, even though the bot was wrong.
+
+Neither story is about model quality alone. They are about operations:
+measuring outcomes in production (Chapter 76), escalating to humans,
+constraining what the agent can promise, and owning the consequences. That's
+what "deploying an agent" really means.
+
+### The reference architecture
+
+```
+                 users / webhooks / cron / queues
+                               |
+                     +---------v---------+
+                     |   API / GATEWAY   |  auth, per-tenant quotas,
+                     +---------+---------+  input guardrails (Ch 60)
+                               |  enqueue task (run_id)
+                     +---------v---------+
+                     |    TASK QUEUE     |  backpressure, priorities,
+                     +---------+---------+  retries with backoff
+                               |
+          +--------------------v---------------------+
+          |   AGENT WORKERS (stateless processes)    |
+          |   harness + loop (Ch 74), executed via a |
+          |   DURABLE RUNTIME: every model call and  |
+          |   tool call is a journaled step          |
+          +----+-------------+-------------+---------+
+               |             |             |
+     +---------v--+   +------v-------+  +--v---------------------+
+     | LLM GATEWAY|   | TOOL GATEWAY |  | SANDBOXES              |
+     | routing,   |   | MCP servers, |  | container / microVM    |
+     | fallbacks, |   | authz per    |  | per task; no secrets;  |
+     | caching,   |   | user, idem-  |  | egress allowlist;      |
+     | budgets,   |   | potency keys,|  | destroyed afterwards   |
+     | pinned     |   | rate limits  |  |                        |
+     | versions   |   |              |  |                        |
+     +------------+   +--------------+  +------------------------+
+               \             |             /
+                +------------v------------+
+                |  STATE + OBSERVABILITY  |  run journal / checkpoints,
+                |                         |  traces (OpenTelemetry GenAI),
+                |                         |  cost + eval dashboards, alerts
+                +-------------------------+
+```
+
+Let's walk through the parts that differ from ordinary web services.
+
+### 1. Durable execution: surviving crashes, deploys, and long waits
+
+Your worker **will** die mid-task: a deploy, an out-of-memory kill, a spot
+instance reclaimed. If the agent's state lives in a Python list, the task is
+lost, or worse, restarted from scratch and the refund issued twice.
+
+**Durable execution** fixes this by journaling every step. Each model call
+and tool call gets a deterministic step key and its result is written to
+durable storage *before* the agent moves on. To resume after a crash, you
+simply run the same code again: completed steps return their recorded
+results instantly (**replay**), and execution continues from the first
+unfinished step. Workflow engines such as **Temporal**, **Restate**,
+**DBOS**, and cloud step-function services do this, as do agent frameworks'
+**checkpointers** (LangGraph, Chapter 69). The core fits in about 40 lines, plus a demo:
+
+```python
+"""durable.py -- a journal that makes an agent run survive crashes and redeploys.
+
+Every model call and tool call is a STEP with a deterministic key
+(run_id, step_no). Before doing a step, look it up: if it already finished,
+return the recorded result instead of doing it again. A crashed run is
+resumed by simply calling the same code again -- finished steps replay from
+the journal in milliseconds, and execution continues from the first
+unfinished one. This is the core idea behind Temporal, Restate, DBOS, and
+LangGraph's checkpointers, in ~40 lines.
+"""
+import json
+import sqlite3
+
+
+class Journal:
+    def __init__(self, path="runs.db"):
+        self.db = sqlite3.connect(path)
+        self.db.execute("""CREATE TABLE IF NOT EXISTS steps(
+            run_id TEXT, step_no INTEGER, kind TEXT, result TEXT,
+            PRIMARY KEY (run_id, step_no))""")
+
+    def step(self, run_id, step_no, kind, fn):
+        row = self.db.execute(
+            "SELECT result FROM steps WHERE run_id=? AND step_no=?",
+            (run_id, step_no)).fetchone()
+        if row:                                   # already done: REPLAY
+            return json.loads(row[0])
+        result = fn()                             # not done: DO IT
+        self.db.execute("INSERT INTO steps VALUES (?,?,?,?)",
+                        (run_id, step_no, kind, json.dumps(result)))
+        self.db.commit()                          # durable BEFORE we move on
+        return result
+
+
+# ---- the side-effecting tool must ALSO be idempotent ------------------------
+# The crash can land between "refund API succeeded" and "journal committed".
+# On resume the step re-runs, so the refund API must recognise the retry.
+def issue_refund(order_id, amount, idempotency_key, payments):
+    if idempotency_key in payments:              # the payment provider's job;
+        return payments[idempotency_key]         # Stripe, Adyen etc. support this
+    receipt = {"refund_id": f"R-{len(payments) + 1}", "order_id": order_id,
+               "amount": amount}
+    payments[idempotency_key] = receipt
+    return receipt
+
+
+if __name__ == "__main__":
+    import os
+    if os.path.exists("/tmp/runs_demo.db"):
+        os.remove("/tmp/runs_demo.db")
+    payments = {}                                 # stands in for the payment provider
+    calls = {"model": 0}
+
+    def fake_model(step):
+        calls["model"] += 1
+        return {"tool": "issue_refund", "args": {"order_id": "ORD-9931", "amount": 25}} \
+            if step == 0 else {"answer": "Refunded $25 to ORD-9931."}
+
+    def run(run_id, crash_after_refund=False):
+        j = Journal("/tmp/runs_demo.db")
+        step = 0
+        while True:
+            decision = j.step(run_id, step, "model", lambda: fake_model(step))
+            step += 1
+            if "answer" in decision:
+                return decision["answer"]
+            key = f"{run_id}:{step}"              # deterministic idempotency key
+            j.step(run_id, step, "tool", lambda: issue_refund(
+                **decision["args"], idempotency_key=key, payments=payments))
+            step += 1
+            if crash_after_refund:
+                raise SystemExit("power cut!")
+
+    try:
+        run("run-42", crash_after_refund=True)
+    except SystemExit as e:
+        print("first attempt:", e)
+    print("resumed:", run("run-42"))
+    print("refunds issued:", len(payments), "| model calls:", calls["model"])
+    assert len(payments) == 1 and calls["model"] == 2
+```
+
+Output:
+
+```
+first attempt: power cut!
+resumed: Refunded $25 to ORD-9931.
+refunds issued: 1 | model calls: 2
+```
+
+The crash happened right after the refund. On resume, the model call and the
+refund were **replayed from the journal**, not repeated: one refund, and no
+paying for the same model call twice. Durable execution also makes
+**human-in-the-loop waits** cheap: the run simply stops at "waiting for
+approval" with its state in the journal, holds no process or memory for
+three days, and resumes when the approval event arrives.
+
+### 2. Idempotent tools: the other half of "exactly once"
+
+Look again at `issue_refund` above. Even with a journal, there is a tiny
+window: the payment API succeeded, then the process died **before** the
+journal write. On resume, the step re-runs. The only defence is an
+**idempotency key**: a deterministic ID (`run_id:step`) sent with the
+request, so the payment provider recognises the retry and returns the
+original result instead of paying twice. Major payment APIs support this
+directly; build the same into your own side-effecting tools.
+
+**Rule:** every tool that changes the world takes an idempotency key, and
+the key is derived from the run and step, never randomly generated per
+attempt.
+
+### 3. Sandboxing: one disposable box per task
+
+Agents that run code or shell commands need isolation stronger than "the same
+container as the web server":
+
+| Isolation | Strength | Typical use |
+|---|---|---|
+| Plain container (Docker) | Shares the host kernel; OK for trusted code | internal tools, low risk |
+| Hardened container (gVisor, seccomp, rootless, read-only FS) | Kernel attack surface reduced | most agent code execution |
+| microVM (Firecracker, Kata) | Separate kernel per sandbox; boots in well under a second | untrusted code, multi-tenant platforms; what most hosted "code sandbox for agents" services use |
+
+Per-task rules (Chapter 61, made concrete): a **fresh sandbox per task**,
+destroyed afterwards; **no production credentials** inside, with tools that
+need secrets called through the tool gateway, which holds the credentials and
+checks the *user's* permissions; an **egress allowlist** (package registry,
+your git host, nothing else); and CPU, memory, disk, and wall-clock limits.
+
+### 4. The LLM gateway: routing, fallbacks, caching, budgets
+
+Don't let every worker call model providers directly. A gateway (your own
+code or an off-the-shelf one) gives you one place for:
+
+- **Version pinning.** Use dated model IDs, not floating aliases, in
+  production. A silent model update can change behaviour as much as a prompt
+  change, so treat a model upgrade like a deploy: eval first (Chapter 76).
+- **Fallbacks.** Provider outage or rate limit → retry with backoff → fall
+  back to a secondary model that *has passed your evals*.
+- **Routing.** Send easy steps to a small, cheap model and hard ones to a
+  frontier model (Chapter 46). Chapter 80 shows routing with a dedicated
+  decision model.
+- **Prompt caching.** Stable prefixes (system prompt, tools, rules) are
+  billed at a steep discount when cached. For agents that re-send a long
+  prefix every step, this is often the single biggest cost lever.
+- **Budgets.** Per-task, per-user, per-tenant spend limits enforced *outside*
+  the agent, plus anomaly alerts ("this task has made 400 calls").
+
+### 5. Observability: traces as the product
+
+Chapter 55's per-step log becomes a distributed **trace**: one trace per run,
+with nested spans for each model call, tool call, and sub-agent. The
+**OpenTelemetry GenAI semantic conventions** standardise the names, so any
+backend (Langfuse, Phoenix, Datadog, Honeycomb, and others) can display them:
+
+```
+   trace run-42  (invoke_agent support-agent)            8.4 s   $0.031
+   |- chat claude-...           gen_ai.usage.input_tokens=3120  1.9 s
+   |- execute_tool verify_identity                              0.2 s
+   |- chat claude-...           (cached prefix: 2,900 tokens)   1.1 s
+   |- execute_tool issue_refund  idempotency_key=run-42:3       0.6 s
+   |- chat claude-...                                           1.4 s
+```
+
+Attributes such as `gen_ai.operation.name`, `gen_ai.request.model`,
+`gen_ai.usage.input_tokens`, and `gen_ai.usage.output_tokens` are part of the
+convention (still marked experimental, so check the current version). Add
+your own: `tenant`, `run_id`, `prompt_version`, `harness_version`,
+`tools_denied`, `cost_usd`.
+
+The dashboards that matter for agents:
+
+| Metric | Why |
+|---|---|
+| task success rate (from outcome signals and online evals) | the actual product |
+| cost per task: p50, p95, max | catches runaway loops early |
+| steps per task: p50, p95 | rising steps = confusion or tool problems |
+| tool error rate, by tool | most "agent" bugs are tool bugs |
+| denial and escalation rates | guardrails firing more often = something changed |
+| time to first token, total latency | user experience |
+
+### 6. Rollouts: prompts and models are deploys
+
+Treat **prompt, tool, harness, and model changes as code deploys**:
+versioned, reviewed, evaluated, and rolled out gradually.
+
+1. **Offline eval gate** (Chapter 76): the change must not regress pass^k,
+   safety rules, or cost.
+2. **Shadow mode**: run the new version on real inputs without acting
+   (tools are dry-run), and compare decisions with the current version.
+3. **Canary**: send 1–5% of new tasks to the new version; watch the
+   dashboard above; widen gradually.
+4. **Instant rollback**: the version is a config value, not a rebuild.
+
+There is one agent-specific wrinkle. **Long-running tasks span deploys.** A
+task that started on version 12 shouldn't wake up halfway through on version
+13 with a different prompt and tool set. Anthropic described using **rainbow
+deployments** for its research agents: old and new versions run side by
+side, new tasks go to the new version, and in-flight tasks finish on the
+version they started on. Durable runtimes support the same idea with
+workflow versioning.
+
+### 7. Rate limits and backpressure
+
+Ten thousand agents each making a model call every two seconds will hit
+provider rate limits. Use a **queue** with concurrency limits per provider
+and per tenant, **exponential backoff with jitter** on 429/529 errors,
+**priorities** (interactive users before overnight batch jobs), and **batch
+APIs** for non-urgent work (typically about half price).
+
+### 8. Incidents: the agent runbook
+
+Write this before launch:
+
+- **Kill switch**: one flag that stops all tool execution (Chapter 61), and
+  one per tool. Practise using it.
+- **Blast-radius limits**: max refunds per hour, max emails per run, max
+  value per action, enforced in the tool gateway.
+- **Replay**: from a trace, re-run a failing task in a sandbox with the same
+  inputs to reproduce it.
+- **Customer remediation**: who contacts the customer when the agent got it
+  wrong, and who can reverse its actions.
+- **Post-incident**: the failing conversation becomes an eval task (Chapter 76).
+
+### Hosted agent platforms vs building it yourself
+
+Several providers now offer **managed agent runtimes**: you supply the
+prompt, tools, and configuration, and they run the loop, sandboxes, state,
+and scaling for you. Cloud vendors offer agent hosting services too.
+
+| | Managed runtime | Build on your infrastructure |
+|---|---|---|
+| Time to production | days | weeks to months |
+| Control over sandbox, data location, network | limited to what's offered | full |
+| Vendor lock-in | higher | lower (especially with MCP for tools) |
+| Good for | most teams' first agents; standard patterns | regulated data, unusual tools, very high scale |
+
+Either way, the **evals, budgets, idempotent tools, and runbook are your
+job**. No platform knows your refund policy.
+
+### The production checklist
+
+```
+   [ ] durable execution: crash mid-task -> resumes, no repeated side effects
+   [ ] every side-effecting tool takes a deterministic idempotency key
+   [ ] fresh sandbox per task; no prod secrets inside; egress allowlist
+   [ ] model versions pinned; fallback model has passed the eval suite
+   [ ] per-task / per-user / per-tenant budgets enforced outside the agent
+   [ ] OpenTelemetry traces with cost, tokens, tool calls, versions
+   [ ] dashboards: success, cost p95, steps p95, tool errors, escalations
+   [ ] offline eval gate in CI for prompt / tool / harness / model changes
+   [ ] shadow -> canary -> full rollout; one-click rollback
+   [ ] in-flight tasks finish on their starting version
+   [ ] kill switch tested; blast-radius limits in the tool gateway
+   [ ] human escalation path, and a named owner for the agent's actions
+```
+
+### Practice (60 min)
+
+1. Run `durable.py`. Then move the simulated crash to *between* the refund
+   call and the journal write (raise inside `issue_refund` after recording
+   the payment). Confirm the idempotency key still prevents a double refund.
+   Then remove the key and watch it fail.
+2. Wrap your Chapter 62 agent's steps in the `Journal`. Kill the process
+   with Ctrl-C mid-conversation and resume it.
+3. Add OpenTelemetry spans (the `opentelemetry-sdk` package with a console
+   exporter is enough) around each model and tool call, using the
+   `gen_ai.*` attribute names above.
+4. Write a one-page runbook for your agent: kill switch, blast-radius
+   limits, who gets paged, how to reverse its actions.
+
+### Common confusions
+
+- **"Retries are enough."** Retrying a non-idempotent tool repeats the side
+  effect. Durable execution without idempotent tools still has a gap; you
+  need both.
+- **"Our agent is stateless, it's just API calls."** The conversation, the
+  pending approval, and the half-finished plan are state. If they live in
+  memory, a deploy deletes them.
+- **"Pinning the model means we never upgrade."** It means you upgrade
+  deliberately: eval, shadow, canary, the same as any other deploy.
+- **"Observability = logging the final answer."** You need every step,
+  with tokens, cost, tool arguments, results, and versions. That's where the
+  answers to "why did it do that?" live.
+
+### Check yourself
+
+1. What does durable execution do on resume, and why doesn't it repeat
+   completed steps?
+2. Why do side-effecting tools *also* need idempotency keys, even with a
+   journal?
+3. Name three things an LLM gateway centralises.
+4. Why are long-running tasks a problem for normal rolling deploys, and what
+   is a rainbow deployment?
+5. Give three items from the agent incident runbook.
+
+### Further reading
+
+- **Docs:** Temporal's or Restate's documentation on durable execution for
+  AI agents; LangGraph's persistence/checkpointer docs.
+- **Docs:** OpenTelemetry semantic conventions for Generative AI
+  (opentelemetry.io), including agent and tool spans.
+- **Article:** "How we built our multi-agent research system" — Anthropic
+  Engineering (June 2025). See its production section on stateful errors,
+  debugging, and rainbow deployments.
+- **Article:** Stripe API docs, "Idempotent requests". The clearest
+  explanation of idempotency keys.
+- **Docs:** Firecracker (firecracker-microvm.github.io) and gVisor
+  (gvisor.dev). What isolation actually means.
+- **Book:** *AI Engineering* (Chip Huyen), the chapters on deployment,
+  monitoring, and user feedback.
+
+---
+## Chapter 78 — Agent interop: AGENTS.md, Skills, MCP, and A2A
+
+### In one sentence
+
+Four open standards now cover the main ways agents connect to the world:
+**AGENTS.md** tells an agent how to behave in a project, **Skills** package
+reusable know-how it loads on demand, **MCP** connects it to tools and data,
+and **A2A** lets separate agents delegate work to each other. Most of these
+now sit under neutral, Linux Foundation-hosted governance.
+
+### The problem
+
+By 2025, every coding agent had its own config file (`.cursorrules`,
+`CLAUDE.md`, `.github/copilot-instructions.md`, ...), every company's
+prompts were copy-pasted into five tools, and agents built by different
+vendors couldn't hand work to each other. Part 13 showed how MCP solved the
+N×M problem for *tools*. The same pressure produced standards for the other
+connections.
+
+### The map
+
+```
+                          +-----------------------+
+     AGENTS.md  --------> |                       | <-------- Skills
+     "how we work here"   |        AGENT          |   "how to do X",
+     (read at start)      |   (model + harness)   |   loaded on demand
+                          |                       |
+                          +---+---------------+---+
+                              |               |
+                         MCP  |               |  A2A
+            tools, data,      |               |   other AGENTS, as peers:
+            prompts           v               v   discover, delegate, track
+                     +-------------+    +----------------+
+                     | MCP servers |    | remote agents  |
+                     | (Part 13)   |    | (other vendors,|
+                     +-------------+    |  other teams)  |
+                                        +----------------+
+```
+
+### AGENTS.md: a README for agents
+
+A plain Markdown file at the root of a repository (optionally more in
+sub-folders, where the nearest one wins) with the things a new engineer would
+need on day one: build and test commands, code style, project layout, and
+what not to touch. Introduced by OpenAI and adopted by many coding agents in
+2025, it's now stewarded by the Agentic AI Foundation (below).
+
+```markdown
+# AGENTS.md
+
+## Setup
+- `pnpm install`; Node 22. Never use npm or yarn here.
+
+## Test
+- `pnpm test` for unit tests; `pnpm e2e` needs `docker compose up db` first.
+- A change is done only when `pnpm lint && pnpm test` passes.
+
+## Conventions
+- API handlers live in `src/routes/`; one file per resource.
+- Never edit `src/generated/` -- run `pnpm codegen` instead.
+- Migrations are append-only. Never modify an existing file in `migrations/`.
+
+## Safety
+- Do not run anything against `*.prod.internal` hosts.
+```
+
+Why it matters: it's the **project rules** layer of the harness (Chapter 74),
+in a format every agent reads. Keep it short and factual: it's injected into
+context on every session, so every line costs tokens on every call. Agents
+that support their own file name (such as `CLAUDE.md`) can simply point it at
+`AGENTS.md` so you maintain one file.
+
+### Skills: playbooks the agent loads only when needed
+
+A **skill** is a folder containing a `SKILL.md` file (instructions with a
+short YAML header) plus any scripts, templates, or reference files it needs.
+Anthropic introduced Agent Skills in October 2025 and published the format
+as an open standard that December, and other agents have adopted it since.
+
+```
+   skills/
+     release-notes/
+       SKILL.md              <- name, description, step-by-step instructions
+       template.md           <- referenced from SKILL.md, read only if needed
+       scripts/collect_prs.py
+```
+
+```markdown
+---
+name: release-notes
+description: Write user-facing release notes from merged PRs since the last
+  tag. Use when asked to prepare a release or changelog.
+---
+
+1. Run `python scripts/collect_prs.py --since $(git describe --tags --abbrev=0)`.
+2. Group PRs into Features / Fixes / Breaking changes using their labels.
+3. Fill in `template.md`. Write for customers, not engineers: no PR numbers
+   in the prose, one sentence per change, breaking changes first.
+4. Show the draft to the user before writing it to `CHANGELOG.md`.
+```
+
+The key design idea is **progressive disclosure**, which is exactly the
+harness trick from Chapter 74:
+
+```
+   always in context:   name + description       (~30 tokens per skill)
+   when relevant:       the body of SKILL.md     (loaded by the agent)
+   only if needed:      template.md, scripts     (read or executed)
+```
+
+So an agent can have 200 skills installed for the cost of 200 short lines.
+
+**Skill vs MCP server vs AGENTS.md**, the question everyone asks:
+
+| Use | When the thing is... | Example |
+|---|---|---|
+| **AGENTS.md** | Always-true facts about *this project* | "tests run with `pnpm test`" |
+| **Skill** | A *procedure* or know-how, used sometimes, possibly with scripts | "how we write release notes", "how to file an expense report" |
+| **MCP server** | A *live connection* to a system, with auth | "query the CRM", "create a Jira ticket" |
+
+Security note: a skill can contain executable scripts and instructions the
+agent will follow. **Treat third-party skills like third-party code**: read
+them before installing, and prefer trusted sources. Chapter 59's tool
+poisoning applies directly.
+
+### MCP: tools and data (recap)
+
+Part 13 covered MCP in depth: hosts, clients, servers, and tools, resources,
+and prompts over JSON-RPC. Two 2025–26 developments matter here:
+
+- Anthropic donated MCP to the **Agentic AI Foundation** (AAIF), formed
+  under the Linux Foundation in December 2025 with founding projects MCP
+  (from Anthropic), goose (an open-source agent framework from Block), and
+  AGENTS.md (from OpenAI), and backed by the major AI labs and cloud providers.
+- The spec kept evolving toward production needs: better authorization,
+  remote servers, and the stateless transport described in Chapter 57.
+
+### A2A: agents talking to agents
+
+MCP treats the thing on the other end as a **tool**: the agent calls it and
+gets a result. But sometimes the thing on the other end is itself an
+**agent**: it has its own model and tools, it may take hours, it may need to
+ask questions, and it belongs to someone else (a supplier, another team,
+another vendor). That's what **A2A (Agent2Agent)** is for. Google announced
+it in April 2025 and donated it to the Linux Foundation in June 2025, with
+backing from AWS, Cisco, Microsoft, Salesforce, SAP, ServiceNow, and others.
+
+Core concepts:
+
+- **Agent Card**: a JSON document a remote agent publishes (conventionally
+  at `/.well-known/agent-card.json`) describing what it can do (its
+  "skills"), its endpoint, and how to authenticate. That's discovery.
+- **Task**: the unit of work, with a lifecycle (submitted → working →
+  input-required → completed / failed / canceled), so long-running jobs and
+  back-and-forth questions are first-class.
+- **Messages and artifacts**: the conversation parts, and the outputs (files,
+  structured data) the remote agent produces.
+- Built on ordinary web standards: HTTP, JSON-RPC, and streaming via
+  server-sent events, with push notifications for long tasks.
+
+```json
+{
+  "name": "Acme Freight Quoting Agent",
+  "description": "Quotes and books LTL freight shipments within the EU.",
+  "url": "https://agents.acme-freight.example/a2a",
+  "version": "2.1.0",
+  "capabilities": {"streaming": true, "pushNotifications": true},
+  "skills": [
+    {"id": "quote", "name": "Get a freight quote",
+     "description": "Price a shipment given origin, destination, pallets, weight."},
+    {"id": "book", "name": "Book a shipment",
+     "description": "Book a previously quoted shipment. Requires a quote_id."}
+  ],
+  "securitySchemes": {"oauth": {"type": "oauth2"}}
+}
+```
+
+**MCP vs A2A** in one line: **MCP is how an agent uses a tool; A2A is how an
+agent hires another agent.** A procurement agent would use MCP to read your
+ERP, and A2A to ask a supplier's agent for a quote. Field note: in 2026 MCP
+is everywhere, while A2A adoption is concentrated in enterprise platforms
+and cross-company workflows. Many teams never need it, because most
+"multi-agent" systems live inside one codebase where a function call is
+simpler (Chapter 54).
+
+### A real-world example: one request, every standard
+
+A developer asks their coding agent: *"Ship the date-picker fix and prepare
+release notes."*
+
+1. The agent starts by reading **AGENTS.md**: test command, never edit
+   `src/generated/`.
+2. It fixes the bug, and the harness's post-hook runs the tests (Chapter 74).
+3. It sees from the skill index that **`release-notes`** matches, loads that
+   `SKILL.md`, and runs its `collect_prs.py` script.
+4. It uses the GitHub **MCP server** to open the pull request and the Jira
+   MCP server to move the ticket to "In review".
+5. The company's deployment is owned by a platform team's agent, so the
+   coding agent sends an **A2A** task to the deploy agent: "deploy PR #4182
+   to staging", and streams status updates until the task completes.
+
+Five systems, four standards, and no custom glue code written for this
+particular combination.
+
+### Computer use: when there's no API at all
+
+Some systems have no API and no MCP server: legacy desktop apps, government
+portals, internal web tools. **Computer-use** (or browser-use) agents
+operate them the way a person does, from screenshots, clicking and typing.
+Anthropic, OpenAI, Google, and others all ship computer-use capabilities, and
+benchmarks like OSWorld and WebArena track progress. Rules of thumb: prefer an
+API or MCP server whenever one exists (it's faster, cheaper, and more
+reliable); run computer-use agents in an isolated VM or browser profile;
+and treat everything on screen as untrusted input, because web pages are a
+prime channel for prompt injection (Chapter 59).
+
+### Practice (45 min)
+
+1. Write an `AGENTS.md` for a project you own. Keep it under 40 lines. Run
+   your coding agent with and without it on the same task, and compare.
+2. Write one skill for a procedure you repeat (a report, a release, a code
+   review checklist), with a script. Check that the agent loads it only when
+   relevant: ask an unrelated question and confirm it doesn't.
+3. Read the A2A spec's Agent Card section, and write a card for your Chapter
+   62 support agent. Which skills would you expose to *another company's*
+   agent, and which never?
+
+### Common confusions
+
+- **"Skills replace MCP."** No. Skills carry *know-how* (and can call
+  scripts); MCP carries *live connections* with auth. A skill can tell the
+  agent which MCP tools to use and how.
+- **"A2A replaces MCP."** No. They connect different things: tools vs peer
+  agents. A system can use both.
+- **"Put everything in AGENTS.md."** It's in context on every call. Put
+  procedures in skills and reference material in files the agent can read
+  when needed.
+- **"A standard makes third-party components safe."** A standard makes them
+  *compatible*. Safety still comes from review, least privilege, and the
+  guardrails in Part 14.
+
+### Check yourself
+
+1. What belongs in AGENTS.md, in a skill, and in an MCP server? Give one
+   example of each.
+2. Explain progressive disclosure, and why it lets an agent have hundreds of
+   skills.
+3. What is an Agent Card, and what problem does it solve?
+4. In one sentence each: when would you use MCP, and when A2A?
+5. Why should you prefer an API over a computer-use agent when both are
+   possible?
+
+### Further reading
+
+- **Spec:** agents.md: the AGENTS.md format and the list of supporting agents.
+- **Spec:** agentskills.io: the Agent Skills format; plus Anthropic's
+  engineering post "Equipping agents for the real world with Agent Skills".
+- **Spec:** a2a-protocol.org: the A2A specification and SDKs.
+- **Announcement:** Linux Foundation, "Linux Foundation Announces the
+  Formation of the Agentic AI Foundation" (Dec 2025).
+- **Benchmark:** OSWorld (os-world.github.io): what computer-use agents
+  can and can't do yet.
+
+---
+
+## Chapter 79 — Project 6: an overnight agent that opens real pull requests
+
+### The brief
+
+Your team's service has 140 dependencies. Every week some publish new
+versions; every month one of those has a breaking change nobody has time to
+handle, so the backlog grows until a security fix forces a painful week of
+upgrades. Bots that bump versions exist, but they stop at "tests failed".
+
+You'll build an agent that runs **every night**, takes **one** outdated
+dependency at a time, upgrades it, **fixes whatever breaks**, proves it with
+the test suite, and opens a **pull request** for a human to review in the
+morning. It never merges, never touches production, and never pushes to
+`main`.
+
+This project uses every chapter in this part:
+
+| Piece | Chapter |
+|---|---|
+| AGENTS.md + a skill for "how we upgrade dependencies" | 78 |
+| A harness: permissions, post-hooks, sandbox | 74 |
+| An outer loop: one dependency per fresh session, verified by the harness | 75 |
+| An eval set of past upgrades | 76 |
+| A scheduled, sandboxed, observable deployment with a human gate | 77 |
+
+### What it must NOT do (write this first, always)
+
+- push to `main`, merge anything, or change CI configuration
+- have network access beyond the package registry and your git host
+- have any production credentials (it gets a token that can only push
+  branches and open PRs on this one repo)
+- delete, skip, or weaken tests (`@skip`, `xfail`, lowering coverage limits)
+- spend more than $15 a night or run more than 3 hours
+
+### The architecture
+
+```
+   02:00 cron (CI scheduler)
+      |
+      v
+   CI job in a fresh container  (no secrets except: model API key,
+      |                          repo-scoped PR token)
+      |
+      +-- 1. plan.py      list outdated deps -> features.json
+      |                   (one task per dependency, smallest risk first)
+      |
+      +-- 2. outer_loop.py  (Ch 75)  for each task, fresh agent session:
+      |        agent reads AGENTS.md + skill "dependency-upgrade"
+      |        bumps version, reads changelog, fixes code
+      |        HARNESS verifies:  lint + type-check + full test suite
+      |                           + "no test files weakened" check
+      |        PASS -> harness commits on branch deps/<name>-<version>
+      |        FAIL x3 -> logged as "needs human", branch discarded
+      |
+      +-- 3. open_prs.py   one PR per passing branch, body = progress notes
+      |                    + changelog links + the agent's own risk summary
+      |
+      +-- 4. traces + cost -> dashboard; summary posted to team chat
+      |
+   09:00 humans review PRs  <-- the approval gate
+```
+
+### Step 1 — Project rules and the skill
+
+`AGENTS.md` (in the repo, used by humans' agents too):
+
+```markdown
+## Test
+- `make lint typecheck test` must all pass. That is the definition of done.
+## Rules
+- Never modify files under tests/ to make a failing test pass. If a test is
+  genuinely wrong because the library changed behaviour, STOP and explain in
+  progress.md instead.
+- Never edit .github/ or Makefile.
+```
+
+`skills/dependency-upgrade/SKILL.md`:
+
+```markdown
+---
+name: dependency-upgrade
+description: Upgrade one dependency and fix breakages. Use for any task that
+  says "upgrade <package>".
+---
+1. Read the package's changelog / release notes between the current and
+   target version (the URL is in the task). List breaking changes first.
+2. Bump ONLY that package (and its required peers) in the lockfile.
+3. Run `make test`. For each failure, find the changelog entry that explains
+   it, and fix OUR code to match the new API. Prefer the library's
+   recommended migration over workarounds.
+4. Search for usages of any deprecated API mentioned in the changelog, even
+   if tests pass, and migrate them.
+5. In progress.md write: breaking changes found, files changed, anything a
+   reviewer should look at closely, and your risk rating (low/med/high) with
+   one sentence of reasoning.
+```
+
+### Step 2 — Plan: turn outdated dependencies into tasks
+
+```python
+# plan.py -- one task per outdated dependency, patch/minor before major
+import json, subprocess
+
+out = subprocess.run(["pip", "list", "--outdated", "--format=json"],
+                     capture_output=True, text=True, check=True).stdout
+deps = json.loads(out)
+
+def risk(d):                      # semver distance: patch < minor < major
+    cur, new = d["version"].split("."), d["latest_version"].split(".")
+    return 2 if cur[0] != new[0] else 1 if cur[1:2] != new[1:2] else 0
+
+tasks = []
+for d in sorted(deps, key=risk)[:8]:                  # at most 8 a night
+    tasks.append({
+        "id": f"deps-{d['name']}-{d['latest_version']}",
+        "desc": (f"upgrade {d['name']} from {d['version']} to "
+                 f"{d['latest_version']} (use the dependency-upgrade skill; "
+                 f"changelog: https://pypi.org/project/{d['name']}/)"),
+        "verify": "make lint typecheck test && python check_tests_untouched.py",
+        "passes": False,
+    })
+json.dump(tasks, open("features.json", "w"), indent=2)
+print(f"{len(tasks)} tasks planned")
+```
+
+(Use your ecosystem's equivalent: `npm outdated --json`, `go list -m -u -json all`,
+`cargo outdated`, and so on.)
+
+### Step 3 — The extra verifier: tests must not be weakened
+
+The most common cheat in long-running coding agents is making the tests
+easier. Make it impossible to get a PASS that way:
+
+```python
+# check_tests_untouched.py -- fail if this attempt weakened the test suite
+import re, subprocess, sys
+
+# compare against main, so changes the agent already COMMITTED are included
+diff = subprocess.run(["git", "diff", "main", "--", "tests/"],
+                      capture_output=True, text=True).stdout
+deleted_tests = re.findall(r"^-\s*def test_", diff, re.M)
+new_skips = re.findall(r"^\+.*(@pytest\.mark\.(skip|xfail)|pytest\.skip\()", diff, re.M)
+if deleted_tests or new_skips:
+    print(f"tests weakened: {len(deleted_tests)} removed, {len(new_skips)} skips added")
+    sys.exit(1)
+```
+
+### Step 4 — Run the outer loop in the sandbox
+
+Reuse `outer_loop.py` from Chapter 75, with `features.json`, `progress.md`,
+and `STOP` in `.gitignore`, and one addition. Before
+each task, create the branch, so each passing task's harness commit lands on
+its own branch:
+
+```python
+# in main(), right after picking `task`:
+sh(f"git checkout -q main && git checkout -q -B {task['id']}")
+```
+
+Set the budgets for the night: `MAX_ITERATIONS = 24` (8 tasks × 3 attempts),
+`MAX_HOURS = 3`, and a provider-side spend limit on the API key as a second
+fence.
+
+### Step 5 — Open the PRs (the human gate)
+
+```python
+# open_prs.py -- one PR per verified branch; humans decide
+import json, subprocess
+
+for t in json.load(open("features.json")):
+    if not t["passes"]:
+        continue
+    notes = subprocess.run(["grep", t["id"], "progress.md"],
+                           capture_output=True, text=True).stdout
+    body = (f"Automated upgrade, verified by `{t['verify']}`.\n\n"
+            f"### Agent notes\n{notes}\n\n"
+            f"Review the risk rating and changed files before merging.")
+    subprocess.run(["git", "push", "-q", "origin", t["id"]], check=True)
+    subprocess.run(["gh", "pr", "create", "--head", t["id"], "--base", "main",
+                    "--title", t["desc"].split(" (")[0],
+                    "--body", body, "--label", "agent"], check=True)
+```
+
+Note that **the harness pushes**, not the agent. The agent's own permissions
+deny `git push` (Chapter 74); only this small, deterministic script, which
+pushes branches the harness verified, has the token.
+
+### Step 6 — Schedule it (CI as the runtime)
+
+Any CI system with a scheduler works. A GitHub Actions sketch:
+
+```yaml
+# .github/workflows/nightly-deps-agent.yml
+name: nightly-deps-agent
+on:
+  schedule: [{cron: "0 2 * * 1-5"}]     # 02:00 UTC, weekdays
+  workflow_dispatch: {}                  # manual run button
+concurrency: deps-agent                  # never two runs at once
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 200                 # hard wall-clock limit
+    permissions: {contents: write, pull-requests: write}   # nothing else
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - run: pip install -r requirements-dev.txt
+      - run: npm install -g @anthropic-ai/claude-code     # or your agent CLI
+      - run: python plan.py
+      - run: python outer_loop.py claude -p
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.DEPS_AGENT_API_KEY }}   # spend-capped key
+      - run: python open_prs.py
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/upload-artifact@v4                  # the morning report
+        with: {name: agent-logs, path: "progress.md\nfeatures.json"}
+```
+
+The CI runner is the sandbox here: a fresh VM per run, destroyed afterwards,
+with exactly two secrets. For stricter isolation (egress allowlists,
+microVMs), run the same scripts on your own runners (Chapter 77).
+
+### Step 7 — Evaluate before you trust it
+
+Before turning on the schedule, build an eval set from **history**
+(Chapter 76): find 15 past dependency upgrades in your git log that needed
+code changes. For each one, check out the commit *before* the upgrade, run
+the agent on that single task 3 times, and grade:
+
+- **outcome**: does the full suite pass, *and* do the hidden tests that the
+  human added in the real upgrade commit pass?
+- **rules**: no test files weakened, no files outside the allowed paths
+  changed
+- **cost and steps** per task
+
+You'll get a pass^3 per upgrade type. Typical findings: patch and minor bumps
+pass reliably; major versions with big API changes fail often. That's fine,
+because those become "needs human" in the morning report, which is still
+useful: the agent has already read the changelog and listed the breaking
+changes.
+
+### Step 8 — Watch it in production
+
+Each morning's summary (posted to team chat by a final CI step) should show:
+
+```
+   Nightly deps agent -- 2026-10-03
+   tasks: 8   verified PRs: 5   needs human: 2   skipped (budget): 1
+   cost: $6.40 (limit $15)   wall time: 1h52m
+   PRs: #4190 requests 2.32->2.33 (low)   #4191 pydantic 2.9->2.11 (med) ...
+   needs human: sqlalchemy 1.4->2.0 (major; 41 call sites use Query API,
+                see progress.md)
+```
+
+Track over weeks: PR merge rate (the true success metric), time reviewers
+spend per PR, cost per merged PR, and reverted agent PRs (should be ~0).
+If reviewers start rubber-stamping, slow the agent down; the human gate only
+works if humans actually review.
+
+### What you've built
+
+A real, deployable long-running agent with the shape most production coding
+agents share: **scheduled trigger → sandboxed runtime → outer loop of fresh
+sessions → harness-verified work → human approval gate → observability**.
+Swap the task source and verifier, and the same skeleton becomes a flaky-test
+fixer, a lint-debt burner, a docs updater, or a security-advisory patcher.
+
+### Extensions to try
+
+1. Add a **reviewer sub-agent**: after a PASS, a second agent with a fresh
+   context reviews the diff against the changelog and must approve before the
+   harness commits.
+2. Run tasks **in parallel** in separate sandboxes, with a lock file so two
+   agents never upgrade packages that depend on each other at the same time.
+3. Export **OpenTelemetry traces** for each session and build the cost-per-
+   merged-PR dashboard.
+4. Feed reviewer comments on merged PRs back into the skill: every "please
+   don't do X" becomes a line in `SKILL.md`.
+
+### Check yourself
+
+1. Why does the harness, not the agent, push branches and open PRs?
+2. What does `check_tests_untouched.py` defend against, and why is it part of
+   `verify` rather than a prompt instruction?
+3. Why is the eval set built from *past* upgrades, and what do the hidden
+   tests add?
+4. Which metric is the real measure of success for this agent, and why
+   isn't it "PRs opened"?
+
+### Further reading
+
+- **Docs:** your coding agent's headless / CI mode documentation (for example
+  Claude Code's GitHub Actions integration or `codex exec`).
+- **Article:** "Effective harnesses for long-running agents" — Anthropic
+  (Nov 2025), again; Step 4 is a direct application.
+- **Docs:** GitHub Actions security hardening guide: least-privilege tokens
+  and secrets in CI.
+
+---
+
+### End of Part 20 — Milestone check
+
+- [ ] I can draw the anatomy of an agent harness and say which failure each layer prevents
+- [ ] I've added a permission policy and a post-tool hook to an agent
+- [ ] I can name the four nested loops and explain why fresh contexts help long tasks
+- [ ] **I've run an outer loop where the harness, not the agent, verifies and commits**
+- [ ] I can explain pass@k vs pass^k and compute both
+- [ ] I can explain durable execution and why tools also need idempotency keys
+- [ ] I know what AGENTS.md, Skills, MCP, and A2A are each for
+- [ ] I've scheduled an agent whose output goes through a human approval gate
+
+---
+# Part 21 — Beyond next-token prediction: decision models and world models
+
+**Optional deep-dive, and the newest material in this guide.** Everything
+from Part 8 onward assumed one kind of model: a Transformer that predicts the
+next token. That design took the field remarkably far, but two other model
+designs are gaining ground for jobs that LLMs do poorly. The first is
+**decision models**: small, fast models that don't write text at all, and
+instead return calibrated probabilities over options *you* define. They're
+used for the hundreds of tiny forks inside an agent loop. The second is
+**world models**, especially LeCun's **JEPA** family, which learn by
+predicting *meaning* rather than tokens or pixels, aimed at understanding
+and planning in the physical world.
+
+Both are young. Treat specific product claims here as a snapshot to
+re-check; the underlying ideas (calibration, thresholds, predicting in
+representation space) are durable.
+
+## Chapter 80 — System One models: Jev and "LLM writes, model decides, code acts"
+
+### In one sentence
+
+A **System One model** is a non-generative model that reads some state and
+answers questions you define in advance (yes/no, pick one, score on a scale)
+with a **probability on every option**, in one fast pass. That lets your code
+threshold the probability, act on confident decisions instantly, and escalate
+uncertain ones to an LLM or a human.
+
+### The problem
+
+Look at the trace of any real agent from Part 20 and count the decisions that
+aren't *writing* anything:
+
+```
+   Is this shell command destructive?              yes / no
+   Which model tier should handle this step?       small / mid / frontier
+   Is this support ticket urgent?                  yes / no
+   Which of these 7 log categories is this?        one of 7
+   Did this tool result answer the question?       yes / no
+   Retry, ask the user, or give up?                one of 3
+   How risky is this PR?                           low / med / high
+```
+
+A busy agent makes hundreds of these per task. The usual approach is to ask
+the frontier LLM each time, and it has four problems:
+
+1. **Latency.** A frontier call takes seconds. A pre-tool safety check that
+   adds 3 seconds to every shell command makes the agent painful to use.
+2. **Cost.** You pay frontier prices for a one-word answer, many times per task.
+3. **No usable probability.** "Yes" from an LLM doesn't tell you whether
+   it was 51% or 99.9% sure, and the best policy depends on exactly that.
+   Asking it to "rate your confidence 0–100" produces poorly calibrated
+   numbers.
+4. **Parsing.** The answer comes back as text you have to parse, which
+   occasionally comes back as a paragraph instead of a word.
+
+### The idea: two systems, like the brain
+
+Psychologist Daniel Kahneman described human thinking as two systems:
+**System 1**, fast, automatic, and intuitive ("is that a face?"), and
+**System 2**, slow, deliberate, and effortful ("what's 17 × 24?"). You don't
+use System 2 to decide whether to step around a puddle.
+
+Agent design is moving the same way:
+
+```
+   LLM (System 2)           writes: plans, code, prose, explanations
+        |
+        |   hands over a closed question + the state
+        v
+   DECISION MODEL           decides: returns probabilities over the
+   (System 1)               options you defined, ~100s of ms
+        |
+        v
+   PLAIN CODE               acts: thresholds the numbers, applies policy,
+                            escalates the uncertain cases back up to the
+                            LLM or a human
+```
+
+The phrase practitioners adopted in 2026 is **"the LLM writes, the decision
+model decides, code acts."** Policy lives in two numbers in your code (an
+auto-approve threshold and an escalate threshold), not in a prompt.
+
+### Jev: a decision-only model
+
+In September 2026, **TypeSafe AI**, a San Francisco lab founded by Diogo
+Almeida (formerly an OpenAI researcher), Erik Gafni, and Sasha Sheng,
+launched **Jev**, which it calls a "System One model". It quickly appeared
+in developer tools: within days it was integrated into Vercel's AI Gateway,
+Netlify, and LangChain, according to InfoQ's coverage. What makes it
+different:
+
+- **It cannot write text.** It takes **state** (text or JSON) plus a set of
+  **questions** with predefined answers, and returns typed answers with
+  probabilities. It can't explain itself, generate code, or ramble.
+- **Three question types:**
+
+  | Type | You define | You get back |
+  |---|---|---|
+  | **Noul** (yes/no) | an instruction phrased as a yes/no question | a single number 0–1: the probability of *yes* |
+  | **Choice** | named options, each with a short description | the chosen option, a probability per option, and a confidence |
+  | **Score** | an ordered rubric (levels) | a probability-weighted score, the distribution over levels, and a confidence |
+
+- **Many questions, one pass.** All questions about the same state are
+  answered in parallel, so adding questions barely adds latency.
+- **Trained for calibration.** TypeSafe describes a training method it calls
+  Reinforcement Learning for Calibrated Decisions (RLCD), meant to make "0.9"
+  mean "right about 90% of the time".
+- **Fast and cheap, by vendor claims.** Launch figures: end-to-end latency
+  of roughly 70–500 ms, a 32,000-token context, and input priced at
+  $0.042 per million tokens with output free. These numbers come from the
+  vendor and early adopters. Re-check current pricing, and measure latency
+  yourself.
+
+What it is **not**: there's no published paper or parameter count, and
+outside observers have speculated it is built on an open-weight LLM
+foundation. Neither point changes how you'd use it, but both are good
+reasons to **evaluate it on your own data** rather than trust headline
+numbers.
+
+### What a call looks like
+
+The request shape as documented at launch (check the current API reference;
+field names may change):
+
+```python
+# jev_client.py -- minimal client (pip install requests)
+import os, requests
+
+JEV_MODEL = "jev-1.13.0"     # pin a version once thresholds are tuned; aliases move
+
+def ask_jev(state, questions, timeout=2.0):
+    r = requests.post(
+        "https://api.typesafe.ai/v1/systemone",
+        headers={"authorization": f"Bearer {os.environ['TYPESAFE_API_KEY']}"},
+        json={"model": JEV_MODEL, "state": state, "questions": questions},
+        timeout=timeout)
+    r.raise_for_status()
+    return r.json()["answers"]
+
+answers = ask_jev(
+    state={"ticket": "The deploy failed twice and customers are seeing 500s. "
+                     "Can someone look now?", "customer_tier": "enterprise"},
+    questions={
+        "urgent": {"type": "noul",
+                   "instructions": "Does this need a human to act right now?"},
+        "team":   {"type": "choice",
+                   "instructions": "Which team should own this ticket?",
+                   "criteria": {
+                       "billing":  "Invoices, charges, refunds, plan changes",
+                       "platform": "Outages, errors, deploys, performance",
+                       "account":  "Login, SSO, permissions, user management",
+                       "unknown":  "None of the above clearly applies"}},
+    })
+# answers["urgent"]["noul"]       -> e.g. 0.98   (P(yes))
+# answers["team"]["choice"]       -> "platform"
+# answers["team"]["confidence"]   -> e.g. 0.95
+# answers["team"]["probabilities"]-> {"billing": 0.01, "platform": 0.95, ...}
+```
+
+Notice the `"unknown"` option. A closed set of options needs an escape hatch,
+or the model is forced to pick something wrong with apparent confidence.
+
+### Pattern 1: a command guard in the harness
+
+This is Chapter 74's **pre-tool hook**, upgraded. Every shell command the
+agent wants to run gets a fast probability of being destructive; code applies
+the policy.
+
+```python
+DESTRUCTIVE = {"type": "noul", "instructions":
+    "Would running `command` delete data, rewrite shared history, or change "
+    "production state in a way that is hard to undo?"}
+
+def jev_command_guard(name, args):                 # plugs into Harness(pre_hooks=[...])
+    if name != "bash":
+        return None
+    try:
+        p = ask_jev({"command": args["command"], "cwd": "/workspace"},
+                    {"destructive": DESTRUCTIVE})["destructive"]["noul"]
+    except Exception:
+        return ("deny", "safety check unavailable")   # FAIL CLOSED, never open
+    if p >= 0.70:
+        return ("deny", f"p_destructive={p:.2f}")
+    if p >= 0.35:
+        return ("deny", f"p_destructive={p:.2f}: needs human approval")
+    return None                                        # allow, ~0.3 s later
+```
+
+An early adopter's write-up reported scores like `rm -rf ./dist` → 0.63
+(ask), `DROP TABLE users` → 0.95 (deny), and `git push --force` → 0.95
+(deny). Three design rules are visible in that code:
+
+1. **Two thresholds, three zones**: allow / ask / deny. Your policy is two
+   numbers you can change without touching a prompt.
+2. **Fail closed.** If the decision service is down, the safe default is
+   "ask a human", never "allow".
+3. **It's one layer, not the only one.** Keep Chapter 74's hard deny rules
+   for the known-catastrophic patterns. A probabilistic check is for the long
+   tail that regexes miss.
+
+### Pattern 2: a model router
+
+```python
+TIER = {"type": "choice", "instructions": "Which model tier should handle `task`?",
+        "criteria": {
+            "small":    "Mechanical edits, renames, formatting, lookups",
+            "mid":      "Multi-file changes following a known pattern",
+            "frontier": "Architecture, debugging, ambiguous or novel specs"}}
+
+def route(task):
+    a = ask_jev({"task": task}, {"tier": TIER})["tier"]
+    if a["confidence"] >= 0.75:
+        return a["choice"]
+    return "mid" if a["choice"] == "small" else "frontier"   # unsure -> go UP a tier
+```
+
+The rule in the last line: **low confidence rounds up, never down.** A wrong
+"small" costs a failed task; a wrong "frontier" costs a few cents.
+
+### Pattern 3: triage with a rubric that improves itself
+
+A nightly job classifies new error-log patterns into a **rubric** (a
+versioned JSON file in your repo), with each class described by what it is,
+what it is *not*, examples, and an action:
+
+```json
+{
+  "classes": {
+    "upstream_timeout": {
+      "what": "A call to a third-party API exceeded its timeout",
+      "not_for": "Timeouts talking to OUR database (use db_timeout)",
+      "examples": ["ReadTimeout: api.payments.example 30s"],
+      "action": "count"
+    },
+    "db_timeout": {"what": "...", "not_for": "...", "examples": ["..."], "action": "alert"},
+    "unknown":    {"what": "Doesn't clearly fit any class above", "action": "escalate"}
+  },
+  "thresholds": {"auto": 0.8}
+}
+```
+
+Each log pattern goes to the decision model as a Choice over the classes.
+Confident answers are acted on in code (count, alert, page). Anything below
+`0.8`, or `unknown`, is **escalated to an LLM agent**, whose job is not to
+classify that one line but to **propose a patch to the rubric** (a new class,
+or a sharper `not_for`) as a pull request. The next night, the decision model
+handles that pattern itself.
+
+That's the full System 1 / System 2 relationship: **System 2 handles the
+novel cases and writes the rules; System 1 applies them at volume.** In one
+published run of exactly this setup, 600 log lines collapsed to 7 patterns,
+classified for a fraction of a cent, with one escalation that cost more than
+all the decision calls combined. That ratio is the point.
+
+**Write rubrics, not prompts.** "One question, one judgment" (combine answers
+in code, not in one compound question); options are a **closed, defensible
+set** including `unknown`; every option has a `not_for` that separates it
+from its nearest neighbour.
+
+### Calibration: what the probability is worth
+
+All three patterns depend on one property: when the model says 0.9, it should
+be right about 90% of the time. That's **calibration**, and you must measure
+it on **your** data, because calibration that holds on public benchmarks can
+degrade on private, unfamiliar inputs. Early independent tests of Jev
+reported exactly that pattern: generally better calibrated than LLMs asked
+for confidence, but **overconfident** in places (a top bucket claiming ~99%
+that was right ~90% of the time), while still preserving *ordering* (higher
+stated confidence did mean more likely right).
+
+This tool works on **any** model that outputs a probability: Jev, an LLM's
+token probabilities, or a classifier you trained in Part 3.
+
+```python
+"""calibrate.py -- is a decision model's "0.9" really 90%? And where do the
+thresholds go? Works on ANY model that returns a probability: Jev, an LLM's
+logprobs, a logistic regression, a fine-tuned classifier.
+
+Input: a labelled set of (probability_of_yes, true_label) pairs -- the
+20-400 real cases you labelled by hand.
+"""
+import math
+import random
+
+
+def reliability(pairs, bins=5):
+    """Bucket by stated probability; compare to how often 'yes' was true."""
+    rows, ece = [], 0.0
+    for b in range(bins):
+        lo, hi = b / bins, (b + 1) / bins
+        bucket = [(p, y) for p, y in pairs
+                  if lo <= p < hi or (b == bins - 1 and p == 1.0)]
+        if not bucket:
+            continue
+        stated = sum(p for p, _ in bucket) / len(bucket)
+        actual = sum(y for _, y in bucket) / len(bucket)
+        ece += len(bucket) / len(pairs) * abs(stated - actual)
+        rows.append((f"{lo:.1f}-{hi:.1f}", len(bucket), stated, actual))
+    return rows, ece       # ECE = expected calibration error (0 = perfect)
+
+
+def pick_thresholds(pairs, max_false_allow=0.01, max_false_block=0.03):
+    """Three-way policy: p < low -> auto-allow, p >= high -> auto-block,
+    in between -> escalate (to an LLM or a human).
+    Pick the narrowest escalation band that meets both error budgets
+    (each budget is a fraction of ALL traffic)."""
+    best = None
+    grid = [i / 100 for i in range(101)]
+    for low in grid:
+        false_allow = sum(y for p, y in pairs if p < low) / len(pairs)
+        if false_allow > max_false_allow:
+            break                          # letting too many 'yes' through
+        for high in grid:
+            if high < low:
+                continue
+            false_block = sum(1 - y for p, y in pairs if p >= high) / len(pairs)
+            if false_block > max_false_block:
+                continue                   # blocking too many harmless ones
+            escalated = sum(low <= p < high for p, _ in pairs) / len(pairs)
+            if best is None or escalated < best[2]:
+                best = (low, high, escalated)
+    return best
+
+
+if __name__ == "__main__":
+    random.seed(7)
+    # Synthetic stand-in for 400 hand-labelled shell commands (1 = destructive).
+    pairs = []
+    for _ in range(400):
+        y = 1 if random.random() < 0.2 else 0          # 20% really are destructive
+        evidence = (3 if y else -3) + random.gauss(0, 2)
+        stated = 1 / (1 + math.exp(-1.5 * evidence))   # 1.5x = overconfident
+        pairs.append((stated, y))
+
+    rows, ece = reliability(pairs)
+    print(f"{'bucket':9s} {'n':>4s} {'stated':>7s} {'actual':>7s}")
+    for name, n, stated, actual in rows:
+        print(f"{name:9s} {n:4d} {stated:7.2f} {actual:7.2f}")
+    print(f"ECE = {ece:.3f}")
+
+    low, high, esc = pick_thresholds(pairs)
+    print(f"auto-allow below {low:.2f}, auto-block at/above {high:.2f}, "
+          f"escalate {esc:.0%} of traffic")
+```
+
+Output:
+
+```
+bucket       n  stated  actual
+0.0-0.2    254    0.03    0.01
+0.2-0.4     23    0.31    0.22
+0.4-0.6     15    0.51    0.20
+0.6-0.8     20    0.70    0.30
+0.8-1.0     88    0.97    0.94
+ECE = 0.054
+auto-allow below 0.36, auto-block at/above 0.69, escalate 7% of traffic
+```
+
+How to read it: the extremes are trustworthy (0.03 stated, 0.01 actual; 0.97
+stated, 0.94 actual), but the middle is **overconfident**: when the model
+says 0.70, only 30% of those commands were actually destructive. The
+threshold picker chooses the widest auto-allow and auto-block zones that stay
+within your error budgets (at most 1% of all traffic wrongly allowed, at most
+3% wrongly blocked) and sends the remaining **7%** to a slower, smarter path.
+**93% of decisions happen in a fraction of a second; the hard 7% get real
+thought.** Re-run it whenever you change the model version, the question
+wording, or the kind of traffic.
+
+### Build your own System One (offline, free)
+
+You can get the same *kind* of answer from any local LLM: run one forward
+pass and compare the probabilities of the tokens "Yes" and "No", without
+generating anything. This is how many teams built decision layers before
+dedicated models existed.
+
+```python
+"""noul_local.py -- a home-made System One decision: P(yes) from a small local
+model's next-token probabilities. One forward pass, no text generation.
+pip install torch transformers   (the model is ~1 GB, downloaded once)
+"""
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+MODEL = "Qwen/Qwen2.5-0.5B-Instruct"         # any small instruct model works
+tok = AutoTokenizer.from_pretrained(MODEL)
+model = AutoModelForCausalLM.from_pretrained(MODEL).eval()
+YES = tok.encode("Yes", add_special_tokens=False)[0]
+NO = tok.encode("No", add_special_tokens=False)[0]
+
+
+def noul(question, state):
+    """Return P(yes) for a yes/no question about `state`."""
+    messages = [
+        {"role": "system", "content": "Answer with exactly one word: Yes or No."},
+        {"role": "user", "content": f"{question}\n\nInput:\n{state}"},
+    ]
+    ids = tok.apply_chat_template(messages, add_generation_prompt=True,
+                                  return_tensors="pt")
+    with torch.no_grad():
+        logits = model(ids).logits[0, -1]       # scores for the NEXT token only
+    p_yes, p_no = torch.softmax(logits[[YES, NO]], dim=0)   # renormalise over 2
+    return p_yes.item()
+
+
+if __name__ == "__main__":
+    q = ("Would running this shell command delete data, rewrite shared history, "
+         "or change production state in a way that is hard to undo?")
+    for cmd in ["ls -la", "git status", "rm -rf ./dist", "git push --force origin main",
+                "psql prod -c 'DROP TABLE users'", "cat README.md"]:
+        print(f"{noul(q, cmd):.2f}  {cmd}")
+```
+
+Real output from this 0.5B-parameter model:
+
+```
+0.60  ls -la
+0.60  git status
+0.67  rm -rf ./dist
+0.88  git push --force origin main
+0.74  psql prod -c 'DROP TABLE users'
+0.63  cat README.md
+```
+
+Look at that honestly. The **ordering** is partly right (`git push --force`
+scores highest), but the numbers are badly **biased**: `ls -la` at 0.60 is
+absurd, and `DROP TABLE` scoring below `git push --force` is wrong. A tiny
+general model leans towards "Yes" and doesn't separate the classes well.
+That's exactly why you (1) **calibrate** before trusting any threshold, (2)
+use a larger model or fine-tune a small one on a few hundred labelled
+examples (Chapter 42), or (3) use a model trained for calibrated decisions.
+Run `calibrate.py` on this model's scores against 50 labelled commands and
+you'll see it immediately.
+
+### Limitations: what decision models can't do
+
+Collected from the vendor's own documentation and early independent testing:
+
+| Weakness | Consequence | What to do |
+|---|---|---|
+| Arithmetic, counting, date comparisons | "Is the invoice over $10,000?" is a guess | compute it in code and pass the *result* as state |
+| Extracting values from documents | it decides; it doesn't extract | LLM or parser extracts, decision model classifies |
+| Long, noisy state | accuracy falls as irrelevant content grows | send only the relevant fields |
+| Adversarial input | text in the state can steer the answer (prompt injection, Chapter 59) | keep hard rules in code; add a second signal for security decisions |
+| Format guarantee ≠ correctness | it can't return an invalid type, but it can return the *wrong valid option* | thresholds + escalation + evals |
+| Accuracy vs the best LLM | early independent studies found it trailed the best LLM per task on accuracy, at a small fraction of the cost; routing low-confidence items to an LLM recovered most of the gap | use the hybrid pattern, not decision-model-only |
+| Decisions about people | employment, credit, access | human review; see Chapter 70's high-risk rules |
+
+### When to reach for a System One model
+
+| Situation | Use |
+|---|---|
+| Closed question, high volume, latency matters | **decision model** |
+| You need text, code, a plan, or an explanation | LLM |
+| The answer is computable (maths, dates, lookups) | plain code |
+| You can't write the options down yet | LLM first; write the rubric from what you learn |
+| One-off, high-stakes, rare | ask a human |
+
+### Practice (60 min)
+
+1. Run `noul_local.py`. Label 50 shell commands yourself (destructive or
+   not), score them, and run `calibrate.py` on the result. What thresholds
+   does it pick, and what share of traffic escalates?
+2. Try a bigger local model (1.5B–7B) and compare ECE and escalation rate.
+   This is the quality vs latency trade-off, measured.
+3. Plug a decision function into the Chapter 74 `Harness` as a pre-hook.
+   Make sure it **fails closed** by pointing it at a dead URL.
+4. If you have access to a hosted decision model, run the same 50 commands
+   through it and compare calibration tables side by side.
+
+### Common confusions
+
+- **"It's just a classifier."** It's a *general* classifier: you define new
+  questions and options at request time, with no training. That's what makes
+  it usable inside agents, where the questions change constantly.
+- **"Calibrated means accurate."** Calibrated means the probabilities are
+  honest. A model can be well calibrated and still unsure about most things,
+  which is still useful, because it tells you when to escalate.
+- **"It replaces the LLM."** It replaces the LLM's *small decisions*. The
+  LLM still writes, plans, and handles everything the decision model escalates.
+- **"Structured output from an LLM gives me the same thing."** Structured
+  output guarantees the *format* of one sampled answer. It doesn't give you a
+  probability distribution over the options, and that distribution is what
+  your thresholds act on.
+
+### Check yourself
+
+1. In "LLM writes, decision model decides, code acts", what does each part
+   own?
+2. Name the three Jev question types and what each returns.
+3. Why should a safety hook built on a decision model fail **closed**?
+4. In the calibration table above, the 0.6–0.8 bucket says 0.70 but the
+   actual rate is 0.30. What does that mean, and how does the threshold
+   picker react?
+5. Why does a model router send low-confidence decisions *up* a tier?
+
+### Further reading
+
+- **News:** InfoQ, "TypeSafe AI Releases Jev: a Decision-Only Model That
+  Returns Typed Probabilities Instead of Text" (Oct 2026), plus MarkTechPost's
+  coverage (Sept 2026).
+- **Docs:** TypeSafe's API reference for current question types, limits,
+  and pricing.
+- **Article:** LangChain, "Building a harness with Jev". Routing and
+  guardrail middleware.
+- **Paper:** Guo et al., "On Calibration of Modern Neural Networks"
+  (arXiv:1706.04599). The classic on why neural nets are overconfident, and
+  on ECE and temperature scaling.
+- **Book:** Daniel Kahneman, *Thinking, Fast and Slow*. Where System 1 /
+  System 2 comes from.
+
+---
+
+## Chapter 81 — JEPA and world models: predicting meaning, not tokens
+
+### In one sentence
+
+A **JEPA** (Joint-Embedding Predictive Architecture) learns by predicting the
+**abstract representation** of a missing or future part of its input (the
+gist of what happens next, not every pixel or token), which Yann LeCun and
+others argue is the route to AI that understands and plans in the physical
+world.
+
+### The problem
+
+LLMs learn by predicting the next token, and Part 8 showed how far that goes.
+But consider what a four-year-old knows that no LLM does: that an unsupported
+cup falls, that a ball rolling behind a sofa still exists, how hard to push a
+door. The child learned it mostly by **watching**, not reading. LeCun's
+well-known estimate: by age four, a child has taken in roughly as much raw
+data through vision as the largest LLMs read in text.
+
+So why not train a model to predict the next **video frame**, the way LLMs
+predict the next token? People did, and it works less well than you'd hope.
+Most of the detail in the next frame is **unpredictable and irrelevant**:
+the exact pattern of leaves moving, reflections, noise. A model forced to
+predict pixels spends huge capacity modelling things that don't matter, and
+hedges by producing blur.
+
+You don't predict the world in pixels either. You predict **"the ball will
+land in her glove"**, not the position of every blade of grass.
+
+### The idea: predict in representation space
+
+```
+   context x  (the part you see:            target y  (the part hidden from
+   e.g. video frames 1-8, or most            the model: frames 9-12, or the
+   of an image)                              masked image blocks)
+        |                                          |
+   +----v----------+                         +-----v---------+
+   | context       |                         | target        |  slow EMA copy
+   | encoder       |                         | encoder       |  of the context
+   +----+----------+                         +-----+---------+  encoder; NO
+        | s_x                                      | s_y         gradients
+   +----v----------+                               |
+   | predictor     |  <-- optional: action a,      |
+   |               |      or latent z              |
+   +----+----------+                               |
+        | predicted s_y                            |
+        +-----------> distance( predicted , s_y ) <+
+                         = the loss, measured in REPRESENTATION space
+```
+
+Three things to notice:
+
+1. **Nothing is ever reconstructed.** The loss compares two *embeddings*. The
+   encoder is free to throw away unpredictable detail (leaf textures) and
+   keep what's predictable and useful (object positions, motion).
+2. **The predictor can take an action.** Give it "the robot arm moves 5 cm
+   left" and it predicts the representation of the resulting state. That's a
+   **world model**: a learned simulator of how things change, which you can
+   use to plan.
+3. **It's self-supervised.** Like LLM pretraining (Chapter 33), the labels
+   come free from the data. Hide part of the input, predict it.
+
+How it compares to what you know:
+
+| Approach | Predicts | Example | Weakness |
+|---|---|---|---|
+| Autoregressive LLM | the next **token** | GPT-style models | language only; no grounding in physics |
+| Generative (pixels) | the missing **pixels** | masked autoencoders, video generators | spends capacity on unpredictable detail |
+| Contrastive | which pairs **match** | CLIP, SimCLR | needs many negative examples |
+| **JEPA** | the missing part's **embedding** | I-JEPA, V-JEPA | must prevent collapse (below) |
+
+### The catch: collapse
+
+There's an obvious cheat. If the encoder maps **every input to the same
+vector**, the predictor can always predict it perfectly and the loss is zero.
+The model has learned nothing. This is called **representation collapse**,
+and every JEPA design is largely about preventing it:
+
+- **EMA target encoder + stop-gradient** (I-JEPA, V-JEPA): the target
+  encoder isn't trained by the loss at all; it's a slowly updated moving
+  average of the context encoder. The cheat path, where both sides collapse
+  together, is cut.
+- **Regularise the embeddings to stay spread out** (the VICReg family): add a
+  loss term that penalises dimensions whose variance drops toward zero.
+  **LeJEPA** (Balestriero & LeCun, 2025) made this principled with a
+  regulariser that pushes embeddings towards an isotropic Gaussian
+  distribution (SIGReg), removing many of the hand-tuned tricks.
+
+### See it happen: a tiny JEPA (~80 lines, runs on a laptop CPU in ~10 s)
+
+Toy world: noisy waves of random frequency. Each 16-step wave is split into 4
+patches. The model sees the embeddings of patches 0–2 and must predict the
+**embedding** of patch 3. We train three versions: naive (collapses), EMA
+target (I-JEPA style), and a spread-regulariser (VICReg/LeJEPA style).
+
+```python
+"""tiny_jepa.py -- a JEPA small enough to read in one sitting.
+
+Data: 16-step noisy waves. Split each into 4 patches of 4 steps.
+Task: from the embeddings of patches 0-2 (context), PREDICT THE EMBEDDING of
+patch 3 (target). Never reconstruct the raw numbers.
+
+Run three ways and watch the 'spread' column (std of embeddings):
+  naive  -- target encoder = context encoder, gradients flow both ways -> COLLAPSE
+  ema    -- target encoder is a slow EMA copy, no gradient through it (I-JEPA/V-JEPA)
+  sigreg -- naive + a regulariser that keeps embeddings spread out (VICReg/LeJEPA idea)
+Then a linear probe asks: did the embeddings learn the wave's FREQUENCY,
+a thing we never trained on?
+"""
+import copy
+import sys
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+torch.manual_seed(0)
+D = 16                                   # embedding size
+
+
+def make_batch(n):
+    freq = torch.rand(n, 1) * 2.5 + 0.5                      # hidden cause
+    phase = torch.rand(n, 1) * 6.28
+    t = torch.arange(16).float().unsqueeze(0)
+    x = torch.sin(freq * t * 0.4 + phase) + 0.1 * torch.randn(n, 16)
+    return x.view(n, 4, 4), freq.squeeze(1)                 # (n, patches, steps)
+
+
+encoder = nn.Sequential(nn.Linear(4, 64), nn.GELU(), nn.Linear(64, D))
+predictor = nn.Sequential(nn.Linear(3 * D, 64), nn.GELU(), nn.Linear(64, D))
+
+
+def train(mode, steps=3000):
+    enc, pred = copy.deepcopy(encoder), copy.deepcopy(predictor)
+    target_enc = copy.deepcopy(enc).requires_grad_(False)
+    opt = torch.optim.AdamW(list(enc.parameters()) + list(pred.parameters()), lr=1e-3)
+    for step in range(steps + 1):
+        x, _ = make_batch(256)
+        ctx = enc(x[:, :3]).flatten(1)                      # (n, 3*D)
+        guess = pred(ctx)                                   # predicted embedding
+        if mode == "ema":
+            with torch.no_grad():
+                target = target_enc(x[:, 3])                # no gradient here
+        else:
+            target = enc(x[:, 3])                           # gradient flows: cheat path
+        loss = F.mse_loss(guess, target)
+        if mode == "sigreg":                                # keep every dim spread out
+            z = enc(x[:, 3])
+            loss = loss + F.relu(1 - z.std(0)).mean()
+        opt.zero_grad(); loss.backward(); opt.step()
+        if mode == "ema":                                   # target slowly follows
+            with torch.no_grad():
+                for pt, pc in zip(target_enc.parameters(), enc.parameters()):
+                    pt.mul_(0.99).add_(0.01 * pc)
+        if step % 1000 == 0:
+            spread = enc(x[:, 3]).std(0).mean().item()
+            print(f"  {mode:6s} step {step:4d}  loss {loss.item():.4f}  spread {spread:.4f}")
+    return enc
+
+
+def probe(enc):
+    """Linear regression from frozen embeddings to the hidden frequency."""
+    def feats(n):
+        x, f = make_batch(n)
+        with torch.no_grad():
+            return enc(x).flatten(1), f
+    Xtr, ytr = feats(2000)
+    Xte, yte = feats(500)
+    Xtr1 = torch.cat([Xtr, torch.ones(len(Xtr), 1)], 1)
+    w = torch.linalg.lstsq(Xtr1, ytr.unsqueeze(1)).solution
+    pred = torch.cat([Xte, torch.ones(len(Xte), 1)], 1) @ w
+    return 1 - ((pred.squeeze() - yte) ** 2).mean() / yte.var()   # R^2
+
+
+if __name__ == "__main__":
+    print(f"random (untrained) encoder probe R^2 = {probe(encoder):.2f}")
+    for mode in (sys.argv[1:] or ["naive", "ema", "sigreg"]):
+        enc = train(mode)
+        print(f"  -> {mode} probe R^2 for frequency = {probe(enc):.2f}\n")
+```
+
+Real output:
+
+```
+random (untrained) encoder probe R^2 = 0.97
+  naive  step    0  loss 0.0474  spread 0.1351
+  naive  step 1000  loss 0.0000  spread 0.0024
+  naive  step 2000  loss 0.0000  spread 0.0014
+  naive  step 3000  loss 0.0000  spread 0.0010
+  -> naive probe R^2 for frequency = 0.10
+
+  ema    step    0  loss 0.0458  spread 0.1408
+  ema    step 1000  loss 0.3189  spread 2.5054
+  ema    step 2000  loss 0.4728  spread 3.1958
+  ema    step 3000  loss 0.5264  spread 3.2800
+  -> ema probe R^2 for frequency = 0.97
+
+  sigreg step    0  loss 0.9050  spread 0.1467
+  sigreg step 1000  loss 0.0594  spread 1.0202
+  sigreg step 2000  loss 0.0519  spread 1.0973
+  sigreg step 3000  loss 0.0385  spread 1.0270
+  -> sigreg probe R^2 for frequency = 0.97
+```
+
+What to take from it:
+
+- **Naive: the loss goes to exactly 0 and the spread collapses to ~0.001.**
+  A perfect loss and a useless model. The embeddings no longer carry the
+  wave's frequency (probe R² 0.10). **A falling loss is not evidence of
+  learning** in self-supervised setups; always check the spread.
+- **EMA and the regulariser both prevent collapse**, and the embeddings keep
+  the frequency information (R² 0.97). Note that the EMA version's loss
+  *rises*: its target keeps moving as the encoder learns, so the loss value
+  isn't comparable across methods.
+- **An honest caveat:** at this toy scale, a *random* encoder also scores
+  R² 0.97, because random features of 4 numbers keep most of the information
+  a linear probe needs. This demo shows the **mechanics** (prediction in
+  embedding space, collapse, and its cures), not the **payoff**. The payoff
+  appears on hard, high-dimensional data like video, where V-JEPA-style
+  features beat pixel-reconstruction features on motion understanding by
+  wide margins, and random features are useless.
+
+### Planning with a world model
+
+Once you have an action-conditioned predictor, you can plan by **imagining**,
+in embedding space, before acting:
+
+```
+   goal   = encoder(image of the desired end state)
+   state  = encoder(current camera image)
+   repeat every step:
+       sample 300 candidate action sequences (say 5 actions each)
+       for each: roll the predictor forward 5 times -> imagined final embedding
+       score = distance(imagined final embedding, goal)
+       keep the best 30, resample around them, repeat a few times   (CEM)
+       EXECUTE ONLY THE FIRST ACTION of the best sequence
+       observe the real result; re-encode; plan again             (MPC)
+```
+
+This is **model-predictive control**, an old idea from robotics, now applied
+in a learned representation space. Because imagined rollouts are just
+embedding arithmetic, not rendered video, they're cheap enough to run many
+times per step.
+
+### The timeline: from position paper to a billion-dollar bet
+
+| When | What |
+|---|---|
+| 2022 | LeCun's position paper "A Path Towards Autonomous Machine Intelligence" proposes JEPA as the core of a world-model architecture. |
+| 2023 | **I-JEPA** (Meta): predicts representations of masked image blocks; strong features with less compute than pixel-reconstruction methods. |
+| Feb 2024 | **V-JEPA**: the same idea for video. |
+| Jun 2025 | **V-JEPA 2**: pretrained on over a million hours of internet video; strong results on motion understanding (e.g. 77.3% top-1 on Something-Something v2). Its action-conditioned variant **V-JEPA 2-AC**, post-trained on just 62 hours of robot video (from the DROID dataset), did zero-shot pick-and-place planning in new environments, using exactly the planning loop above. |
+| Sep 2025 | **LLM-JEPA**: applies JEPA-style objectives to language model training, alongside next-token prediction. |
+| Nov 2025 | **LeJEPA**: the SIGReg regulariser; collapse prevention without the usual heuristics. LeCun leaves Meta to found **AMI Labs** (Advanced Machine Intelligence) in Paris, built around JEPA world models. |
+| Mar 2026 | AMI Labs reportedly closes a $1.03B seed round. Follow-up models appear, including **V-JEPA 2.1** and **LeWorldModel**, a small JEPA world model reported to train stably end to end from raw pixels. |
+
+### Where world models fit (and where JEPA sits among them)
+
+"World model" covers several competing designs in 2026:
+
+- **JEPA-style (non-generative)**: predict embeddings; aimed at understanding
+  and planning. AMI Labs, plus academic groups.
+- **Generative world models**: models that generate the future as video,
+  sometimes interactively. Examples: Google DeepMind's **Genie 3** (2025)
+  generating explorable worlds in real time, NVIDIA's **Cosmos** world
+  foundation models for robotics and autonomous-vehicle simulation, and
+  large video generators described as "world simulators".
+- **LLMs as world models**: the argument that enough text (and images) gives
+  an implicit model of the world. It's partially true, and the reason LLMs
+  can reason about everyday physics at all.
+
+The honest state of play: **LLMs remain far ahead for language, code, and
+abstract reasoning**, and agents (Parts 12–20) are built on them. World
+models are where the action is for **robotics, autonomous driving, video
+understanding, and physical planning**: domains where token prediction
+struggles and where a cheap, imagined rollout is valuable. Many researchers
+expect hybrids: an LLM for language and high-level plans, a world model for
+perception and physical consequences. Whether JEPA specifically wins that
+role is one of the most interesting open bets in the field.
+
+### Practice (45 min)
+
+1. Run `tiny_jepa.py`. Then change the EMA rate from `0.99` to `0.5` (target
+   follows quickly) and to `0.999` (target barely moves). What happens to the
+   spread and the probe?
+2. In the `sigreg` mode, remove the `F.relu(1 - z.std(0))` term. Confirm it
+   collapses like `naive`.
+3. Make the data harder: add a second hidden factor (amplitude) and a probe
+   for it. Does the embedding capture both factors?
+4. Read the V-JEPA 2 paper's planning section and map each step onto the CEM
+   / MPC pseudo-code above.
+
+### Common confusions
+
+- **"JEPA generates video."** No. It never outputs pixels. That's the point:
+  it predicts *representations*. Generative world models (Genie, Cosmos) are a
+  different design.
+- **"Zero loss means it learned the task perfectly."** In a JEPA, zero loss
+  is the classic sign of **collapse**. Watch the spread of the embeddings.
+- **"World models will replace LLMs."** Not on any near-term evidence for
+  language tasks. They target different problems, and hybrids are more likely
+  than replacement.
+- **"JEPA is just contrastive learning."** Contrastive methods need negative
+  pairs to avoid collapse; JEPAs avoid it with architecture (EMA, stop-grad) or
+  regularisation, and they *predict* across a gap rather than just matching
+  pairs.
+
+### Check yourself
+
+1. What does a JEPA predict, and why is that better than predicting pixels
+   for video?
+2. What is representation collapse, and why does it give a loss of zero?
+3. Name two ways to prevent collapse.
+4. How does an action-conditioned predictor let a robot plan? Describe the
+   MPC loop.
+5. In the tiny JEPA output, why can't you use the EMA run's rising loss to
+   conclude it's learning worse than the `sigreg` run?
+
+### Further reading
+
+- **Paper:** LeCun, "A Path Towards Autonomous Machine Intelligence"
+  (OpenReview, 2022). The vision, readable without heavy maths.
+- **Paper:** Assran et al., "Self-Supervised Learning from Images with a
+  Joint-Embedding Predictive Architecture" (I-JEPA, arXiv:2301.08243).
+- **Paper:** "V-JEPA 2: Self-Supervised Video Models Enable Understanding,
+  Prediction and Planning" (arXiv:2506.09985, 2025).
+- **Paper:** Balestriero & LeCun, "LeJEPA: Provable and Scalable
+  Self-Supervised Learning Without the Heuristics" (arXiv:2511.08544).
+- **Paper:** Bardes, Ponce & LeCun, "VICReg" (arXiv:2105.04906). The
+  variance-regularisation idea used in the tiny JEPA.
+- **Talks:** any recent Yann LeCun lecture on world models: the clearest
+  statement of why he thinks next-token prediction isn't enough.
+
+---
+
+### End of Part 21 — Milestone check
+
+- [ ] I can explain "LLM writes, decision model decides, code acts"
+- [ ] I can name Jev's three question types and design a closed option set with an `unknown`
+- [ ] **I've measured a model's calibration and picked thresholds from it**
+- [ ] I can explain why a decision-model safety hook must fail closed
+- [ ] I can explain what a JEPA predicts and why it doesn't reconstruct pixels
+- [ ] **I've watched a JEPA collapse, and prevented it two ways**
+- [ ] I can describe how a world model is used to plan (MPC)
+
+---
+
 **If you've read this far, you've now covered the entire guide** — the core
-path (Parts 1–16) and all three deep-dives (17–19). From here, the
+path (Parts 1–16) and all five deep-dives (17–21). From here, the
 Appendices are pure reference material: a glossary, formulas, setup
 troubleshooting, cheat sheets, and a reading list. Nobody reads them front to
 back — bookmark this page and come back whenever a term or formula needs a
@@ -12460,6 +15510,104 @@ valuable ones.
 **Workflow** — an LLM orchestrated through predefined code paths that *you* wrote.
 Prefer this over an agent whenever the steps are predictable.
 
+### Harnesses, production agents, decision models, and world models (Parts 20–21)
+
+**A2A (Agent2Agent)** — an open protocol, now under the Linux Foundation, for
+one agent to discover another (via its Agent Card), send it a task, and track
+that task to completion. MCP is for tools; A2A is for peer agents. See Chapter 78.
+
+**AGENTS.md** — a Markdown file in a repository giving coding agents the
+project's build/test commands, conventions, and no-go areas. The "project
+rules" layer of a harness. See Chapter 78.
+
+**Agent Card** — the JSON document an A2A agent publishes describing its
+skills, endpoint, and authentication.
+
+**Agent Skill** — a folder with a `SKILL.md` (name, description,
+instructions) plus optional scripts and files, loaded by the agent only when
+relevant. See Chapter 78.
+
+**Calibration** — how well a model's stated probabilities match reality: of
+everything it calls "90% likely", about 90% should be true. Measured with a
+reliability table and ECE. See Chapter 80.
+
+**Compaction** — replacing the older part of an agent's conversation with a
+model-written summary when the context window fills. Lossy. See Chapter 74.
+
+**Context rot** — the decline in model quality as the context window fills
+with more, and staler, material.
+
+**Durable execution** — journaling every step of a long-running process so
+that after a crash it resumes by replaying finished steps from the journal
+instead of redoing them. Temporal, Restate, DBOS, and framework
+checkpointers provide it. See Chapter 77.
+
+**ECE (Expected Calibration Error)** — the average gap between stated
+probability and actual frequency across probability buckets, weighted by
+bucket size. 0 means perfectly calibrated.
+
+**Harness** — all the code around the model in an agent: context assembly,
+tools, permissions, hooks, result shaping, context management, verification,
+sandbox, and limits. "Agent = model + harness." See Chapter 74.
+
+**Hook** — your own code that runs at a fixed point in the agent loop (before
+a tool, after a tool, at stop) and can block, modify, or add to what happens.
+
+**Idempotency key** — a deterministic ID sent with a side-effecting request
+so a retry is recognised and not executed twice. Essential for agent tools.
+
+**JEPA (Joint-Embedding Predictive Architecture)** — a self-supervised
+architecture that predicts the *embedding* of a hidden or future part of the
+input rather than its raw pixels or tokens. I-JEPA, V-JEPA, V-JEPA 2. See
+Chapter 81.
+
+**Jev** — TypeSafe AI's decision-only "System One" model (2026): it returns
+typed answers (Noul, Choice, Score) with probabilities instead of text.
+See Chapter 80.
+
+**Model-predictive control (MPC)** — planning by imagining many action
+sequences with a model, executing only the first action of the best one, then
+re-planning from the new real state.
+
+**Outer loop** — a loop that runs many fresh agent sessions, one task each,
+with state kept in files and git; the Ralph loop is the simplest form. See
+Chapter 75.
+
+**pass^k (pass-hat-k)** — the probability that *all* k attempts at a task
+succeed; the reliability metric for agents. Contrast **pass@k**, the
+probability that *at least one* succeeds. See Chapter 76.
+
+**Progressive disclosure** — showing the model only a short index (names and
+one-line descriptions) and loading full instructions on demand; how harnesses
+offer many skills cheaply.
+
+**Rainbow deployment** — running old and new versions side by side so
+in-flight long-running tasks finish on the version they started on.
+
+**Ralph loop** — running the same prompt through a headless coding agent
+again and again, each time with a fresh context, so the codebase converges
+on a spec; named after Ralph Wiggum. See Chapter 75.
+
+**Representation collapse** — the failure in which a self-supervised encoder
+maps every input to (nearly) the same vector, making the prediction loss zero
+while learning nothing.
+
+**Sub-agent** — an agent started by another agent with its own fresh context
+for a self-contained job; only its short result returns, keeping the parent's
+context clean.
+
+**System One model** — a fast, non-generative decision model that returns
+probabilities over predefined options (after Kahneman's fast "System 1"
+thinking). "The LLM writes, the decision model decides, code acts."
+
+**Test-time compute** — spending more computation at inference (longer
+reasoning, more samples) to get better answers; the scaling axis behind
+reasoning models.
+
+**World model** — a model that predicts how the world will change, often
+given an action, so that an agent can plan by imagining outcomes. JEPA-style
+(predicts embeddings) or generative (predicts video).
+
 ---
 
 # Appendix B — Math corner (only what you need)
@@ -12746,6 +15894,14 @@ Once you finish this guide you can read these directly.
 | 16 | Lewis et al., *Retrieval-Augmented Generation* (2005.11401) | 2020 | RAG |
 | 17 | Liu et al., *Lost in the Middle* (2307.03172) | 2023 | context behaviour |
 | 18 | Sennrich et al., *Neural MT of Rare Words with Subword Units* (1508.07909) | 2016 | BPE |
+| 19 | Yao et al., *ReAct* (2210.03629) | 2022 | the agent loop |
+| 20 | Assran et al., *I-JEPA* (2301.08243) | 2023 | predicting in representation space |
+| 21 | Jimenez et al., *SWE-bench* (2310.06770) | 2023 | evaluating coding agents on real issues |
+| 22 | Yao et al., *τ-bench* (2406.12045) | 2024 | tool-agent-user evals; pass^k |
+| 23 | Kwa et al. (METR), *Measuring AI Ability to Complete Long Tasks* (2503.14499) | 2025 | the time-horizon trend behind long-running agents |
+| 24 | Assran et al., *V-JEPA 2* (2506.09985) | 2025 | video world model; zero-shot robot planning |
+| 25 | Balestriero & LeCun, *LeJEPA* (2511.08544) | 2025 | collapse prevention without heuristics (SIGReg) |
+| 26 | Guo et al., *On Calibration of Modern Neural Networks* (1706.04599) | 2017 | calibration, ECE (for Chapter 80) |
 
 ### How the facts in this guide were checked
 
@@ -12763,6 +15919,19 @@ model documentation). Specifically confirmed:
   subsampling, and the 0.75-power noise distribution from arXiv:1310.4546.
 - **Lost in the Middle:** U-shaped positional accuracy, Liu et al.,
   arXiv:2307.03172 (2023), later published in TACL.
+- **τ-bench:** pass^k metric and the finding that consistency across repeated
+  trials was far below single-trial success (Yao et al., arXiv:2406.12045).
+- **V-JEPA 2:** pretrained on 1M+ hours of video; V-JEPA 2-AC post-trained on
+  62 hours of DROID robot video for zero-shot planning (arXiv:2506.09985).
+- **Parallel-agent C compiler:** 16 agents, ~2,000 sessions, ~$20,000 in API
+  costs, a ~100,000-line Rust compiler that builds Linux 6.9 (Anthropic
+  Engineering, 2026).
+- **Agentic AI Foundation:** formed under the Linux Foundation (Dec 2025) with
+  MCP, goose, and AGENTS.md as founding projects (Linux Foundation press release).
+- **Jev (Chapter 80):** launch facts from InfoQ's and MarkTechPost's coverage
+  (Sept–Oct 2026). Pricing, latency, and accuracy figures are **vendor or
+  early-adopter claims**, not independently verified here, and the most
+  likely to change.
 
 **Things that change and should be re-checked before you rely on them:** model
 names and capabilities, API prices, context-window sizes, benchmark scores, and
@@ -13241,6 +16410,113 @@ by a huge activation can matter more than a large weight multiplied by a tiny
 one. (5) Because scales (and zero-points) are stored per group at higher
 precision (often fp16), adding overhead on top of the nominal 4 bits per
 weight.
+
+**Ch 74** (1) Any five of: context assembly, tools, permissions, hooks,
+result shaping, context management (compaction, sub-agents, external
+memory), verification, sandbox, and limits. (2) Because the model can be
+talked out of (or simply ignore) a prompt instruction, whereas code runs
+regardless of what the model outputs; the Replit incident is the
+example. (3) It runs your code after a tool call and appends the output
+to the result. Running tests after every edit means a mistake is caught,
+and shown to the model as evidence, one step after it's made instead of
+many steps later. (4) Prompt caching reuses a prefix only if it's
+byte-for-byte identical; a changing timestamp at the top invalidates the
+cache on every call, so you pay full price for the whole prefix each step.
+(5) Context isolation: the sub-agent reads lots of material in its own
+fresh context and returns only a short result, so the parent's context
+doesn't fill with it.
+
+**Ch 75** (1) Reasoning (inside the model), agent loop (one context
+window), outer loop (fresh session per task, state in files), and
+schedule/event (what starts the outer loop). (2) So no session inherits
+context rot or a previous session's confusion; the only memory is the
+code, notes, and git history, which are precise and inspectable. (3) Because
+the agent is an optimistic narrator and could mark its own homework; the
+harness measures "done" objectively and protects the task list from
+being edited. (4) 0.98^200 ≈ 2%, so a long single session almost always
+hits an error somewhere. The outer loop breaks the work into short,
+independently verified tasks with retries and checkpoints, so one failure
+costs one attempt at one task rather than the whole run. (5) Any two of:
+no automatic verifier; irreversible actions (payments, customer emails,
+production changes); a task that can't be decomposed into a task list.
+
+**Ch 76** (1) pass@k: probability that at least one of k attempts succeeds;
+pass^k: probability that all k succeed. A customer-facing agent needs
+pass^k, because every customer gets a run, not the best of several.
+(2) The message can claim success while the world disagrees (no refund, or
+two); the environment state is the ground truth. (3) Agents find valid
+alternative paths; asserting an exact sequence fails good runs. Rules such
+as "never X" and "Y before Z" capture what actually matters. (4) A second
+model playing a user with a hidden goal and persona; it lets you test
+multi-turn conversations, clarifying questions, and edge cases at scale
+and repeatably. (5) Any two of: escalations to humans, refund reversals,
+reopened tickets, users repeating themselves, thumbs-down rate, tool error
+rate.
+
+**Ch 77** (1) It re-runs the same code; each step looks up its
+deterministic key in the journal and returns the recorded result if
+present, so completed steps are replayed instantly rather than executed,
+and execution continues from the first unfinished step. (2) A crash can
+happen after the side effect but before the journal write; on resume the
+step runs again, and only an idempotency key lets the downstream system
+recognise and ignore the duplicate. (3) Any three of: version pinning,
+fallbacks, routing, prompt caching, budgets, rate limiting. (4) A
+long-running task may be mid-flight when a deploy happens and would resume
+on a different prompt/tool version. A rainbow deployment keeps old versions
+running for in-flight tasks while new tasks start on the new version.
+(5) Any three of: kill switch, blast-radius limits, replay from traces,
+customer remediation owner, post-incident eval task.
+
+**Ch 78** (1) AGENTS.md: always-true project facts ("tests: `pnpm test`").
+Skill: a procedure used sometimes ("how we write release notes").
+MCP server: a live, authenticated connection ("create a Jira ticket").
+(2) Only names and one-line descriptions sit in context; the full
+instructions and files load only when relevant, so each installed skill
+costs a few dozen tokens until it's used. (3) A JSON document an A2A agent
+publishes describing its skills, endpoint, and auth; it solves discovery
+(how one agent finds out what another can do and how to call it). (4) MCP
+when your agent needs to use a tool or data source; A2A when it needs to
+delegate a task to another, independent agent. (5) APIs are faster,
+cheaper, more reliable, and far less exposed to prompt injection than
+operating a UI from screenshots.
+
+**Ch 79** (1) Least privilege: the agent's permissions deny `git push`;
+only a small deterministic script holds the token and pushes only branches
+the harness verified. (2) It stops the agent from passing by deleting
+tests or adding skips; in `verify`, it's enforced by code on every attempt,
+whereas a prompt instruction can be ignored. (3) Past upgrades have a known
+correct outcome; the tests the human added in the real upgrade are hidden
+from the agent and check that it truly handled the change, not just that
+the existing suite passes. (4) PR merge rate (with low revert rate),
+because opening a PR costs nothing; the value is in PRs that humans accept.
+
+**Ch 80** (1) The LLM writes (plans, code, text, and handles escalations);
+the decision model decides (probabilities over predefined options); code
+acts (thresholds, policy, escalation). (2) Noul: one probability of yes.
+Choice: chosen option, per-option probabilities, confidence. Score: a
+probability-weighted score on an ordered rubric, the distribution over
+levels, and confidence. (3) If the safety check is unavailable and you
+default to allow, an outage silently removes your protection; failing
+closed (deny or ask a human) keeps the system safe. (4) The model is
+overconfident in that range: only 30% of the things it rates around 0.70
+are actually positive. The picker therefore places that region inside the
+escalation band rather than auto-blocking it. (5) Because a wrongly
+"small" choice causes a failed task, which is expensive, while a wrongly
+"frontier" choice only costs a little extra money.
+
+**Ch 81** (1) The embedding (abstract representation) of the hidden or
+future part of the input. Pixels contain lots of unpredictable,
+irrelevant detail; predicting embeddings lets the model ignore it and
+focus on predictable structure. (2) The encoder outputs the same vector
+for every input, so the predictor can always predict it exactly; the loss
+is zero but nothing has been learned. (3) An EMA target encoder with
+stop-gradient; a regulariser that keeps embeddings spread out (VICReg,
+SIGReg). (4) Encode the current state and the goal, imagine many action
+sequences with the predictor, score their imagined end states against the
+goal, execute the first action of the best one, observe, and re-plan.
+(5) The EMA run's target moves as the encoder learns, so its loss
+measures something different; the two losses aren't on the same scale.
+Use the probe and the spread instead.
 
 ---
 
