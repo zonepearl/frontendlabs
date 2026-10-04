@@ -1,0 +1,18 @@
+Run it
+Test it
+Files
+package.json
+server.mjs
+public/index.html
+public/agent-ui.js
+public/api.js
+public/app.js
+public/styles.css
+playwright.config.js
+tests/a11y.spec.js
+tests/auth.setup.js
+tests/chat.spec.js
+tests/fixtures.js
+tests/login.spec.js
+tests/security.spec.js
+tests/session.spec.js

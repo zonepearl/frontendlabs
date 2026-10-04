@@ -52,8 +52,42 @@ Table of contents
 50. Garbage collection and memory leaks in real JS apps
 51. Browser security internals: CSP, sandboxing, Spectre, site isolation
 52. Capstone: an offline-first, multi-threaded, end-to-end-encrypted notes PWA
+53. Metaprogramming: Symbols, Proxy and Reflect
+54. Iterators, generators and streams: data that arrives over time
+55. JavaScript in 2026: the features worth adopting now
+56. JavaScript puzzles: predict the output, then explain it
+57. Machine learning in the browser: WebGPU, WebAssembly and Transformers.js
+58. WebLLM: running a real LLM entirely in the browser
+59. Built-in AI and streaming conversational UIs
+60. Agents in JavaScript: the tool-calling loop
+61. Actionable UI: a small framework for agentic interfaces
+62. Edge functions: JavaScript next to your users
+63. Mini project: Support Desk — a working agentic web app
+64. The browser threat model, and the OWASP "top 20"
+65. OWASP Top 10:2025, implemented in JavaScript
+66. OWASP Top 10 for LLM Applications, in a JavaScript agent app
+67. Authentication in the browser: sessions, tokens, OAuth and passkeys
+68. Mini project: harden and audit Support Desk
+69. How to read a large JavaScript codebase
+70. Preact: a whole React in a few kilobytes
+71. Signals from the inside: push dirtiness, pull values
+72. Zustand: a state manager in 20 lines, and useSyncExternalStore
+73. Hono: routing with one regex, middleware as an onion
+74. A testing strategy for web apps, and how Playwright works
+75. Setting up Playwright for a real project
+76. Writing tests that survive refactors
+77. Advanced techniques: mocks, streams, clocks, users, a11y, visuals
+78. Flakiness, debugging and CI: war stories from this suite
+79. Architecture and setup
+80. Station walkthrough: from URL to bytes
+81. Station walkthrough: rendering, the event loop and V8
+82. Station walkthrough: threads and storage
+83. Station walkthrough: Core Web Vitals and debugging
+84. Testing the lab, extending it, and where to go next
 Appendix A: Event-loop task-ordering cheat sheet
 Appendix B: Storage options comparison table
 Appendix C: Web Crypto API cheat sheet
 Appendix D: Glossary
 Appendix E: Further reading
+Appendix F: Playwright cheat sheet
+Appendix G: Modern platform features: support at a glance (October 2026)

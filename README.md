@@ -46,6 +46,17 @@ Each guide's Markdown is in [`docs/`](docs/); the site is the official, always-c
 
 ## What's new
 
+- **JavaScript — The Complete Field Guide, Parts X–XV** ([`/javascript/`](https://frontendlabs.xyz/javascript/)),
+  chapters 53–84. Modern JavaScript in depth (Proxy/Reflect, Web Streams,
+  ES2023–ES2026, Temporal, `using`, 16 puzzles). JavaScript and AI: WebGPU,
+  Transformers.js and WebLLM in the browser, built-in AI, streaming chat UIs,
+  the agent tool loop, WebMCP, actionable UI and edge functions. The OWASP
+  Top 10:2025 and LLM Top 10 implemented in JavaScript, plus sessions, CSRF,
+  PKCE and passkeys. Preact, Signals, Zustand and Hono read from source.
+  Playwright E2E in depth. Two complete, tested projects ship with it:
+  **Support Desk** (an agentic app, [`/javascript/support-desk/`](https://frontendlabs.xyz/javascript/support-desk/))
+  and **Browser Lab** (a live animated tour of the browser and V8,
+  [`/javascript/browser-lab/`](https://frontendlabs.xyz/javascript/browser-lab/)).
 - **Real-Life Mathematics, in depth** ([`/maths/`](https://frontendlabs.xyz/maths/)).
   The linear algebra, calculus and probability & statistics chapters now explain
   every formula symbol by symbol, with a worked example under each one, the
