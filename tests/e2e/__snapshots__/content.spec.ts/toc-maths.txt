@@ -3,6 +3,7 @@ How to use this guide
 Contents
 Role-based learning paths
 Notation cheat sheet
+How to read a formula (the skill nobody teaches)
 1. Number Systems & Bit-Level Math
 2. Modular Arithmetic
 3. Boolean Algebra & Logic
@@ -33,6 +34,7 @@ Notation cheat sheet
 28. Game Theory & Adversarial Thinking
 29. Control Theory Basics (Feedback Loops, PID)
 Formula cheat sheet
+Theorem index
 Practice labs (hands-on, in order of difficulty)
 Further Reading
 Topics Not Covered (and where they'd fit)
