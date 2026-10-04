@@ -25,7 +25,7 @@
     {
       "id": "more",
       "title": "More field guides",
-      "note": "AI and performance testing."
+      "note": "AI, Docker & Kubernetes in production, and performance testing."
     }
   ],
   "guides": [
@@ -320,6 +320,23 @@
       ]
     },
     {
+      "slug": "kubernetes",
+      "title": "Docker & Kubernetes — The Real-Life Field Guide",
+      "short": "Docker & K8s",
+      "icon": "☸️",
+      "category": "more",
+      "level": "Beginner → Production",
+      "summary": "One cloud system built end to end: production Dockerfiles, Kubernetes, autoscaling, OpenTelemetry, GitOps, canaries and DR, in a Linux lab VM.",
+      "source": "K8s-docker/real-life-k8s-guide.md",
+      "originals": [],
+      "pages": [
+        {
+          "slug": "plan",
+          "source": "K8s-docker/k8s-docker-plan.md"
+        }
+      ]
+    },
+    {
       "slug": "scale-perf",
       "title": "Scale, Load & Performance Testing",
       "icon": "📈",
@@ -345,9 +362,10 @@
     {
       "id": "systems",
       "title": "Systems",
-      "note": "The machine every request starts and ends on, and how to measure it under load.",
+      "note": "The machine every request starts and ends on, containers and Kubernetes in production, and how to measure it under load.",
       "guides": [
         "linux",
+        "kubernetes",
         "scale-perf"
       ]
     },

@@ -3,10 +3,10 @@
 # Frontend Labs
 
 **Long-form engineering field guides, read like books.**
-From the kernel to LLMs: operating systems, networking, security, Go, Rust, C and AI,
-with runnable labs in every guide.
+From the kernel to LLMs: operating systems, Docker & Kubernetes, networking, security,
+Go, Rust, Python, C and AI, with runnable labs in every guide.
 
-[**frontendlabs.xyz**](https://frontendlabs.xyz) · [Guides](#the-guides) · [Run it locally](#run-it-locally) · [Contributing](#contributing)
+[**frontendlabs.xyz**](https://frontendlabs.xyz) · [Guides](#the-guides) · [What's new](#whats-new) · [Run it locally](#run-it-locally) · [Contributing](#contributing)
 
 [![deploy](https://github.com/zonepearl/frontendlabs/actions/workflows/pages.yml/badge.svg)](https://github.com/zonepearl/frontendlabs/actions/workflows/pages.yml)
 [![e2e](https://github.com/zonepearl/frontendlabs/actions/workflows/ci.yml/badge.svg)](https://github.com/zonepearl/frontendlabs/actions/workflows/ci.yml)
@@ -24,6 +24,7 @@ with runnable labs in every guide.
 | 🤖 | [AI from Zero to LLMs](https://frontendlabs.xyz/ai/) | AI | Beginner → Expert |
 | 📐 | [Real-Life Mathematics](https://frontendlabs.xyz/maths/) | AI | Beginner → Expert |
 | 🖥️ | [Operating Systems, Linux & Containers](https://frontendlabs.xyz/linux/) | Systems | Beginner → Expert · step 1 |
+| ☸️ | [Docker & Kubernetes — The Real-Life Field Guide](https://frontendlabs.xyz/kubernetes/) | Systems | Beginner → Production · after step 1 |
 | 📈 | [Scale, Load & Performance Testing](https://frontendlabs.xyz/scale-perf/) | Systems | In depth |
 | 🧭 | [The OSI Model, One Click at a Time](https://frontendlabs.xyz/osi/) | Networking | Overview · step 2a |
 | 🌐 | [Networking from Zero (TCP/IP)](https://frontendlabs.xyz/tcp-ip/) | Networking | Beginner → Expert · step 2b |
@@ -39,8 +40,31 @@ with runnable labs in every guide.
 | 🟨 | [JavaScript — The Complete Field Guide](https://frontendlabs.xyz/javascript/) | Programming | Beginner → Expert |
 | 🧩 | [Data Structures & Algorithms](https://frontendlabs.xyz/dsa/) | Programming | Beginner → Advanced |
 
-The systems course reads in order: **1 OS → 2 Networking → 3 Security → 4 HTTPS**, with Go and Rust alongside.
+The systems course reads in order: **1 OS → 2 Networking → 3 Security → 4 HTTPS**, with Go, Rust and Python alongside.
+**Docker & Kubernetes** picks up after step 1 and takes containers to production.
 Each guide's Markdown is in [`docs/`](docs/); the site is the official, always-current edition.
+
+## What's new
+
+- **Docker & Kubernetes — The Real-Life Field Guide** ([`/kubernetes/`](https://frontendlabs.xyz/kubernetes/)).
+  Beginner to production, built around one cloud system ("Orbit") assembled end to end:
+  production Dockerfiles and supply-chain security, Kubernetes core and production workloads,
+  probes and self-healing, autoscaling (HPA, KEDA, Karpenter), OpenTelemetry with
+  Prometheus, Loki, Tempo and SLO burn-rate alerts, GitOps with Argo CD, canary releases,
+  backup/DR and chaos. Part 0 is a scripted Linux lab VM on macOS. The 90-day DevOps
+  plan ships alongside it at [`/kubernetes/plan/`](https://frontendlabs.xyz/kubernetes/plan/).
+  It sits in **Systems**, after the OS & Linux guide.
+- **AI from Zero to LLMs, Parts 20–21** (chapters 74–81): agent harnesses, long-running
+  agent loops, agent evals (pass^k), deploying agents to production, agent interop
+  (AGENTS.md, Skills, MCP, A2A), an overnight PR-opening agent, System One decision
+  models (Jev), and JEPA world models. The home-page AI spotlight links straight to them.
+- **Python — The Complete Field Guide** ([`/python/`](https://frontendlabs.xyz/python/)).
+  The language and its internals, the series' OS, networking and security labs in Python,
+  data science and AI/ML from NumPy to PyTorch and LLM apps, and a walkthrough of
+  `requests` down to the socket. It runs alongside every step of the course.
+- **Rust — The Complete Field Guide** ([`/rust/`](https://frontendlabs.xyz/rust/)), alongside
+  Go across the systems series, together with the new home page: an AI spotlight,
+  the engineering-path ribbon, and topic sections (Systems, Networking, Security, Programming).
 
 ## What the site gives readers
 

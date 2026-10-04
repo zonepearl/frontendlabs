@@ -6291,6 +6291,12 @@ namespaces, cgroups, and the filesystem model. If a container ever does
 something confusing, the answer is almost always "go back to Phase 1's
 mental model and apply it here."
 
+> **Going further:** this phase gets you to "I understand containers and
+> Kubernetes". [Docker & Kubernetes — The Real-Life Field Guide](../K8s-docker/real-life-k8s-guide.md)
+> continues to production: hardened images, probes and graceful shutdown,
+> autoscaling, OpenTelemetry observability, GitOps, canary releases and
+> disaster recovery, built as one system in a Linux lab VM.
+
 # Part 14 — Container fundamentals
 
 Every part so far was one OS running many processes with the illusion of
