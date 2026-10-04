@@ -26,9 +26,15 @@ test.describe("@visual", () => {
     await expect(page).toHaveScreenshot("home-night.png", { mask: volatile(page) });
   });
 
-  test("guide page: title and contents", async ({ page }) => {
+  test("guide landing page: title and contents", async ({ page }) => {
     await page.goto("rust/");
     await settle(page);
     await expect(page).toHaveScreenshot("reader-rust.png", { mask: volatile(page) });
+  });
+
+  test("chapter page", async ({ page }) => {
+    await page.goto("rust/6-ownership-moves-copies-and-drop/");
+    await settle(page);
+    await expect(page).toHaveScreenshot("chapter-rust.png", { mask: volatile(page) });
   });
 });

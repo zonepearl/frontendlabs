@@ -1,5 +1,7 @@
 # The OSI Model, One Click at a Time
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/osi/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > **One real request, followed through all seven layers.**
 > You click **"Place order"** on a shopping site from your laptop on home Wi-Fi.
 > About 250 ms later you see "Order confirmed". This guide follows that click

@@ -1,5 +1,7 @@
 # JavaScript — The Complete Field Guide (Beginner → Expert)
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/javascript/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > A practical, example-driven path through JavaScript: the language itself,
 > the browser it usually runs in, the network it talks over, and the
 > multi-threaded, encrypted, offline-capable applications you can build once

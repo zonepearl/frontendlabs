@@ -2,19 +2,22 @@
 <html lang="en" data-theme="paper">
 <head>
 {{template "head" .}}
-<title>{{.Book.Title}} · frontendlabs</title>
-<meta name="description" content="{{if .Book.Subtitle}}{{.Book.Subtitle}}{{else}}{{.Guide.Summary}}{{end}}">
-<meta property="og:title" content="{{.Book.Title}}">
-<meta property="og:description" content="{{if .Book.Subtitle}}{{.Book.Subtitle}}{{else}}{{.Guide.Summary}}{{end}}">
+<title>{{.Title}} · frontendlabs</title>
+<meta name="description" content="{{.Desc}}">
+<meta property="og:title" content="{{.Title}}">
+<meta property="og:description" content="{{.Desc}}">
+{{if .NoIndex}}<meta name="robots" content="noindex, follow">{{end}}
+{{with .LD}}<script type="application/ld+json">{{.}}</script>{{end}}
 </head>
-<body class="bg-surface text-ink antialiased" data-page="{{.PageURL}}" data-guide="{{.Guide.Slug}}" data-guide-title="{{.Guide.Title}}" data-emoji="{{.Guide.Icon}}">
+<body class="bg-surface text-ink antialiased" data-mode="{{.Mode}}" data-page="{{.PageURL}}" data-guide="{{.Guide.Slug}}" data-guide-title="{{.Guide.Title}}" data-emoji="{{.Guide.Icon}}"
+      data-landing="{{rel .PageURL .Doc.URL}}" data-anchors="{{rel .PageURL .Anchors}}">
 
 <div id="progress" class="fixed top-0 left-0 z-50 h-[3px] w-0 bg-accent transition-[width] duration-150"></div>
 
 <header id="bar" class="fixed inset-x-0 top-0 z-40 flex h-14 items-center gap-2 border-b border-rule bg-surface/90 px-3 font-sans backdrop-blur">
   <a href="{{rel .PageURL ""}}" class="mr-1 flex h-10 shrink-0 items-center rounded-lg bg-white px-2 shadow-sm ring-1 ring-black/5" title="All guides" aria-label="Frontend Labs home"><img src="{{rel .PageURL "assets/brand/wordmark-96.png"}}" alt="Frontend Labs" width="63" height="32" class="h-8 w-auto"></a>
   <button id="tocBtn" class="btn" title="Contents (t)" aria-controls="toc">☰<span class="hidden sm:inline">&nbsp;Contents</span></button>
-  <span class="mx-1 hidden truncate text-sm font-semibold sm:block">{{.Guide.Icon}} {{.Guide.Title}}</span>
+  <a href="{{rel .PageURL .Doc.URL}}" class="mx-1 hidden truncate text-sm font-semibold text-ink no-underline sm:block">{{.Guide.Icon}} {{.Guide.Title}}</a>
   <span id="where" class="hidden min-w-0 flex-1 truncate text-sm text-muted md:block"></span>
   <span class="ml-auto flex items-center gap-1">
     <button id="fsDown" class="btn" title="Smaller text (-)">A−</button>
@@ -24,6 +27,7 @@
     <details class="relative">
       <summary class="btn list-none" title="Editions and source">⋯</summary>
       <div class="absolute right-0 mt-2 w-60 rounded-xl border border-rule bg-card p-1 text-sm shadow-xl">
+        {{if .AllURL}}<a class="menu-item" href="{{rel .PageURL .AllURL}}">Read as one page</a>{{end}}
         {{range .Originals}}<a class="menu-item" href="{{.URL}}">{{.Title}} ↗</a>{{end}}
         <a class="menu-item" href="{{.SourceURL}}">Markdown source ↗</a>
         <button class="menu-item w-full text-left" onclick="window.print()">Print / save as PDF</button>
@@ -44,34 +48,72 @@
   </ol>
   <p class="toc-head">On this page</p>
   {{end}}
+  {{if .AllURL}}
+  <ol class="mb-2 space-y-0.5">
+    <li><a href="{{rel .PageURL .Doc.URL}}" class="toc-link {{if eq .Mode "landing"}}is-current{{end}}">Overview</a></li>
+    <li><a href="{{rel .PageURL .AllURL}}" class="toc-link {{if eq .Mode "all"}}is-current{{end}}">Read as one page</a></li>
+  </ol>
+  {{end}}
   <ol id="tocList" class="space-y-0.5">
-    {{range .Book.TOC}}
-      {{if eq .Level 1}}<li class="toc-part">{{.Text}}</li>
-      {{else}}<li><a href="#{{.ID}}" data-id="{{.ID}}" class="toc-link"><span>{{.Text}}</span><em>{{minutes .Minutes}}</em></a></li>{{end}}
+    {{range $e := .Book.TOC}}
+      {{if eq $e.Level 1}}<li class="toc-part">{{$e.Text}}</li>
+      {{else}}<li><a href="{{if or (eq $.Mode "all") (not $e.URL)}}#{{$e.ID}}{{else}}{{rel $.PageURL $e.URL}}{{end}}" data-id="{{$e.ID}}" class="toc-link{{with $.Chapter}}{{if eq .ID $e.ID}} is-current{{end}}{{end}}"><span>{{$e.Text}}</span><em>{{minutes $e.Minutes}}</em></a></li>{{end}}
     {{end}}
   </ol>
 </nav>
 
 <main id="main" class="pt-14 lg:pl-80">
   <div class="book mx-auto px-5 pb-32">
+    {{if eq .Mode "chapter"}}
+    <nav aria-label="Breadcrumb" class="crumbs">
+      <a href="{{rel .PageURL ""}}">Home</a><span aria-hidden="true">›</span>
+      <a href="{{rel .PageURL .Doc.URL}}">{{.Guide.Icon}} {{.Book.Title}}</a>
+      {{with .Chapter.Part}}<span aria-hidden="true">›</span><span>{{.}}</span>{{end}}
+    </nav>
+    {{else}}
     <header class="titlepage">
       <div class="text-6xl">{{.Guide.Icon}}</div>
       {{if .Guide.Step}}<p class="mt-4 text-xs font-bold tracking-[.14em] text-accent uppercase">{{if eq .Guide.Step "Alongside"}}Runs alongside the series{{else}}Series · step {{.Guide.Step}}{{end}}</p>{{end}}
       <h1 class="book-title">{{.Book.Title}}</h1>
       {{if .Book.Subtitle}}<p class="sub">{{.Book.Subtitle}}</p>{{end}}
       <div class="rule"></div>
-      <p class="meta">{{if .Book.Chapters}}{{.Book.Chapters}} chapter{{if gt .Book.Chapters 1}}s{{end}} · {{end}}{{minutes .Book.Minutes}} of reading</p>
-      <div id="resume"></div>
+      <p class="meta">{{if .Book.Chapters}}{{.Book.Chapters}} chapter{{if gt .Book.Chapters 1}}s{{end}} · {{end}}{{minutes .Book.Minutes}} of reading{{if eq .Mode "all"}} · the whole book on one page{{end}}</p>
+      <div id="resume">
+        {{if and (eq .Mode "landing") .FirstCh}}<a class="resume-btn start-btn" href="{{rel .PageURL .FirstCh.URL}}">Start reading <span>· {{.FirstCh.Title}}</span></a>{{end}}
+      </div>
     </header>
+    {{end}}
 
     <article id="content">
 {{.Body}}
     </article>
 
+    {{if and (eq .Mode "landing") .AllURL}}
+    <section id="contents" class="landing-toc" aria-labelledby="contents-title">
+      <h2 id="contents-title">Contents</h2>
+      <p class="hint">{{.Book.Chapters}} chapters, one page each. Prefer one long page? <a href="{{rel .PageURL .AllURL}}">Read the whole book on one page</a>.</p>
+      <ol>
+        {{range .Book.TOC}}
+          {{if eq .Level 1}}<li class="part">{{.Text}}</li>
+          {{else}}<li><a href="{{if .URL}}{{rel $.PageURL .URL}}{{else}}#{{.ID}}{{end}}">{{.Text}}</a><em>{{minutes .Minutes}}</em></li>{{end}}
+        {{end}}
+      </ol>
+    </section>
+    {{end}}
+
+    {{if eq .Mode "chapter"}}
+    <nav class="chapnav chapnav-pages" aria-label="Chapters">
+      {{with .PrevCh}}<a class="prev" rel="prev" href="{{rel $.PageURL .URL}}"><small>← Previous chapter</small><span>{{.Title}}</span></a>{{else}}<a class="prev" href="{{rel $.PageURL $.Doc.URL}}"><small>← Back to</small><span>Overview and contents</span></a>{{end}}
+      {{with .NextCh}}<a class="next" rel="next" href="{{rel $.PageURL .URL}}"><small>Next chapter →</small><span>{{.Title}}</span></a>{{end}}
+    </nav>
+    {{end}}
+
+    {{if or (ne .Mode "chapter") (not .NextCh)}}
     <nav class="mt-20 grid gap-4 border-t border-rule pt-8 font-sans sm:grid-cols-2">
       {{with .Prev}}<a href="{{rel $.PageURL (printf "%s/" .Slug)}}" class="guide-nav"><span>← Previous guide</span><strong>{{.Icon}} {{.Title}}</strong></a>{{else}}<span></span>{{end}}
       {{with .Next}}<a href="{{rel $.PageURL (printf "%s/" .Slug)}}" class="guide-nav text-right"><span>Next guide →</span><strong>{{.Icon}} {{.Title}}</strong></a>{{end}}
     </nav>
+    {{end}}
     <p class="mt-10 text-center font-sans text-xs text-faint">Generated from <a href="{{.SourceURL}}">{{base .Doc.Source}}</a> · {{.Built}}</p>
   </div>
 </main>

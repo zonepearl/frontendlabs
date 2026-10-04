@@ -1,5 +1,7 @@
 # Real-Life Scale, Load & Performance Testing — In-Depth Guide
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/scale-perf/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 A practitioner's reference for reasoning about network behavior, latency, and load —
 and for building simulations that prove a system will survive real traffic.
 Covers open-source tools, hands-on simulations, and report generation, with code

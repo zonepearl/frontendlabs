@@ -20,13 +20,26 @@ test("home page never scrolls sideways", async ({ page }) => {
   await noSidewaysScroll(page);
 });
 
-// One representative page per guide keeps this fast; long code lines must scroll inside their block.
+// Each guide's one-page edition holds every chapter, so one load per guide covers all its
+// content; long code lines must scroll inside their block, not widen the page.
 for (const d of docs.filter((d) => d.main)) {
-  test(`${d.url} never scrolls sideways`, async ({ page }) => {
-    await page.goto(d.url);
+  test(`${d.url} never scrolls sideways`, async ({ page, request }) => {
+    const all = (await request.get(`${d.url}all/`)).ok();
+    await page.goto(all ? `${d.url}all/` : d.url);
     await noSidewaysScroll(page);
+    if (all) {
+      await page.goto(d.url); // and the landing page with its contents list
+      await noSidewaysScroll(page);
+    }
   });
 }
+
+test("a chapter page fits the screen and shows its breadcrumb", async ({ page }) => {
+  await page.goto("rust/6-ownership-moves-copies-and-drop/");
+  await noSidewaysScroll(page);
+  await expect(page.locator('nav[aria-label="Breadcrumb"]')).toBeVisible();
+  await expect(page.locator("h1.chapter-title")).toBeVisible();
+});
 
 test("header and section chips stay visible while scrolling", async ({ page }) => {
   await page.goto("./");

@@ -1,5 +1,7 @@
 # C — The Complete Field Guide (Beginner → Expert)
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/c/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > A practical, example-driven path through C: what the language actually
 > gives you, why it's shaped the way it is, and how to read and write C that
 > solves real problems — from a CLI tool to a TCP server to the internals of

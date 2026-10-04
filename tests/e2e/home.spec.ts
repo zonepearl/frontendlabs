@@ -66,11 +66,12 @@ test.describe("spotlight layout", () => {
     await expect(firstSection.locator(`[data-guide="${sp.guide}"] h2`)).toHaveText(guide(sp.guide).title);
   });
 
-  test("deep links point into the featured guide, in order", async ({ page }) => {
-    const links = page.locator(`#${spotSection.id} a[href^="${sp.guide}/#"]`);
+  test("deep links point into the featured guide's chapter pages, in order", async ({ page }) => {
+    const links = page.locator(`#${spotSection.id} a[href^="${sp.guide}/"][href*="#"]`);
     await expect(links).toHaveText(sp.links.map((l) => l.title));
     for (const [i, l] of sp.links.entries()) {
-      await expect(links.nth(i)).toHaveAttribute("href", `${sp.guide}/#${l.anchor}`);
+      // the chapter page that holds the anchor: <guide>/<chapter>/#<anchor>
+      await expect(links.nth(i)).toHaveAttribute("href", new RegExp(`^${sp.guide}/[^/#]+/#${l.anchor}$`));
     }
   });
 

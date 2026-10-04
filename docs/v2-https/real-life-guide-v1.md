@@ -1,5 +1,7 @@
 # The HTTPS Request Lifecycle — A Real-Life Guide (v1)
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/https/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > What really happens when you type `https://www.netflix.com` and press Enter?
 > This guide walks you through the major steps — from your keyboard to
 > Netflix's servers and back to your screen — explained so a 5-year-old could

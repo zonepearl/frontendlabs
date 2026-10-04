@@ -21,6 +21,7 @@ type TOCEntry struct {
 	ID      string
 	Text    string
 	Minutes int
+	URL     string // site path of the page holding this entry (set by the builder)
 }
 
 // Minutes is the whole document's reading time at 220 words per minute.
@@ -225,3 +226,126 @@ func addGitHubAliases(body string) string {
 		return open + `<span class="anchor-alias" id="` + gh + `"></span>` + h[len(open):]
 	})
 }
+
+// ChapterPage is one chapter rendered as its own page (/<doc>/<chapter-id>/).
+type ChapterPage struct {
+	ID      string // the chapter heading's id; also the URL segment
+	Title   string
+	Part    string // title of the part (h1) the chapter belongs to, if any
+	HTML    string // the part's introduction (first chapter of a part only) + the chapter section
+	Words   int
+	Minutes int
+	Desc    string // first paragraph, trimmed, for <meta name="description">
+	URL     string // site path, set by the builder
+}
+
+var (
+	reChapterStart = regexp.MustCompile(`<section class="chapter" id="ch-`)
+	rePartH1       = regexp.MustCompile(`(?s)<h1 id="[^"]+">(.*?)</h1>`)
+	reFirstPara    = regexp.MustCompile(`(?s)<(?:p|li)>(.*?)</(?:p|li)>`) // opening prose: paragraphs and list items
+	reChapterH2    = regexp.MustCompile(`(?s)^(<section class="chapter" id="ch-[^"]+" data-ch="[^"]+">)<h2 id="([^"]+)">(.*?)</h2>`)
+)
+
+// Split cuts the book body into its front matter (everything before the first
+// part or chapter) and one page per chapter. A part's heading and introduction
+// go on the page of the part's first chapter, so nothing is lost; a part with
+// no chapters becomes a page of its own.
+func (b *Book) Split() (front string, pages []*ChapterPage) {
+	body := b.Body
+	locs := reChapterStart.FindAllStringIndex(body, -1)
+	if len(locs) == 0 {
+		return body, nil
+	}
+	front = body[:locs[0][0]]
+	prelude := ""
+	if i := strings.Index(front, "<h1 id="); i >= 0 { // a part starts before the first chapter
+		front, prelude = front[:i], front[i:]
+	}
+	part := ""
+	if m := rePartH1.FindAllStringSubmatch(prelude, -1); m != nil {
+		part = plain(m[len(m)-1][1])
+	}
+	for i, l := range locs {
+		end := len(body)
+		if i+1 < len(locs) {
+			end = locs[i+1][0]
+		}
+		chunk := body[l[0]:end]
+		// the chapter section ends at "</section>" followed by the next part's heading, if any
+		section, tail := chunk, ""
+		if j := strings.Index(chunk, "</section><h1 id="); j >= 0 {
+			section, tail = chunk[:j+len("</section>")], chunk[j+len("</section>"):]
+		}
+		m := reChapterH2.FindStringSubmatch(section)
+		if m == nil {
+			continue
+		}
+		p := &ChapterPage{ID: m[2], Title: plain(m[3]), Part: part}
+		// the chapter title is the page's h1
+		section = m[1] + `<h1 id="` + m[2] + `" class="chapter-title">` + m[3] + `</h1>` + section[len(m[0]):]
+		p.HTML = prelude + section
+		p.Words = len(strings.Fields(plain(p.HTML)))
+		p.Minutes = max(1, (p.Words+110)/220)
+		p.Desc = describe(section)
+		pages = append(pages, p)
+		prelude = tail
+		if pm := rePartH1.FindAllStringSubmatch(tail, -1); pm != nil {
+			part = plain(pm[len(pm)-1][1])
+		}
+	}
+	if strings.TrimSpace(prelude) != "" { // trailing parts without chapters
+		if m := regexp.MustCompile(`<h1 id="([^"]+)">(.*?)</h1>`).FindStringSubmatch(prelude); m != nil {
+			p := &ChapterPage{ID: m[1], Title: plain(m[2]), Part: plain(m[2]), HTML: prelude}
+			p.Words = len(strings.Fields(plain(prelude)))
+			p.Minutes = max(1, (p.Words+110)/220)
+			pages = append(pages, p)
+		} else if len(pages) > 0 {
+			pages[len(pages)-1].HTML += prelude
+		}
+	}
+	return front, pages
+}
+
+// IDs lists every element id in an HTML fragment (headings, aliases, anything).
+func IDs(html string) []string {
+	var out []string
+	for _, m := range reIDAttr.FindAllStringSubmatch(html, -1) {
+		out = append(out, m[1])
+	}
+	return out
+}
+
+// trimWords shortens s to at most limit bytes at a word boundary, adding "…".
+func trimWords(s string, limit int) string {
+	if len(s) <= limit {
+		return s
+	}
+	cut := strings.LastIndex(s[:limit], " ")
+	if cut < limit/2 {
+		cut = limit
+	}
+	return strings.TrimRight(s[:cut], " ,;:—-") + "…"
+}
+
+// describe builds a meta description from a chapter's opening paragraphs:
+// enough text to fill the ~155 characters search results show.
+func describe(section string) string {
+	desc := ""
+	for _, pm := range reFirstPara.FindAllStringSubmatch(section, 8) {
+		t := plain(pm[1])
+		if t == "" {
+			continue
+		}
+		if desc != "" {
+			desc += " "
+		}
+		desc += t
+		if len(desc) >= 120 {
+			break
+		}
+	}
+	return trimWords(reSpacePunct.ReplaceAllString(desc, "$1"), 155)
+}
+
+// reSpacePunct removes the space that stripping inline tags leaves before punctuation ("salt ," -> "salt,").
+var reSpacePunct = regexp.MustCompile(` ([,.;:!?)])`)

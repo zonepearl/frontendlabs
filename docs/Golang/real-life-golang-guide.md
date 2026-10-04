@@ -1,5 +1,7 @@
 # Go — The Complete Field Guide (Beginner → Expert)
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/go/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > A practical, example-driven path through Go: what the language actually
 > gives you, why it's shaped the way it is, and how to use it to build real
 > terminal tools, GUI apps, network services, and security infrastructure.

@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -30,6 +31,9 @@ type Builder struct {
 	tmpl   *template.Template
 	metas  map[string]*docMeta        // by docs-relative source path
 	appIDs map[string]map[string]bool // element ids on each rendered page, by site URL
+
+	prep    map[string]*prepared         // by document URL
+	anchors map[string]map[string]string // document URL -> element id -> page URL
 }
 
 // docMeta is what the home page and search index need from each document.
@@ -83,8 +87,15 @@ func (b *Builder) BuildAll() error {
 	if err := b.copyAssets(); err != nil {
 		return err
 	}
-	for _, d := range b.M.Docs() {
-		if err := b.buildDoc(d); err != nil {
+	b.prep = map[string]*prepared{}
+	b.anchors = map[string]map[string]string{}
+	for _, d := range b.M.Docs() { // phase 1: render and split every document, so every anchor is known
+		if err := b.prepareDoc(d); err != nil {
+			return fmt.Errorf("%s: %w", d.Source, err)
+		}
+	}
+	for _, d := range b.M.Docs() { // phase 2: write pages with links resolved to the right chapter page
+		if err := b.writeDoc(b.prep[d.URL]); err != nil {
 			return fmt.Errorf("%s: %w", d.Source, err)
 		}
 	}
@@ -112,14 +123,27 @@ func (b *Builder) Rebuild(changedSources []string) ([]string, error) {
 		set[path.Clean(filepath.ToSlash(s))] = true
 	}
 	var urls []string
+	changed := false
 	for _, d := range b.M.Docs() {
 		if set[d.Source] {
 			start := time.Now()
-			if err := b.buildDoc(d); err != nil {
+			if err := b.prepareDoc(d); err != nil {
 				return urls, fmt.Errorf("%s: %w", d.Source, err)
 			}
 			fmt.Printf("rebuilt %-48s in %v\n", d.Source, time.Since(start).Round(time.Millisecond))
+			changed = true
 			urls = append(urls, "/"+d.URL)
+			for _, c := range b.prep[d.URL].chapters {
+				urls = append(urls, "/"+c.URL)
+			}
+			urls = append(urls, "/"+d.URL+"all/")
+		}
+	}
+	if changed { // rewrite every document: links into the changed one may point at different chapter pages now
+		for _, d := range b.M.Docs() {
+			if err := b.writeDoc(b.prep[d.URL]); err != nil {
+				return urls, fmt.Errorf("%s: %w", d.Source, err)
+			}
 		}
 	}
 	if err := b.copyOriginals(); err != nil {
@@ -142,14 +166,31 @@ type pageLink struct {
 	Current    bool
 }
 
+// bookPage is the data for book.html. One template renders three kinds of page:
+//   - "landing": /<doc>/: title page, front matter, contents linking to chapters
+//   - "chapter": /<doc>/<chapter-id>/: one chapter, the pages search engines index
+//   - "all":     /<doc>/all/: the whole book on one page (noindex; for find-in-page and print)
+//
+// A document without chapters renders as a single landing page with everything.
 type bookPage struct {
 	Site      *Manifest
 	Guide     *Guide
 	Doc       *Doc
 	Book      *Book
+	Mode      string
 	Body      template.HTML
 	PageURL   string
-	Pages     []pageLink // for guides with sub-pages
+	Title     string // <title> and og:title
+	Desc      string
+	NoIndex   bool
+	LD        template.JS // JSON-LD structured data
+	Chapter   *ChapterPage
+	PrevCh    *ChapterPage
+	NextCh    *ChapterPage
+	FirstCh   *ChapterPage
+	AllURL    string // "" when the document has no chapters
+	Anchors   string // anchors.json for this document (old #links on the landing page)
+	Pages     []pageLink
 	Originals []pageLink
 	SourceURL string
 	Prev      *Guide
@@ -158,11 +199,29 @@ type bookPage struct {
 	Built     string
 }
 
-func (b *Builder) buildDoc(d *Doc) error {
+// prepared is a document after rendering and splitting, before its pages are written.
+type prepared struct {
+	doc      *Doc
+	book     *Book
+	front    string
+	chapters []*ChapterPage
+	anchors  map[string]string // element id -> site path of the page that holds it
+}
+
+// thinWords: chapters shorter than this are kept out of the sitemap and marked
+// noindex, so search engines see only pages with real content.
+const thinWords = 200
+
+var reNotice = regexp.MustCompile(`(?m)^.*<!-- frontendlabs-notice -->.*\n?`)
+
+// prepareDoc renders a document and splits it into chapter pages.
+func (b *Builder) prepareDoc(d *Doc) error {
 	src, err := os.ReadFile(filepath.Join(b.DocsDir, filepath.FromSlash(d.Source)))
 	if err != nil {
 		return err
 	}
+	// "Read this on frontendlabs.xyz" notices are for GitHub readers, not for the site itself.
+	src = reNotice.ReplaceAll(src, nil)
 	byMD, byOrg := b.docMaps()
 	htmlBody, err := renderMarkdown(src, &linkRewriter{doc: d, byMD: byMD, byOrg: byOrg})
 	if err != nil {
@@ -172,45 +231,197 @@ func (b *Builder) buildDoc(d *Doc) error {
 	if book.Title == "" {
 		book.Title = d.Guide.Title
 	}
+	pd := &prepared{doc: d, book: book, anchors: map[string]string{}}
+	pd.front, pd.chapters = book.Split()
+	if len(pd.chapters) == 0 {
+		pd.front = book.Body
+	}
+	for _, id := range IDs(pd.front) {
+		pd.anchors[id] = d.URL
+	}
+	seen := map[string]bool{"all": true}
+	for _, pg := range d.Guide.Pages { // sub-page slugs share the URL space under the guide
+		if d.Page == nil {
+			seen[pg.Slug] = true
+		}
+	}
+	chapterURL := map[string]string{}
+	for _, c := range pd.chapters {
+		if seen[c.ID] {
+			return fmt.Errorf("chapter id %q collides with another page's URL", c.ID)
+		}
+		seen[c.ID] = true
+		c.URL = d.URL + c.ID + "/"
+		chapterURL[c.ID] = c.URL
+		for _, id := range IDs(c.HTML) {
+			pd.anchors[id] = c.URL
+		}
+	}
+	for i := range book.TOC {
+		if u, ok := pd.anchors[book.TOC[i].ID]; ok {
+			book.TOC[i].URL = u
+		}
+	}
+	b.prep[d.URL] = pd
+	b.anchors[d.URL] = pd.anchors
 	b.metas[d.Source] = &docMeta{
 		Title: book.Title, Chapters: book.Chapters(), Words: book.Words, TOC: book.TOC,
 		Labs: countPrograms(src),
 	}
+	return nil
+}
 
-	p := &bookPage{
-		Site: b.M, Guide: d.Guide, Doc: d, Book: book, Body: template.HTML(book.Body),
-		PageURL: d.URL, Live: b.Live, Built: time.Now().Format("2 Jan 2006 15:04"),
-		SourceURL: relURL(d.URL, "docs/"+d.Source),
+// locate returns the page that holds anchor frag of the document at docURL.
+func (b *Builder) locate(docURL, frag string) string {
+	if frag != "" {
+		if u, ok := b.anchors[docURL][frag]; ok {
+			return u
+		}
 	}
-	if len(d.Guide.Pages) > 0 {
-		p.Pages = append(p.Pages, pageLink{"Overview", relURL(d.URL, d.Guide.Slug+"/"), d.Page == nil})
-		for _, pg := range d.Guide.Pages {
-			title := pg.Slug
-			if m := b.metas[path.Clean(pg.Source)]; m != nil {
-				title = m.Title
-			} else if t := firstHeading(filepath.Join(b.DocsDir, pg.Source)); t != "" {
-				title = t
+	return docURL
+}
+
+var reSiteLink = regexp.MustCompile(`href="@site:([^"#]*)(#[^"]*)?"`)
+
+// resolveLinks turns "@site:" placeholders into relative links from pageURL.
+func (b *Builder) resolveLinks(html, pageURL string) string {
+	return reSiteLink.ReplaceAllStringFunc(html, func(m string) string {
+		sm := reSiteLink.FindStringSubmatch(m)
+		target, frag := sm[1], strings.TrimPrefix(sm[2], "#")
+		if _, isDoc := b.anchors[target]; isDoc && frag != "" {
+			id, err := url.PathUnescape(frag)
+			if err != nil {
+				id = frag
 			}
-			p.Pages = append(p.Pages, pageLink{title, relURL(d.URL, d.Guide.Slug+"/"+pg.Slug+"/"), d.Page == pg})
+			target = b.locate(target, id)
 		}
-	}
-	for _, o := range d.Guide.Originals {
-		label := "Original book edition"
-		if !strings.HasSuffix(o, "-book.html") {
-			label = "Original HTML edition"
+		out := ""
+		if target != pageURL {
+			out = relURL(pageURL, target)
 		}
-		p.Originals = append(p.Originals, pageLink{label, relURL(d.URL, "originals/"+o), false})
+		if frag != "" {
+			out += "#" + frag
+		}
+		if out == "" {
+			out = "./"
+		}
+		return `href="` + out + `"`
+	})
+}
+
+// writeDoc writes a prepared document's landing page, chapter pages, and one-page edition.
+func (b *Builder) writeDoc(pd *prepared) error {
+	d, book := pd.doc, pd.book
+	built := time.Now().Format("2 Jan 2006 15:04")
+	base := bookPage{
+		Site: b.M, Guide: d.Guide, Doc: d, Book: book, Live: b.Live, Built: built,
+		Desc: book.Subtitle, Anchors: d.URL + "anchors.json",
 	}
-	p.Prev, p.Next = b.neighbours(d.Guide)
-	var page strings.Builder
-	if err := b.tmpl.ExecuteTemplate(&page, "book.html", p); err != nil {
+	if base.Desc == "" {
+		base.Desc = d.Guide.Summary
+	}
+	if len(pd.chapters) > 0 {
+		base.AllURL = d.URL + "all/"
+		base.FirstCh = pd.chapters[0]
+	}
+	base.Prev, base.Next = b.neighbours(d.Guide)
+
+	write := func(p bookPage, html string) error {
+		p.SourceURL = relURL(p.PageURL, "docs/"+d.Source)
+		p.Body = template.HTML(b.resolveLinks(html, p.PageURL))
+		p.Pages = b.subPages(d, p.PageURL)
+		for _, o := range d.Guide.Originals {
+			label := "Original book edition"
+			if !strings.HasSuffix(o, "-book.html") {
+				label = "Original HTML edition"
+			}
+			p.Originals = append(p.Originals, pageLink{label, relURL(p.PageURL, "originals/"+o), false})
+		}
+		var page strings.Builder
+		if err := b.tmpl.ExecuteTemplate(&page, "book.html", p); err != nil {
+			return err
+		}
+		b.appIDs[p.PageURL] = idSet(page.String())
+		return writeFile(filepath.Join(b.OutDir, filepath.FromSlash(p.PageURL+"index.html")), []byte(page.String()))
+	}
+
+	// landing page
+	landing := base
+	landing.Mode, landing.PageURL, landing.Title = "landing", d.URL, book.Title
+	landing.LD = b.structuredData(pd, nil)
+	if err := write(landing, pd.front); err != nil {
 		return err
 	}
-	b.appIDs[d.URL] = idSet(page.String())
-	if err := writeFile(filepath.Join(b.OutDir, filepath.FromSlash(d.URL+"index.html")), []byte(page.String())); err != nil {
+	// chapter pages
+	for i, c := range pd.chapters {
+		p := base
+		p.Mode, p.PageURL, p.Chapter = "chapter", c.URL, c
+		p.Title = c.Title + " · " + shortTitle(d)
+		p.Desc = c.Desc
+		if len(c.Desc) < 60 { // e.g. a chapter that opens with a table: describe it by its place in the guide
+			p.Desc = trimWords(c.Title+": "+d.Guide.Summary, 155)
+		}
+		p.NoIndex = c.Words < thinWords
+		if i > 0 {
+			p.PrevCh = pd.chapters[i-1]
+		}
+		if i+1 < len(pd.chapters) {
+			p.NextCh = pd.chapters[i+1]
+		}
+		p.LD = b.structuredData(pd, c)
+		if err := write(p, c.HTML); err != nil {
+			return err
+		}
+	}
+	// the whole book on one page
+	if len(pd.chapters) > 0 {
+		all := base
+		all.Mode, all.PageURL, all.Title, all.NoIndex = "all", d.URL+"all/", book.Title+" (one page)", true
+		if err := write(all, book.Body); err != nil {
+			return err
+		}
+	}
+	// id -> chapter page (relative to the document), so old links to /<doc>/#<id> can be redirected by reader.js
+	anchors := map[string]string{}
+	for id, u := range pd.anchors {
+		if u != d.URL {
+			anchors[id] = strings.TrimPrefix(u, d.URL)
+		}
+	}
+	js, _ := json.Marshal(anchors)
+	if err := writeFile(filepath.Join(b.OutDir, filepath.FromSlash(d.URL+"anchors.json")), js); err != nil {
 		return err
 	}
 	return b.copyFile(filepath.Join(b.DocsDir, d.Source), filepath.Join(b.OutDir, "docs", d.Source))
+}
+
+// shortTitle is the guide's compact name for page titles.
+func shortTitle(d *Doc) string {
+	if d.Page != nil {
+		return d.Guide.Title
+	}
+	if d.Guide.Short != "" && len(d.Guide.Short) > 3 {
+		return d.Guide.Short
+	}
+	return d.Guide.Title
+}
+
+// subPages lists a guide's sub-documents (the Go plan's weeks) for the contents sidebar.
+func (b *Builder) subPages(d *Doc, from string) []pageLink {
+	if len(d.Guide.Pages) == 0 {
+		return nil
+	}
+	out := []pageLink{{"Overview", relURL(from, d.Guide.Slug+"/"), d.Page == nil}}
+	for _, pg := range d.Guide.Pages {
+		title := pg.Slug
+		if m := b.metas[path.Clean(pg.Source)]; m != nil {
+			title = m.Title
+		} else if t := firstHeading(filepath.Join(b.DocsDir, pg.Source)); t != "" {
+			title = t
+		}
+		out = append(out, pageLink{title, relURL(from, d.Guide.Slug+"/"+pg.Slug+"/"), d.Page == pg})
+	}
+	return out
 }
 
 // neighbours returns the previous/next guide. In the classic layout that is the
@@ -276,6 +487,8 @@ type homePage struct {
 	Live     bool
 	Built    string
 
+	LD template.JS // JSON-LD: the WebSite
+
 	// Spotlight layout only.
 	Spotlight *spotView
 	Path      []homeCard // the course, in reading order
@@ -283,7 +496,7 @@ type homePage struct {
 }
 
 func (b *Builder) buildHome() error {
-	hp := &homePage{Site: b.M, Live: b.Live, Built: time.Now().Format("2 Jan 2006 15:04")}
+	hp := &homePage{Site: b.M, Live: b.Live, Built: time.Now().Format("2 Jan 2006 15:04"), LD: b.homeStructuredData()}
 	words := 0
 	cards := map[string]homeCard{}
 	for _, g := range b.M.Guides {
@@ -311,7 +524,8 @@ func (b *Builder) buildHome() error {
 		sp := b.M.Spotlight
 		hp.Spotlight = &spotView{Eyebrow: sp.Eyebrow, Card: cards[sp.Guide], Coming: sp.Coming}
 		for _, l := range sp.Links {
-			hp.Spotlight.Links = append(hp.Spotlight.Links, struct{ Title, URL string }{l.Title, sp.Guide + "/#" + l.Anchor})
+			page := b.locate(sp.Guide+"/", l.Anchor) // the chapter page that holds the anchor
+			hp.Spotlight.Links = append(hp.Spotlight.Links, struct{ Title, URL string }{l.Title, page + "#" + l.Anchor})
 		}
 		home := b.M.SectionOf(sp.Guide)
 		for _, sec := range b.M.Sections {
@@ -370,7 +584,14 @@ func (b *Builder) writeSearchIndex() error {
 		}
 		idx = append(idx, entry{m.Title, d.URL, d.Guide.Title, d.Guide.Icon})
 		for _, e := range m.TOC {
-			idx = append(idx, entry{e.Text, d.URL + "#" + e.ID, d.Guide.Title, d.Guide.Icon})
+			u := e.URL // chapter entries open their own page; parts open the page with their heading
+			if u == "" {
+				u = d.URL
+			}
+			if e.Level == 1 || u == d.URL {
+				u += "#" + e.ID
+			}
+			idx = append(idx, entry{e.Text, u, d.Guide.Title, d.Guide.Icon})
 		}
 	}
 	js, _ := json.Marshal(idx)
@@ -394,6 +615,13 @@ func (b *Builder) writeHostingFiles() error {
 			lastmod = st.ModTime().Format("2006-01-02")
 		}
 		fmt.Fprintf(&sm, "  <url><loc>%s</loc><lastmod>%s</lastmod></url>\n", b.M.Abs(d.URL), lastmod)
+		if pd := b.prep[d.URL]; pd != nil {
+			for _, c := range pd.chapters { // the one-page edition and thin chapters are noindex: not listed
+				if c.Words >= thinWords {
+					fmt.Fprintf(&sm, "  <url><loc>%s</loc><lastmod>%s</lastmod></url>\n", b.M.Abs(c.URL), lastmod)
+				}
+			}
+		}
 	}
 	sm.WriteString("</urlset>\n")
 	if err := writeFile(filepath.Join(b.OutDir, "sitemap.xml"), []byte(sm.String())); err != nil {

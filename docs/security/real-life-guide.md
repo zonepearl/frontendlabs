@@ -1,5 +1,7 @@
 # Security from Zero — A Practical Guide for Engineers
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/security-from-zero/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > From "what is Base64?" to running your own certificate authority, migrating to
 > post-quantum cryptography, and breaking (then fixing) a real application.
 >

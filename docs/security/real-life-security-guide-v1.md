@@ -1,5 +1,7 @@
 # Security Engineering in Depth — Advanced Practice
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/security-in-depth/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 **The sequel to *Security from Zero* (`real-life-guide.md`).** That guide took you
 from "what is a byte" to threat-modeling a system, running a PKI, hardening a
 host, and breaking and fixing a web app. This one assumes all of that and goes

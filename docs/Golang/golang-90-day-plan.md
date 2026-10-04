@@ -1,4 +1,7 @@
 # 120-Day Go Engineering Plan: Novice → Advanced
+
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/go-plan/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 ## Target Persona: Software Engineer
 ### Networking (L4–L7) + Security (WAF, DDoS, Bot, API Protection)
 ### ~1 hour/day | Standard library only | Weekly mini projects

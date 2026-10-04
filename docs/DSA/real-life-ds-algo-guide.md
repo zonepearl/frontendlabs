@@ -1,5 +1,7 @@
 # The Real-Life Guide to Data Structures & Algorithms
 
+> 📖 **Read this on [frontendlabs.xyz](https://frontendlabs.xyz/dsa/)**: the official edition, with one page per chapter, search, and dark mode. <!-- frontendlabs-notice -->
+
 > Explained like you're five, coded like you're a Go engineer — and, for
 > every topic, coded like a C engineer too.
 
