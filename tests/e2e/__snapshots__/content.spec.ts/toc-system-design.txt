@@ -1,0 +1,71 @@
+Table of Contents
+1. What System Design Is, and How the Interview Works
+2. The Framework: A 45–60 Minute Design, Step by Step
+3. Back-of-the-Envelope Estimation
+4. Building Blocks & Scaling from 1 to 10 Million Users
+5. APIs & Communication Protocols
+6. Storage Fundamentals: Choosing a Database
+7. Caching
+8. Scaling Basics: Replication, Read Replicas, Statelessness
+9. Partitioning & Sharding
+10. Replication & Consistency Models
+11. Asynchronous Processing: Queues, Logs, Streams
+12. Distributed Transactions: 2PC, Sagas, Outbox
+13. Service Boundaries: Monolith, Microservices, and Conway's Law
+14. Reliability Patterns & Availability Math
+15. Specialized Indexes: Search, Geo, Time-Series
+16. Observability, SLIs/SLOs & Error Budgets
+17. Security & Multi-Tenancy in Design
+18. Data Modeling Practice
+19. Consensus, Coordination & Time
+20. Multi-Region, Cells & Disaster Recovery
+21. Data Platforms: OLTP, OLAP, CDC & Stream Processing
+22. Performance at Extreme Scale: Queueing, Tails, Metastability
+23. Verifying Distributed Systems
+24. Backup & Restore as a Discipline
+25. AI/ML & LLM Systems Design
+26. Agentic AI Systems
+27. Business Outcomes → Architecture: The Translation Layer
+28. Cost Engineering & Unit Economics
+29. Evolution & Migrations Without Downtime
+30. The Leadership Layer: Decisions, Org, Risk
+31. URL Shortener (warm-up)
+32. Distributed Rate Limiter
+33. News Feed / Timeline
+34. Chat & Messaging (WhatsApp / Teams)
+35. Notification Platform
+36. Ride-Hailing & Proximity Search (Uber)
+37. Video Streaming (YouTube / Netflix)
+38. Distributed Key-Value Store (Dynamo)
+39. Payments & Ledger (Stripe)
+40. Ticketing & Flash Sales (Ticketmaster)
+41. Collaborative Editing (Google Docs / Office 365)
+42. Search Autocomplete / Typeahead
+43. Web Crawler
+44. Ad Click Aggregation & Top-K
+45. File Sync & Storage (Dropbox / OneDrive / Drive)
+46. Distributed Job Scheduler
+47. How to Use These Walkthroughs
+48. Walkthrough: Design Instagram
+49. Walkthrough: Design a CDN
+50. Walkthrough: Design Web Search (Google)
+51. Walkthrough: Design Google Maps Routing & Navigation
+52. Walkthrough: Design Object Storage (S3)
+53. Walkthrough: Design a Metrics Monitoring & Alerting Platform
+54. Walkthrough: Design a Global Configuration & Feature-Flag Platform
+55. Walkthrough: Design a Secrets Manager & Key Management Service (KMS)
+56. Walkthrough: Design a Certificate Authority / Cert-Minting Service
+57. Walkthrough: Design a Service Mesh
+58. Walkthrough: Design a Cluster Scheduler / Container Orchestrator (Kubernetes, Borg)
+59. Walkthrough: Design a Stock Exchange Matching Engine
+60. Level Calibration: Senior, Staff, Principal, and Engineering Managers
+61. Company-Specific Notes: Google, Microsoft, Meta, Amazon & Others
+62. Communication: Driving the Whiteboard
+63. Drawing System Designs: Whiteboard, Paper, and Virtual Canvas
+64. "Walk Me Through a System You Designed" — The Past-Project Deep Dive
+65. Red Flags & Common Failure Modes
+66. An 8-Week Study Plan
+67. Interview Prompt Bank: Real-World Questions, Mapped
+68. Cheat Sheets & Further Reading
+Appendix A — Real Incidents, Decoded
+Appendix B — Engineering Blog & Paper Map
