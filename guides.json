@@ -25,7 +25,7 @@
     {
       "id": "more",
       "title": "More field guides",
-      "note": "AI, Docker & Kubernetes in production, and performance testing."
+      "note": "AI, Docker & Kubernetes in production, performance testing, and system design."
     }
   ],
   "guides": [
@@ -357,6 +357,17 @@
       "originals": [
         "scale-perf/real-life-scale-guide.html"
       ]
+    },
+    {
+      "slug": "system-design",
+      "title": "Real-Life System Design",
+      "tag": "For Senior, Staff, Principal & EM interviews",
+      "icon": "🏗️",
+      "category": "more",
+      "level": "Beginner → Expert",
+      "summary": "Estimation and building blocks to consensus, multi-region and cost; how real companies built it, 16 solved cases, 12 mock interviews, and the playbook for senior design loops.",
+      "source": "system-design/real-life-system-design-guide.md",
+      "originals": []
     }
   ],
   "sections": [
@@ -372,11 +383,12 @@
     {
       "id": "systems",
       "title": "Systems",
-      "note": "The machine every request starts and ends on, containers and Kubernetes in production, and how to measure it under load.",
+      "note": "The machine every request starts and ends on, containers and Kubernetes in production, how to measure it under load, and how to design whole systems that scale.",
       "guides": [
         "linux",
         "kubernetes",
-        "scale-perf"
+        "scale-perf",
+        "system-design"
       ]
     },
     {

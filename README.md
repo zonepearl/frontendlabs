@@ -27,6 +27,7 @@ with runnable labs in every guide.
 | 🖥️ | [Operating Systems, Linux & Containers](https://frontendlabs.xyz/linux/) | Systems | Beginner → Expert · step 1 |
 | ☸️ | [Docker & Kubernetes — The Real-Life Field Guide](https://frontendlabs.xyz/kubernetes/) | Systems | Beginner → Production · after step 1 |
 | 📈 | [Scale, Load & Performance Testing](https://frontendlabs.xyz/scale-perf/) | Systems | In depth |
+| 🏗️ | [Real-Life System Design](https://frontendlabs.xyz/system-design/) | Systems | Beginner → Expert · senior interviews |
 | 🧭 | [The OSI Model, One Click at a Time](https://frontendlabs.xyz/osi/) | Networking | Overview · step 2a |
 | 🌐 | [Networking from Zero (TCP/IP)](https://frontendlabs.xyz/tcp-ip/) | Networking | Beginner → Expert · step 2b |
 | 🔗 | [The HTTPS Request Lifecycle](https://frontendlabs.xyz/https/) | Networking | Intermediate → Expert · step 4 |
@@ -41,13 +42,29 @@ with runnable labs in every guide.
 | 🟨 | [JavaScript — The Complete Field Guide](https://frontendlabs.xyz/javascript/) | Programming | Beginner → Expert · 2 tested projects |
 | 🧩 | [Data Structures & Algorithms](https://frontendlabs.xyz/dsa/) | Programming | Beginner → Advanced |
 
-**18 guides and more than 1,300 chapters**, all free to read.
+**19 guides and nearly 1,400 chapters**, all free to read.
 The systems course reads in order: **1 OS → 2 Networking → 3 Security → 4 HTTPS**, with Go, Rust and Python alongside.
-**Docker & Kubernetes** picks up after step 1 and takes containers to production.
+**Docker & Kubernetes** picks up after step 1 and takes containers to production, and
+**Real-Life System Design** closes the Systems section by putting it all together into designs that scale.
 Each guide's Markdown is in [`docs/`](docs/); the site is the official, always-current edition.
 
 ## What's new
 
+- **Real-Life System Design** ([`/system-design/`](https://frontendlabs.xyz/system-design/)),
+  71 chapters from zero to senior-level design interviews. Parts 0–IV run
+  beginner → expert: a plain-language glossary and the interview framework,
+  estimation and building blocks, sharding, replication, async messaging and
+  sagas, reliability and observability, then consensus, multi-region and cells,
+  verification (property tests, deterministic simulation, TLA+), backup &
+  restore, AI and agentic systems, and business outcomes → architecture, cost
+  and migrations. Every concept carries an architecture/flow diagram, how real
+  companies built it (mapped to their engineering blogs and papers), and corner
+  cases. Then 16 solved cases, 12 step-by-step mock interviews (Instagram, CDN,
+  web search, maps, S3, KMS, a certificate authority, a service mesh, a stock
+  exchange, …), and the playbook for Senior, Staff, Principal and EM loops:
+  level calibration, drawing on a whiteboard, paper or canvas, the past-project
+  round, and a bank of real prompts. It sits in **Systems**, after Scale, Load
+  & Performance Testing.
 - **JavaScript — The Complete Field Guide, Parts X–XV** ([`/javascript/`](https://frontendlabs.xyz/javascript/)),
   chapters 53–84. Modern JavaScript in depth (Proxy/Reflect, Web Streams,
   ES2023–ES2026, Temporal, `using`, 16 puzzles). JavaScript and AI: WebGPU,
