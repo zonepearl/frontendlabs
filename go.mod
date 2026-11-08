@@ -2,4 +2,4 @@ module frontendlabs.xyz/guides
 
 go 1.26.1
 
-require github.com/yuin/goldmark v1.8.6
+require github.com/yuin/goldmark v1.8.7
